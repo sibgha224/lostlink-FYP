@@ -1,101 +1,96 @@
 import React from 'react';
 
 const Login = ({ onGoToSignup, onGoToForget }) => {
-  
-  const inputContainerStyle = {
-    position: 'relative',
-    marginTop: '5px'
-  };
-
-  const inputStyle = {
-    width: '100%',
-    padding: '12px 12px 12px 40px',
-    borderRadius: '25px',
-    border: '1px solid #e2e8f0',
-    backgroundColor: '#f8fafc',
-    fontSize: '0.95rem',
-    color: '#334155',
-    boxSizing: 'border-box',
-    outline: 'none'
-  };
-
-  const labelStyle = {
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    color: '#0f172a',
-    marginLeft: '5px',
-    display: 'block',
-    textAlign: 'left'
-  };
-
   return (
-    <div style={{ width: '100%', maxWidth: '420px', padding: '20px' }}>
-      
-      {/* 🚩 Header section ko white card ke andar lane ke liye content ko wraps kiya hai */}
-      <div style={{ background: '#ffffff', borderRadius: '20px', boxShadow: '0 15px 35px rgba(0,0,0,0.15)', border: '1px solid #f1f5f9', overflow: 'hidden' }}>
-        
-        {/* 🚩 1. Naya Header Area (Form Card ke top par, White Background par) */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          gap: '12px',
-          padding: '25px 25px 10px 25px', // Header ke liye compact padding
-          textAlign: 'center'
-        }}>
-          {/* Blue Icon */}
-          <div style={{ background: '#007bff', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,123,255,0.2)' }}>
+    <div className="w-full max-w-[420px] px-4">
+
+      {/* Card */}
+      <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+        {/* Logo Header */}
+        <div className="flex items-center justify-center gap-3 pt-7 pb-3 px-6">
+          <div className="bg-blue-600 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           </div>
-          {/* Text */}
-          <span style={{ fontSize: '2.0rem', fontWeight: 'bold', color: '#0f172a', letterSpacing: '-1px' }}>LostLink</span>
+          <span className="text-3xl font-bold text-slate-900 tracking-tight">LostLink</span>
         </div>
 
-        {/* Form area padding */}
-        <div style={{ padding: '20px 35px 35px 35px' }}>
-          <form style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            
-            {/* Email Field */}
+        {/* Form */}
+        <div className="px-9 pb-9 pt-4">
+          <form className="flex flex-col gap-5">
+
+            {/* Email */}
             <div>
-              <label style={labelStyle}>Email</label>
-              <div style={inputContainerStyle}>
-                <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', display: 'flex', alignItems: 'center' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              <label className="block text-sm font-semibold text-slate-800 mb-1 ml-1">Email</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                  </svg>
                 </div>
-                <input type="email" placeholder="your@email.com" style={inputStyle} />
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  className="w-full py-3 pl-10 pr-3 rounded-3xl border border-slate-200 bg-slate-50 text-[0.95rem] text-slate-700 outline-none focus:border-blue-500 transition-colors"
+                />
               </div>
             </div>
 
-            {/* Password Field */}
+            {/* Password */}
             <div>
-              <label style={labelStyle}>Password</label>
-              <div style={inputContainerStyle}>
-                <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', display: 'flex', alignItems: 'center' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <label className="block text-sm font-semibold text-slate-800 mb-1 ml-1">Password</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
                 </div>
-                <input type="password" placeholder="********" style={inputStyle} />
+                <input
+                  type="password"
+                  placeholder="********"
+                  className="w-full py-3 pl-10 pr-3 rounded-3xl border border-slate-200 bg-slate-50 text-[0.95rem] text-slate-700 outline-none focus:border-blue-500 transition-colors"
+                />
               </div>
-              {/* Forgot Password */}
-              <p onClick={onGoToForget} style={{ textAlign: 'right', fontSize: '0.85rem', color: '#007bff', cursor: 'pointer', marginTop: '8px', fontWeight: '500' }}>
+              <p
+                onClick={onGoToForget}
+                className="text-right text-sm text-blue-600 cursor-pointer mt-2 font-medium hover:underline"
+              >
                 Forgot Password?
               </p>
             </div>
 
             {/* Login Button */}
-            <button type="button" style={{ padding: '14px', background: '#007bff', color: 'white', border: 'none', borderRadius: '30px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '10px', boxShadow: '0 4px 12px rgba(0, 123, 255, 0.2)' }}>
-              Log In <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            <button
+              type="button"
+              className="flex items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-base rounded-3xl border-none cursor-pointer transition-all shadow-md shadow-blue-500/20 mt-2"
+            >
+              Log In
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
             </button>
+
           </form>
         </div>
       </div>
 
-      {/* 🚩 Footer Link ko white box ke bahar rakha hai taake design clean lage, text COLOR isko WHITE de diya hai taake background par dikhe */}
-      <p style={{ textAlign: 'center', marginTop: '25px', fontSize: '0.95rem', color: '#ffffff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
-        Don't have an account? <span onClick={onGoToSignup} style={{ color: '#ffffff', cursor: 'pointer', fontWeight: 'bold', textDecoration: 'underline' }}>Create new account</span>
+      {/* Footer */}
+      <p className="text-center mt-6 text-[0.95rem] text-white drop-shadow">
+        Don't have an account?{' '}
+        <span
+          onClick={onGoToSignup}
+          className="text-white font-bold underline cursor-pointer"
+        >
+          Create new account
+        </span>
       </p>
+
     </div>
   );
 };
