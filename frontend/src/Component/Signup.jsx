@@ -7,34 +7,62 @@ const Signup = ({ onGoToLogin }) => {
   const interDepartments = ["F.Sc (Pre-Medical)", "F.Sc (Pre-Engineering)", "ICS (Physics)", "I.Com", "F.A"];
   const currentDepartments = level === 'BS' ? bsDepartments : interDepartments;
 
-  const inputClass = "w-full py-1.5 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-[0.8rem] text-slate-700 outline-none focus:border-blue-500 transition-colors mt-0.5 box-border";
-  const labelClass = "text-[0.75rem] font-bold text-slate-700 block text-left";
+  const inputClass = "w-full py-1.5 px-2.5 rounded-lg border border-[#e8d0d0] bg-[#fff8f8] text-[0.8rem] text-[#2e1a1a] outline-none focus:border-[#800020] transition-colors mt-0.5 box-border font-[DM_Sans]";
+  const labelClass = "text-[0.75rem] font-bold text-[#800020] block text-left font-[DM_Sans] uppercase tracking-widest";
 
   return (
-    <div className="w-full h-screen flex justify-center items-center p-4">
+    <div
+      className="w-full h-screen flex justify-center items-center p-4"
+      style={{
+        backgroundImage: "url('/college_bg.jpeg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
 
       {/* Top-Left Logo */}
       <div className="fixed top-4 left-4 flex items-center gap-2.5 z-10">
-        <div className="bg-blue-600 w-9 h-9 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/40">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center"
+          style={{ background: '#800020' }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="3">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
         </div>
-        <span className="text-2xl font-bold text-white tracking-tight drop-shadow-md">LostLink</span>
+        <span
+          className="text-2xl tracking-tight drop-shadow-md"
+          style={{ fontFamily: "'Fraunces', serif", fontWeight: 800, color: '#fde8ec' }}
+        >
+          LostLink
+        </span>
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-[400px] max-h-[88vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10">
+      <div className="w-full max-w-[400px] max-h-[88vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10"
+        style={{ border: '0.5px solid #e8d0d0' }}
+      >
 
         {/* Card Header */}
-        <div className="bg-slate-100 px-5 py-3 text-center border-b-2 border-slate-200 shrink-0">
-          <h2 className="m-0 text-[1.05rem] font-extrabold text-slate-800">Create Account</h2>
-          <p className="mt-0.5 text-[0.7rem] text-slate-500">Join the lost and found portal.</p>
+        <div
+          className="px-5 py-3 text-center shrink-0"
+          style={{ background: 'linear-gradient(135deg, #4a0010 0%, #800020 100%)', borderBottom: '2px solid #4a0010' }}
+        >
+          <h2
+            className="m-0 text-[1.05rem]"
+            style={{ fontFamily: "'Fraunces', serif", fontWeight: 800, color: '#fde8ec' }}
+          >
+            Create Account
+          </h2>
+          <p className="mt-0.5 text-[0.7rem]" style={{ color: '#c07080' }}>
+            Join the lost and found portal.
+          </p>
         </div>
 
         {/* Card Body - scrollable */}
-        <div className="px-4 py-3 overflow-y-auto">
+        <div className="px-4 py-3 overflow-y-auto" style={{ background: '#ffffff' }}>
           <form className="grid grid-cols-2 gap-[7px]">
 
             {/* Full Name */}
@@ -107,10 +135,16 @@ const Signup = ({ onGoToLogin }) => {
               <div className="col-span-2">
                 <label className={labelClass}>Shift</label>
                 <div className="flex gap-2 mt-1">
-                  <label className="flex-1 border border-slate-200 py-1.5 text-center rounded-lg text-[0.73rem] cursor-pointer bg-slate-50">
+                  <label
+                    className="flex-1 py-1.5 text-center rounded-lg text-[0.73rem] cursor-pointer font-bold"
+                    style={{ border: '1px solid #e8d0d0', background: '#fff8f8', color: '#2e1a1a', fontFamily: 'DM Sans, sans-serif' }}
+                  >
                     <input type="radio" name="shift" className="mr-1" /> Morning
                   </label>
-                  <label className="flex-1 border border-slate-200 py-1.5 text-center rounded-lg text-[0.73rem] cursor-pointer bg-slate-50">
+                  <label
+                    className="flex-1 py-1.5 text-center rounded-lg text-[0.73rem] cursor-pointer font-bold"
+                    style={{ border: '1px solid #e8d0d0', background: '#fff8f8', color: '#2e1a1a', fontFamily: 'DM Sans, sans-serif' }}
+                  >
                     <input type="radio" name="shift" className="mr-1" /> Evening
                   </label>
                 </div>
@@ -120,16 +154,30 @@ const Signup = ({ onGoToLogin }) => {
             {/* Submit Button */}
             <button
               type="button"
-              className="col-span-2 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-[0.88rem] rounded-lg border-none cursor-pointer transition-all mt-1 shadow-md shadow-blue-500/30"
+              className="col-span-2 py-2.5 active:scale-95 text-[0.88rem] rounded-lg border-none cursor-pointer transition-all mt-1"
+              style={{
+                background: 'linear-gradient(135deg, #800020 0%, #4a0010 100%)',
+                color: '#fde8ec',
+                fontFamily: 'DM Sans, sans-serif',
+                fontWeight: 700,
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'linear-gradient(135deg, #a0002a 0%, #800020 100%)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'linear-gradient(135deg, #800020 0%, #4a0010 100%)'}
             >
               Create Account →
             </button>
 
           </form>
 
-          <p className="text-center mt-2 text-[0.75rem] text-slate-500">
+          <p className="text-center mt-2 text-[0.75rem]" style={{ color: '#800020', fontWeight: 600 }}>
             Already have an account?{' '}
-            <span onClick={onGoToLogin} className="text-blue-600 cursor-pointer font-bold hover:underline">Login</span>
+            <span
+              onClick={onGoToLogin}
+              className="cursor-pointer font-bold hover:underline"
+              style={{ color: '#800020' }}
+            >
+              Login
+            </span>
           </p>
         </div>
       </div>
