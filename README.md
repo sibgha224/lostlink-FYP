@@ -14,6 +14,6 @@ Our platform is built using the **MERN Stack** along with specialized cloud serv
 Project Team Members: 
 
 This project is collaboratively developed by the following final-year students from the **University of the Punjab**:
-Sibgha Tul Iman
-kinza 
-Alishba rani 
+Sibgha Tul Iman,
+kinza,
+Alishba rani,
