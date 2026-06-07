@@ -46,7 +46,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  // OTP fields — zaroori hain!
+  
   verifyOtp: {
     type: String,
     default: ''

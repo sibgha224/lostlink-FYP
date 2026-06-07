@@ -3,47 +3,47 @@ const bcrypt = require('bcryptjs');
 const generateToken = require('../utils/generatetoken');
 const sendEmail = require('../utils/sendemail');
 
-// ───── REGISTER ─────
 const register = async (req, res) => {
   try {
     const { name, email, password, rollNo, department, shift, session } = req.body;
 
-    // 1. Pehle check karein ke saari fields majood hain ya nahi
     if (!name || !email || !password || !rollNo || !department || !shift || !session) {
       return res.status(400).json({ message: 'Please fill all required fields' });
     }
 
-    // 2. Strong Password check (Kam se kam 6 chars, 1 number aur 1 symbol hona zaroori hai)
-    const strongPasswordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,}$/;
+    let validationErrors = [];
 
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
     if (!strongPasswordRegex.test(password)) {
-      return res.status(400).json({ 
-        message: 'Password must be at least 6 characters long and contain at least one number and one special character (e.g. @, #, $, %)..' 
-      });
+      validationErrors.push('Password must be at least 8 characters long and contain a mix of uppercase letters, lowercase letters, numbers, and special characters.');
     }
 
-    // 3. Mandatory 4-Year Session Validation (Format: 2022-2026)
-    const sessionRegex = /^(\d{4})-(\d{4})$/;
+    const numericRollNoRegex = /^\d+$/;
+    if (!numericRollNoRegex.test(rollNo)) {
+      validationErrors.push('Roll Number must contain digits only (e.g., 085675).');
+    }
+
+     const sessionRegex = /^(\d{4})-(\d{4})$/;
     const match = session.match(sessionRegex);
-
     if (!match) {
-      return res.status(400).json({ message: 'Session must be in YYYY-YYYY format (e.g., 2022-2026)' });
+      validationErrors.push('Session must be in YYYY-YYYY format (e.g., 2022-2026).');
+    } else {
+      const startYear = parseInt(match[1]);
+      const endYear = parseInt(match[2]);
+      if (endYear - startYear !== 4) {
+        validationErrors.push('Session must be a valid 4-year degree duration (e.g., 2022-2026).');
+      }
     }
 
-    const startYear = parseInt(match[1]);
-    const endYear = parseInt(match[2]);
-
-    if (endYear - startYear !== 4) {
-      return res.status(400).json({ message: 'Session must be a valid 4-year degree duration (e.g., 2022-2026)' });
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ errors: validationErrors });
     }
 
-    // 4. Unique Email Check
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
-    // 5. Unique Roll Number Check
     const existingRollNo = await User.findOne({ rollNo });
     if (existingRollNo) {
       return res.status(400).json({ message: 'This Roll Number is already registered by another student' });
@@ -90,7 +90,6 @@ const register = async (req, res) => {
   }
 };
 
-// ───── VERIFY EMAIL ─────
 const verifyEmail = async (req, res) => {
   try {
     const { userId, otp } = req.body;
@@ -136,7 +135,6 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-// ───── LOGIN ─────
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -178,7 +176,6 @@ const login = async (req, res) => {
   }
 };
 
-// ───── GET PROFILE ─────
 const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password -verifyOtp -resetOtp');
@@ -188,7 +185,6 @@ const getProfile = async (req, res) => {
   }
 };
 
-// ───── FORGOT PASSWORD ─────
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -223,7 +219,6 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// ───── RESET PASSWORD ─────
 const resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
@@ -231,12 +226,10 @@ const resetPassword = async (req, res) => {
     if (!email || !otp || !newPassword) {
       return res.status(400).json({ message: 'All fields are required' });
     }
-
-    // 👈 NAYA SECURITY CHECK: Naya password bhi strong hona mandatory hai!
-    const strongPasswordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{6,}$/;
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
     if (!strongPasswordRegex.test(newPassword)) {
       return res.status(400).json({ 
-        message: 'New password must be at least 6 characters long and contain at least one number and one special character (e.g. @, #, $, %)..' 
+        message: 'New password must be at least 8 characters long and contain a mix of uppercase letters, lowercase letters, numbers, and special characters (e.g., @, #, $, %).' 
       });
     }
 
