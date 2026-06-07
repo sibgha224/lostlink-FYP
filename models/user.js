@@ -40,13 +40,17 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    default: 'user'
+    enum: ['student', 'admin'], 
+    default: 'student'         
   },
   isVerified: {
     type: Boolean,
     default: false
   },
-  
+  isBlocked: {                 
+    type: Boolean,
+    default: false
+  },
   verifyOtp: {
     type: String,
     default: ''
