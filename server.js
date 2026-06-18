@@ -1,3 +1,6 @@
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']); 
+
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -11,7 +14,6 @@ app.use(cors());
 app.use(express.json());
 
 connectDB();
-
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes); 
