@@ -5,18 +5,27 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const connectDB = require('./config/db');
+
 const authRoutes = require('./routes/authroutes');
-const adminRoutes = require('./routes/adminRoutes'); 
+const adminRoutes = require('./routes/adminRoutes');
+const lostItemRoutes = require('./routes/lostitemroutes');
+const foundItemRoutes = require('./routes/founditemroutes');
+const claimRoutes = require('./routes/claimroutes');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+app.use(express.urlencoded({ extended: true }));
+
 connectDB();
 
 app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes); 
+app.use('/api/admin', adminRoutes);
+app.use('/api/lost-items', lostItemRoutes);
+app.use('/api/found-items', foundItemRoutes);
+app.use('/api/claims', claimRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'LostLink API is Running!' });

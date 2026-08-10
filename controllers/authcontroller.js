@@ -20,10 +20,10 @@ const register = async (req, res) => {
 
     const numericRollNoRegex = /^\d+$/;
     if (!numericRollNoRegex.test(rollNo)) {
-      validationErrors.push('Roll Number must contain digits only (e.g., 085675).');
+      validationErrors.push('Roll Number must contain digits only (e.g., 085246).');
     }
 
-     const sessionRegex = /^(\d{4})-(\d{4})$/;
+    const sessionRegex = /^(\d{4})-(\d{4})$/;
     const match = session.match(sessionRegex);
     if (!match) {
       validationErrors.push('Session must be in YYYY-YYYY format (e.g., 2022-2026).');
@@ -67,15 +67,15 @@ const register = async (req, res) => {
     user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000;
     await user.save();
 
+
     await sendEmail(
       user.email,
       'LostLink — Verify Your Email',
       `<div style="font-family: Arial; padding: 20px;">
-        <h2 style="color: #4F46E5;">Welcome to LostLink!</h2>
-        <p>Hi <b>${user.name}</b>, your verification OTP is:</p>
+        <h2>Welcome to LostLink!</h2>
+        <p>Hi <b>${user.name}</b>, your email verification OTP is:</p>
         <h1 style="color: #4F46E5; letter-spacing: 8px;">${otp}</h1>
         <p>This OTP will expire in <b>24 hours</b>.</p>
-        <p style="color: gray;">If you did not register, please ignore this email.</p>
       </div>`
     );
 
@@ -112,7 +112,7 @@ const verifyEmail = async (req, res) => {
     }
 
     user.isVerified = true;
-    user.verifyOtp = '';
+    user.verifyOtp = undefined;
     user.verifyOtpExpireAt = 0;
     await user.save();
 
