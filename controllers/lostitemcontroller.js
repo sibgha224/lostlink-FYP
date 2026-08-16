@@ -1,6 +1,5 @@
 const LostItem = require('../models/lostitem');
 
-
 const reportLostItem = async (req, res) => {
   try {
     const { itemName, category, description, buildingName, latitude, longitude, dateLost } = req.body;
@@ -19,8 +18,8 @@ const reportLostItem = async (req, res) => {
       imageURL,
       location: {
         buildingName: buildingName || '',
-        latitude: latitude || 0,
-        longitude: longitude || 0
+        latitude: latitude ? Number(latitude) : 0,
+        longitude: longitude ? Number(longitude) : 0
       },
       dateLost
     });
@@ -36,6 +35,7 @@ const reportLostItem = async (req, res) => {
   }
 };
 
+
 const getAllLostItems = async (req, res) => {
   try {
     const lostItems = await LostItem.find({ status: 'active' })
@@ -48,7 +48,6 @@ const getAllLostItems = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
 
 const getLostItemById = async (req, res) => {
   try {
@@ -78,10 +77,9 @@ const getMyLostItems = async (req, res) => {
   }
 };
 
-
 const updateLostItem = async (req, res) => {
   try {
-    const lostItem = await LostItem.findById(req.params.id);
+    let lostItem = await LostItem.findById(req.params.id);
 
     if (!lostItem) {
       return res.status(404).json({ message: 'Lost item not found' });
@@ -91,10 +89,31 @@ const updateLostItem = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    const { itemName, category, description, buildingName, latitude, longitude, dateLost, status } = req.body;
+    
+    let updateData = {};
+    if (itemName) updateData.itemName = itemName;
+    if (category) updateData.category = category;
+    if (description) updateData.description = description;
+    if (dateLost) updateData.dateLost = dateLost;
+    if (status) updateData.status = status;
+
+    if (req.file) {
+      updateData.imageURL = req.file.path;
+    }
+
+    if (buildingName || latitude || longitude) {
+      updateData.location = {
+        buildingName: buildingName !== undefined ? buildingName : lostItem.location.buildingName,
+        latitude: latitude !== undefined ? Number(latitude) : lostItem.location.latitude,
+        longitude: longitude !== undefined ? Number(longitude) : lostItem.location.longitude
+      };
+    }
+
     const updatedItem = await LostItem.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true }
+      { $set: updateData },
+      { new: true, runValidators: true }
     );
 
     res.status(200).json({
@@ -106,6 +125,7 @@ const updateLostItem = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 const deleteLostItem = async (req, res) => {
   try {
@@ -128,13 +148,13 @@ const deleteLostItem = async (req, res) => {
   }
 };
 
-
 const searchLostItems = async (req, res) => {
   try {
-    const { keyword, category } = req.query;
+    const { keyword, category, buildingName, date, sortBy } = req.query;
 
     let query = { status: 'active' };
 
+    // Keyword Search
     if (keyword) {
       query.$or = [
         { itemName: { $regex: keyword, $options: 'i' } },
@@ -146,9 +166,28 @@ const searchLostItems = async (req, res) => {
       query.category = category;
     }
 
+    if (buildingName) {
+      query['location.buildingName'] = { $regex: buildingName, $options: 'i' };
+    }
+
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      query.createdAt = { $gte: startOfDay, $lte: endOfDay };
+    }
+
+    let sortOption = { createdAt: -1 };
+    if (sortBy === 'oldest') {
+      sortOption = { createdAt: 1 };
+    }
+
     const lostItems = await LostItem.find(query)
       .populate('userId', 'name email')
-      .sort({ createdAt: -1 });
+      .sort(sortOption);
 
     res.status(200).json(lostItems);
 

@@ -1,4 +1,6 @@
 const FoundItem = require('../models/founditem'); 
+const LostItem = require('../models/lostitem');
+
 const reportFoundItem = async (req, res) => {
   try {
     const { itemName, category, description, buildingName, latitude, longitude, dateFound } = req.body;
@@ -17,8 +19,8 @@ const reportFoundItem = async (req, res) => {
       imageURL,
       location: {
         buildingName: buildingName || '',
-        latitude: latitude || 0,
-        longitude: longitude || 0
+        latitude: latitude ? Number(latitude) : 0,
+        longitude: longitude ? Number(longitude) : 0
       },
       dateFound
     });
@@ -36,10 +38,7 @@ const reportFoundItem = async (req, res) => {
 
 const getAllFoundItems = async (req, res) => {
   try {
-    const foundItems = await FoundItem.find({
-      status: 'active',
-      isApproved: true
-    })
+    const foundItems = await FoundItem.find({ status: 'active' })
       .populate('userId', 'name email')
       .sort({ createdAt: -1 });
 
@@ -80,7 +79,7 @@ const getMyFoundItems = async (req, res) => {
 
 const updateFoundItem = async (req, res) => {
   try {
-    const foundItem = await FoundItem.findById(req.params.id);
+    let foundItem = await FoundItem.findById(req.params.id);
 
     if (!foundItem) {
       return res.status(404).json({ message: 'Found item not found' });
@@ -90,10 +89,31 @@ const updateFoundItem = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    const { itemName, category, description, buildingName, latitude, longitude, dateFound, status } = req.body;
+    
+    let updateData = {};
+    if (itemName) updateData.itemName = itemName;
+    if (category) updateData.category = category;
+    if (description) updateData.description = description;
+    if (dateFound) updateData.dateFound = dateFound;
+    if (status) updateData.status = status;
+
+    if (req.file) {
+      updateData.imageURL = req.file.path;
+    }
+
+    if (buildingName || latitude || longitude) {
+      updateData.location = {
+        buildingName: buildingName !== undefined ? buildingName : foundItem.location.buildingName,
+        latitude: latitude !== undefined ? Number(latitude) : foundItem.location.latitude,
+        longitude: longitude !== undefined ? Number(longitude) : foundItem.location.longitude
+      };
+    }
+
     const updatedItem = await FoundItem.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true }
+      { $set: updateData },
+      { new: true, runValidators: true }
     );
 
     res.status(200).json({
@@ -127,47 +147,69 @@ const deleteFoundItem = async (req, res) => {
   }
 };
 
+// Smart Search & Filtering 
 const searchFoundItems = async (req, res) => {
   try {
-    const { keyword, category } = req.query;
+    const { keyword, category, type, buildingName, date, sortBy } = req.query;
 
-    let query = { status: 'active', isApproved: true };
+    let mongoQuery = { status: 'active' };
 
     if (keyword) {
-      query.$or = [
+      mongoQuery.$or = [
         { itemName: { $regex: keyword, $options: 'i' } },
         { description: { $regex: keyword, $options: 'i' } }
       ];
     }
 
     if (category) {
-      query.category = category;
+      mongoQuery.category = category;
     }
 
-    const foundItems = await FoundItem.find(query)
-      .populate('userId', 'name email')
-      .sort({ createdAt: -1 });
+    if (buildingName) {
+      mongoQuery['location.buildingName'] = { $regex:buildingName, $options: 'i' };
+    }
+    
+    if (date) {
+      const [year, month, day] = date.split('-').map(Number);
 
-    res.status(200).json(foundItems);
+      const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+      const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
 
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-const approveFoundItem = async (req, res) => {
-  try {
-    const foundItem = await FoundItem.findById(req.params.id);
-
-    if (!foundItem) {
-      return res.status(404).json({ message: 'Found item not found' });
+      mongoQuery.createdAt = { $gte: startOfDay, $lte: endOfDay };
     }
 
-    foundItem.isApproved = true;
-    await foundItem.save();
+    let sortOption = { createdAt: -1 };
+    if (sortBy === 'oldest') {
+      sortOption = { createdAt: 1 };
+    }
+
+    let results = [];
+
+    if (type === 'lost') {
+      results = await LostItem.find(mongoQuery)
+        .populate('userId', 'name email')
+        .sort(sortOption);
+    } else if (type === 'found') {
+      results = await FoundItem.find(mongoQuery)
+        .populate('userId', 'name email')
+        .sort(sortOption);
+    } else {
+      const foundData = await FoundItem.find(mongoQuery).populate('userId', 'name email');
+      const lostData = await LostItem.find(mongoQuery).populate('userId', 'name email');
+      
+      results = [...foundData, ...lostData];
+
+      if (sortBy === 'oldest') {
+        results.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      } else {
+        results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      }
+    }
 
     res.status(200).json({
-      message: 'Found item approved successfully!',
-      foundItem
+      success: true,
+      count: results.length,
+      data: results
     });
 
   } catch (error) {
@@ -182,6 +224,5 @@ module.exports = {
   getMyFoundItems,
   updateFoundItem,
   deleteFoundItem,
-  searchFoundItems,
-  approveFoundItem
+  searchFoundItems
 };

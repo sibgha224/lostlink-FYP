@@ -1,5 +1,6 @@
 const express = require('express');
-const router = express.Router();
+const router = express.Router(); 
+
 const {
   reportFoundItem,
   getAllFoundItems,
@@ -7,11 +8,10 @@ const {
   getMyFoundItems,
   updateFoundItem,
   deleteFoundItem,
-  searchFoundItems,
-  approveFoundItem
+  searchFoundItems
 } = require('../controllers/founditemcontroller');
+
 const { protect } = require('../middleware/authmiddleware');
-const { adminOnly } = require('../middleware/adminMiddleware');
 const upload = require('../middleware/uploadmiddleware');
 
 router.post('/report', protect, (req, res, next) => {
@@ -23,12 +23,14 @@ router.post('/report', protect, (req, res, next) => {
   });
 }, reportFoundItem);
 
+
 router.get('/all', protect, getAllFoundItems);
 router.get('/my-items', protect, getMyFoundItems);
+
 router.get('/search', protect, searchFoundItems);
+
 router.get('/:id', protect, getFoundItemById);
 router.put('/:id', protect, updateFoundItem);
 router.delete('/:id', protect, deleteFoundItem);
-router.put('/:id/approve', protect, adminOnly, approveFoundItem);
 
 module.exports = router;
