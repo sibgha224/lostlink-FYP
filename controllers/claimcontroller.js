@@ -9,8 +9,14 @@ const submitClaim = async (req, res) => {
       return res.status(400).json({ message: 'Please fill all required fields' });
     }
 
-    const proofImage = req.file ? req.file.path : '';
+    const item = await FoundItem.findById(foundItemId);
+    if (!item) {
+      return res.status(404).json({ message: 'Found item not found' });
+    }
 
+    if (item.postedBy && item.postedBy.toString() === req.user._id.toString()) {
+      return res.status(400).json({ message: 'You cannot claim an item you posted yourself!' });
+    }
     const existingClaim = await Claim.findOne({
       foundItem: foundItemId,
       claimedBy: req.user._id
@@ -19,6 +25,8 @@ const submitClaim = async (req, res) => {
     if (existingClaim) {
       return res.status(400).json({ message: 'You already submitted a claim for this item!' });
     }
+
+    const proofImage = req.file ? req.file.path : '';
 
     const claim = await Claim.create({
       foundItem: foundItemId,
@@ -41,6 +49,16 @@ const submitClaim = async (req, res) => {
 
 const getClaimsByItem = async (req, res) => {
   try {
+
+    const item = await FoundItem.findById(req.params.foundItemId);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    if (item.postedBy && item.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Unauthorized: Only the item founder can view claims' });
+    }
+
     const claims = await Claim.find({ foundItem: req.params.foundItemId })
       .populate('claimedBy', 'name email rollNo')
       .sort({ createdAt: -1 });
@@ -65,18 +83,26 @@ const updateClaimStatus = async (req, res) => {
       });
     }
 
+    const item = await FoundItem.findById(claim.foundItem);
+    if (item && item.postedBy && item.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized: Only the item founder can update claim status'
+      });
+    }
+
     claim.status = status;
     claim.founderRemarks = founderRemarks;
     claim.decisionDate = new Date();
     await claim.save();
 
     if (status === 'approved') {
+      
       await FoundItem.findByIdAndUpdate(
         claim.foundItem,
         { status: 'claimed' }
       );
 
-      
       await Claim.updateMany(
         {
           foundItem: claim.foundItem,
