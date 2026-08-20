@@ -4,23 +4,26 @@ const User = require('../models/user');
 const protect = async (req, res, next) => {
   try {
     let token;
-    
-    if (req.headers.authorization && 
-        req.headers.authorization.startsWith('Bearer')) {
-      
+
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
 
-      
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-     
       req.user = await User.findById(decoded.id).select('-password');
-      next();
 
+      if (!req.user) {
+        return res.status(401).json({ message: 'User not found' });
+      }
+
+      if (req.user.isBlocked) {
+        return res.status(403).json({ message: 'Your account has been blocked. Please contact admin.' });
+      }
+
+      next();
     } else {
       res.status(401).json({ message: 'Not authorized, no token' });
     }
-
   } catch (error) {
     res.status(401).json({ message: 'Token invalid or expired' });
   }

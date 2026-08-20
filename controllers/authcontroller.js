@@ -157,6 +157,9 @@ const login = async (req, res) => {
       return res.status(400).json({ message: 'Please verify your email first' });
     }
 
+    if (user.isBlocked) {
+  return res.status(403).json({ message: 'Your account has been blocked. Please contact admin.' });
+}
     const token = generateToken(user._id);
 
     res.status(200).json({
