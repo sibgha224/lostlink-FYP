@@ -1,5 +1,6 @@
 const Claim = require('../models/claim');
-const FoundItem = require('../models/founditem'); 
+const FoundItem = require('../models/founditem');
+const sendEmail = require('../utils/sendemail');
 
 const submitClaim = async (req, res) => {
   try {
@@ -14,9 +15,14 @@ const submitClaim = async (req, res) => {
       return res.status(404).json({ message: 'Found item not found' });
     }
 
-    if (item.postedBy && item.postedBy.toString() === req.user._id.toString()) {
+    if (item.userId && item.userId.toString() === req.user._id.toString()) {
       return res.status(400).json({ message: 'You cannot claim an item you posted yourself!' });
     }
+
+    if (item.status !== 'active') {
+      return res.status(400).json({ message: 'This item is no longer available for claims' });
+    }
+
     const existingClaim = await Claim.findOne({
       foundItem: foundItemId,
       claimedBy: req.user._id
@@ -46,16 +52,14 @@ const submitClaim = async (req, res) => {
   }
 };
 
-
 const getClaimsByItem = async (req, res) => {
   try {
-
     const item = await FoundItem.findById(req.params.foundItemId);
     if (!item) {
       return res.status(404).json({ message: 'Item not found' });
     }
 
-    if (item.postedBy && item.postedBy.toString() !== req.user._id.toString()) {
+    if (item.userId && item.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Unauthorized: Only the item founder can view claims' });
     }
 
@@ -74,7 +78,14 @@ const updateClaimStatus = async (req, res) => {
   try {
     const { status, founderRemarks } = req.body;
 
-    const claim = await Claim.findById(req.params.claimId);
+    if (!status || !['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Status must be either 'approved' or 'rejected'"
+      });
+    }
+
+    const claim = await Claim.findById(req.params.claimId).populate('claimedBy', 'name email');
 
     if (!claim) {
       return res.status(404).json({
@@ -83,8 +94,23 @@ const updateClaimStatus = async (req, res) => {
       });
     }
 
+    if (claim.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: `This claim has already been ${claim.status}`
+      });
+    }
+
     const item = await FoundItem.findById(claim.foundItem);
-    if (item && item.postedBy && item.postedBy.toString() !== req.user._id.toString()) {
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: 'Related item not found'
+      });
+    }
+
+    if (item.userId && item.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Unauthorized: Only the item founder can update claim status'
@@ -97,7 +123,6 @@ const updateClaimStatus = async (req, res) => {
     await claim.save();
 
     if (status === 'approved') {
-      
       await FoundItem.findByIdAndUpdate(
         claim.foundItem,
         { status: 'claimed' }
@@ -116,6 +141,29 @@ const updateClaimStatus = async (req, res) => {
       );
     }
 
+    if (claim.claimedBy && claim.claimedBy.email) {
+      try {
+        const subject = status === 'approved'
+          ? 'Your claim has been accepted - LostLink'
+          : 'Your claim has been rejected - LostLink';
+
+        const htmlContent = status === 'approved'
+          ? `<p>Hi ${claim.claimedBy.name},</p>
+             <p>Good news! Your claim on the item has been <strong>accepted</strong> by the finder.</p>
+             ${founderRemarks ? `<p>Remarks: ${founderRemarks}</p>` : ''}
+             <p>Please coordinate with the finder to collect your item.</p>
+             <p>- LostLink Team</p>`
+          : `<p>Hi ${claim.claimedBy.name},</p>
+             <p>Your claim on the item has been <strong>rejected</strong> by the finder.</p>
+             ${founderRemarks ? `<p>Remarks: ${founderRemarks}</p>` : ''}
+             <p>- LostLink Team</p>`;
+
+        await sendEmail(claim.claimedBy.email, subject, htmlContent);
+      } catch (emailError) {
+        console.log('Claim notification email failed:', emailError.message);
+      }
+    }
+
     res.json({
       success: true,
       message: 'Claim updated successfully.'
@@ -129,8 +177,21 @@ const updateClaimStatus = async (req, res) => {
   }
 };
 
+const getMyClaims = async (req, res) => {
+  try {
+    const claims = await Claim.find({ claimedBy: req.user._id })
+      .populate('foundItem', 'itemName status imageURL')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(claims);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   submitClaim,
   getClaimsByItem,
-  updateClaimStatus
+  updateClaimStatus,
+  getMyClaims
 };

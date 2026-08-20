@@ -3,7 +3,8 @@ const router = express.Router();
 const {
   submitClaim,
   getClaimsByItem,
-  updateClaimStatus
+  updateClaimStatus,
+  getMyClaims
 } = require('../controllers/claimcontroller');
 const { protect } = require('../middleware/authmiddleware');
 const upload = require('../middleware/uploadmiddleware');
@@ -17,6 +18,7 @@ router.post('/submit', protect, (req, res, next) => {
   });
 }, submitClaim);
 
+router.get('/my-claims', protect, getMyClaims);
 router.get('/:foundItemId/claims', protect, getClaimsByItem);
 router.put('/:claimId/status', protect, updateClaimStatus);
 
