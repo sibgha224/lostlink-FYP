@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
 import Home from "./Component/Home.jsx";
-import Signup from "./Component/Signup.jsx";
-import Login from "./Component/Login.jsx";
-import ForgotPassword from "./Component/ForgotPassword.jsx";
-
 function App() {
   const [screen, setScreen] = useState('home');
 
