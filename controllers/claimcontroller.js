@@ -1,6 +1,7 @@
 const Claim = require('../models/claim');
 const FoundItem = require('../models/founditem');
 const sendEmail = require('../utils/sendemail');
+const { createNotification } = require('./notificationcontroller');
 
 const submitClaim = async (req, res) => {
   try {
@@ -15,7 +16,7 @@ const submitClaim = async (req, res) => {
       return res.status(404).json({ message: 'Found item not found' });
     }
 
-    if (item.userId && item.userId.toString() === req.user._id.toString()) {
+    if (!item.userId || item.userId.toString() === req.user._id.toString()) {
       return res.status(400).json({ message: 'You cannot claim an item you posted yourself!' });
     }
 
@@ -41,6 +42,15 @@ const submitClaim = async (req, res) => {
       proofImage
     });
 
+    if (item.userId) {
+      await createNotification(req, {
+        recipient: item.userId,
+        type: 'claim_submitted',
+        message: `${req.user.name || 'A user'} has submitted a claim on your item "${item.itemName || 'Found Item'}".`,
+        relatedItem: item._id
+      });
+    }
+
     res.status(201).json({
       message: 'Claim submitted successfully!',
       claim
@@ -59,7 +69,7 @@ const getClaimsByItem = async (req, res) => {
       return res.status(404).json({ message: 'Item not found' });
     }
 
-    if (item.userId && item.userId.toString() !== req.user._id.toString()) {
+    if (!item.userId || item.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Unauthorized: Only the item founder can view claims' });
     }
 
@@ -94,13 +104,6 @@ const updateClaimStatus = async (req, res) => {
       });
     }
 
-    if (claim.status !== 'pending') {
-      return res.status(400).json({
-        success: false,
-        message: `This claim has already been ${claim.status}`
-      });
-    }
-
     const item = await FoundItem.findById(claim.foundItem);
 
     if (!item) {
@@ -110,10 +113,18 @@ const updateClaimStatus = async (req, res) => {
       });
     }
 
-    if (item.userId && item.userId.toString() !== req.user._id.toString()) {
+    // Authorization 
+    if (!item.userId || item.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Unauthorized: Only the item founder can update claim status'
+      });
+    }
+
+    if (claim.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: `This claim has already been ${claim.status}`
       });
     }
 
@@ -139,6 +150,16 @@ const updateClaimStatus = async (req, res) => {
           founderRemarks: 'Another claim has been approved.'
         }
       );
+    }
+
+    // Claimer ko decision ki notification
+    if (claim.claimedBy) {
+      await createNotification(req, {
+        recipient: claim.claimedBy._id,
+        type: status === 'approved' ? 'claim_approved' : 'claim_rejected',
+        message: `Your claim for "${item.itemName || 'Item'}" has been ${status}.`,
+        relatedItem: item._id
+      });
     }
 
     if (claim.claimedBy && claim.claimedBy.email) {
