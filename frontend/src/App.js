@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Home from "./Component/Home.jsx";
+import Signup from "./Component/Signup.jsx";
 function App() {
   const [screen, setScreen] = useState('home');
 
