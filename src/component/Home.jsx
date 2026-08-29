@@ -118,7 +118,7 @@ const Home = (props) => {
         <div className="flex-1 max-w-[560px]">
           <div className="inline-flex items-center gap-2 bg-[#fff8f8] rounded-[20px] px-3.5 py-1.5 mb-5" style={{ border: '1px solid #e8d0d0' }}>
             <span className="w-2 h-2 rounded-full bg-[#800020] inline-block"></span>
-            <span className="text-[#800020] font-bold text-[0.78rem] uppercase tracking-widest">Lost & Found Portal</span>
+            <span className="text-[#800020] font-bold text-[0.78rem] uppercase tracking-widest">Lost & Found System</span>
           </div>
 
           <h1 className="font-headings text-[#2e1a1a] mb-4 leading-[1.08]" style={{ fontSize: 'clamp(2.2rem, 5vw, 3.8rem)', letterSpacing: '-1px' }}>
@@ -331,7 +331,7 @@ const Home = (props) => {
           <div>
             <h4 className="font-headings mb-4 text-[#2e1a1a] text-[1.05rem]">Quick Links</h4>
             <ul className="list-none p-0 m-0 text-[#5a3a3a] text-[0.9rem] flex flex-col gap-2.5 font-medium">
-              {['About the Portal', 'Terms of Service', 'Privacy Policy', 'FAQ'].map(l => (
+              {['About the System', 'Terms of Service', 'Privacy Policy', 'FAQ'].map(l => (
                 <li key={l} className="cursor-pointer hover:text-[#800020] transition-colors">{l}</li>
               ))}
             </ul>

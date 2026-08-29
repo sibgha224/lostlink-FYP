@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
 import Home from "./component/Home.jsx";
+import Signup from "./component/Signup.jsx";
+
 function App() {
   const [screen, setScreen] = useState('home');
 
   const isAuthPage = screen === 'login' || screen === 'signup' || screen === 'forget';
 
   return (
-    <div className={`relative min-h-screen flex flex-col ${isAuthPage ? "bg-cover bg-center bg-no-repeat" : "bg-white"}`}
-      style={isAuthPage ? { backgroundImage: "url('/college_bg.JPEG')" } : {}}>
-
-      {/* Dark Overlay - sirf auth pages par */}
-      {isAuthPage && (
-        <div className="absolute inset-0 bg-slate-900/30 z-[1]"></div>
-      )}
-
-      <div className="relative z-[2] w-full flex-1">
+    <div 
+      className={`relative min-h-screen flex flex-col ${isAuthPage ? "bg-cover bg-center bg-no-repeat" : "bg-white"}`}
+      style={isAuthPage ? { backgroundImage: "url('/college_bg.jpeg')" } : {}}
+    >
+      <div className="relative z-[2] w-full flex-1 flex items-center justify-center">
 
         {/* Home */}
         {(screen === 'home' || screen === 'report-lost' || screen === 'report-found' || screen === 'browse') && (
@@ -28,21 +26,15 @@ function App() {
 
         {/* Auth Pages */}
         {screen === 'signup' && (
-          <div className="flex justify-center items-center h-screen">
-            <Signup onGoToLogin={() => setScreen('login')} />
-          </div>
+          <Signup onGoToLogin={() => setScreen('login')} />
         )}
 
         {screen === 'login' && (
-          <div className="flex justify-center items-center h-screen">
-            <Login onGoToSignup={() => setScreen('signup')} onGoToForget={() => setScreen('forget')} />
-          </div>
+          <Login onGoToSignup={() => setScreen('signup')} onGoToForget={() => setScreen('forget')} />
         )}
 
         {screen === 'forget' && (
-          <div className="flex justify-center items-center h-screen">
-            <ForgotPassword onGoToLogin={() => setScreen('login')} />
-          </div>
+          <ForgotPassword onGoToLogin={() => setScreen('login')} />
         )}
 
       </div>
@@ -50,4 +42,4 @@ function App() {
   );
 }
 
-export default App;       
+export default App;
