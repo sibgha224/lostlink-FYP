@@ -1,6 +1,8 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import React, { useState } from 'react';
 import Home from "./component/Home.jsx";
 import Signup from "./component/Signup.jsx";
+import Login from "./component/Login.jsx";
 
 function App() {
   const [screen, setScreen] = useState('home');
