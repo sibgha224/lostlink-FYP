@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Home from "./component/Home.jsx";
 import Signup from "./component/Signup.jsx";
 import Login from "./component/Login.jsx";
-
+import ForgotPassword from "./component/ForgotPassword.jsx";
 function App() {
   const [screen, setScreen] = useState('home');
 
