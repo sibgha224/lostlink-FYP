@@ -5,6 +5,7 @@ import Login from "./component/Login.jsx";
 import ForgotPassword from "./component/ForgotPassword.jsx";
 import ReportLostFound from "./component/ReportLostFound.jsx";
 import FoundItems from "./component/FoundItems.jsx";
+import LostItems from "./component/LostItems.jsx";
 
 function App() {
   const [screen, setScreen] = useState('home');
@@ -22,6 +23,11 @@ function App() {
     screen === 'found-items' || 
     screen === 'found items';
 
+  const isLostPage = 
+    screen === 'Lost Items' || 
+    screen === 'lost-items' || 
+    screen === 'lost items';
+
   return (
     <div 
       className={`relative min-h-screen flex flex-col w-full ${isAuthPage ? "bg-cover bg-center bg-no-repeat" : "bg-white"}`}
@@ -29,7 +35,7 @@ function App() {
     >
       <div className="relative z-[2] w-full flex-1 flex flex-col">
 
-        {!isReportPage && !isFoundPage && !isAuthPage && (
+        {!isReportPage && !isFoundPage && !isLostPage && !isAuthPage && (
           <Home
             activeScreen={screen}
             onNavigate={(s) => setScreen(s)}
@@ -37,14 +43,25 @@ function App() {
             onGoToSignup={() => setScreen('signup')}
             onGoToReportItem={() => setScreen('report-lost-found')}
             onGoToFoundItems={() => setScreen('found-items')}
+            onGoToLostItems={() => setScreen('lost-items')}
+          />
+        )}
+
+        {isLostPage && (
+          <LostItems 
+            onGoToHome={() => setScreen('home')}
+            onGoToFoundItems={() => setScreen('found-items')}
+            onGoToReportItem={() => setScreen('report-lost-found')}
+            onGoToLogin={() => setScreen('login')}
+            onGoToSignup={() => setScreen('signup')}
           />
         )}
 
         {isFoundPage && (
           <FoundItems 
             onGoToHome={() => setScreen('home')}
+            onGoToLostItems={() => setScreen('lost-items')}
             onGoToReportItem={() => setScreen('report-lost-found')}
-            onGoToFoundItems={() => setScreen('found-items')}
             onGoToLogin={() => setScreen('login')}
             onGoToSignup={() => setScreen('signup')}
           />
@@ -56,6 +73,7 @@ function App() {
             onGoToHome={() => setScreen('home')}
             onGoToReportItem={() => setScreen('report-lost-found')}
             onGoToFoundItems={() => setScreen('found-items')}
+            onGoToLostItems={() => setScreen('lost-items')}
             onGoToMyReports={() => setScreen('my-reports')}
             onReportSuccess={(data) => {
               console.log('Report submitted:', data);
