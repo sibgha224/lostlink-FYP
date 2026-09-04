@@ -59,11 +59,14 @@ const Home = (props) => {
         <div className="hidden md:flex gap-1">
           {['Home', 'Found Items', 'Lost Items', 'Report Lost & Found Items'].map((link, i) => (
             <span key={link}
-              onClick={() => {
-                setActiveTab(i);
-                if (i === 1 && props.onGoToReportLost) props.onGoToReportLost();
-                if (i === 2 && props.onGoToReportFound) props.onGoToReportFound();
-              }}
+             onClick={() => {
+              setActiveTab(i);
+              if (link === 'Report Lost & Found Items' && props.onNavigate) {
+                props.onNavigate('Report Lost & Found Items');
+              } else if (props.onNavigate) {
+                props.onNavigate(link.toLowerCase());
+              }
+            }}
               className="px-4 py-2 rounded-lg cursor-pointer text-[0.9rem] font-bold transition-all hover:bg-[#fff8f8]"
               style={{ 
                 color: '#800020', 
@@ -96,9 +99,17 @@ const Home = (props) => {
       {/* Mobile Menu */}
       {menuOpen && (
         <div className="md:hidden bg-white px-[5%] py-4" style={{ borderBottom: '1px solid #e8d0d0', boxShadow: '0 8px 20px rgba(0,0,0,0.05)' }}>
-          {['Home', 'Report Lost', 'Report Found', 'Browse All'].map((link, i) => (
+          {['Home', 'Found Items', 'Lost Items', 'Report Lost & Found Items'].map((link, i) => (
             <div key={link}
-              onClick={() => { if(i===1) props.onGoToReportLost?.(); if(i===2) props.onGoToReportFound?.(); setMenuOpen(false); }}
+              onClick={() => { 
+                setActiveTab(i);
+                if (link === 'Report Lost & Found Items' && props.onNavigate) {
+                  props.onNavigate('Report Lost & Found Items');
+                } else if (props.onNavigate) {
+                  props.onNavigate(link.toLowerCase());
+                }
+                setMenuOpen(false); 
+              }}
               className="py-3 font-bold cursor-pointer text-[0.95rem]"
               style={{ borderBottom: '1px solid #fff8f8', color: '#800020' }}>
               {link}
@@ -144,17 +155,16 @@ const Home = (props) => {
             </button>
           </div>
 
-          {/* CTA Buttons */}
+          {/* Single Combined CTA Button */}
           <div className="flex gap-3 flex-wrap">
-            <button onClick={props.onGoToReportLost}
-              className="btn-primary px-6 py-3 rounded-xl border-none font-bold cursor-pointer text-[0.95rem]"
+            <button onClick={props.onGoToReportItem}
+              className="btn-primary flex items-center gap-2 px-6 py-3 rounded-xl border-none font-bold cursor-pointer text-[0.95rem]"
               style={{ boxShadow: '0 4px 15px rgba(128,0,32,0.2)' }}>
-              + Report Lost Item
-            </button>
-            <button onClick={props.onGoToReportFound}
-              className="px-6 py-3 rounded-xl font-bold cursor-pointer text-[0.95rem] transition-all hover:bg-[#fff8f8]"
-              style={{ background: '#ffffff', color: '#800020', border: '2px solid #e8d0d0' }}>
-              ⊞ Report Found Item
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Report Lost & Found Item
             </button>
           </div>
         </div>
@@ -287,10 +297,10 @@ const Home = (props) => {
         <h2 className="font-headings text-[#fde8ec] m-0 mb-3" style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)' }}>Lost something? Don't stress!</h2>
         <p className="text-[#e8d0d0] mb-8 text-[1.05rem]">Join thousands of students who have recovered their belongings through LostLink.</p>
         <div className="flex gap-3.5 justify-center flex-wrap">
-          <button onClick={props.onGoToReportLost}
+          <button onClick={props.onGoToReportItem}
             className="px-8 py-3.5 rounded-xl border-none font-bold cursor-pointer text-[0.95rem] transition-all hover:bg-[#fff8f8]"
             style={{ background: '#ffffff', color: '#800020', boxShadow: '0 4px 15px rgba(0,0,0,0.15)' }}>
-            Report Lost Item
+            Report Lost & Found Item
           </button>
           <button onClick={props.onGoToSignup}
             className="px-8 py-3.5 rounded-xl font-bold cursor-pointer text-[0.95rem] text-[#fde8ec] transition-all hover:bg-[rgba(255,255,255,0.1)]"
@@ -301,7 +311,6 @@ const Home = (props) => {
       </section>
 
       {/* ===== FOOTER ===== */}
-     {/* ===== FOOTER ===== */}
       <footer className="bg-white px-[5%] pt-[60px] pb-[30px]" style={{ borderTop: '1px solid #e8d0d0' }}>
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] gap-10 mb-10">
 
@@ -354,7 +363,7 @@ const Home = (props) => {
                 gcmbdin@gmail.com
               </div>
               <div className="flex items-center gap-2 text-[#5a3a3a] text-[0.9rem]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#800020" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#800020" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13A19.79 19.79 0 0 1 1.62 4.33 2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                 0546-504504
               </div>
               <div className="flex items-center gap-2 text-[#5a3a3a] text-[0.9rem]">

@@ -15,30 +15,30 @@ const Signup = ({ onGoToLogin }) => {
   const currentDepartments = level === 'BS' ? bsDepartments : interDepartments;
 
   const inputClass =
-    "w-full py-1 px-2.5 rounded-lg border border-[#e8d0d0] bg-white text-[0.78rem] text-[#2e1a1a] outline-none focus:border-[#800020] focus:bg-[#fff8f8] transition-colors mt-0.5 box-border";
+    "w-full py-1.5 px-2.5 rounded-lg border border-[#e8d0d0] bg-white text-[0.78rem] text-[#2e1a1a] outline-none focus:border-[#800020] focus:bg-[#fff8f8] transition-colors mt-0.5 box-border";
 
   const labelClass =
     "text-[0.72rem] font-bold text-[#800020] block text-left";
 
   return (
-    <>
+    <div className="min-h-screen w-full flex items-center justify-center p-4 relative">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,800&display=swap');
         .font-headings { font-family: 'Fraunces', serif; }
       `}</style>
 
       {/* Top-Left Logo */}
-      <div className="fixed top-4 left-4 flex items-center gap-2.5 z-10">
-        <div className="w-[38px] h-[38px] rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', boxShadow: '0 4px 12px rgba(128,0,32,0.2)' }}>
+      <div className="absolute top-4 left-4 flex items-center gap-2.5 z-10">
+        <div className="w-[38px] h-[38px] rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #800020, #4a0010)' }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
-        <span className="font-headings text-[1.35rem] text-[#2e1a1a] tracking-tight">
+        <span className="font-headings text-[1.35rem] text-[#2e1a1a] tracking-tight drop-shadow-sm font-bold">
           LostLink
         </span>
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-[390px] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl flex flex-col z-10 overflow-hidden my-auto">
+      <div className="w-full max-w-[390px] bg-white rounded-2xl shadow-2xl flex flex-col z-10 overflow-hidden my-auto mt-16 mb-6 border border-[#e8d0d0]">
 
         {/* Card Header */}
         <div className="bg-gradient-to-r from-[#4a0010] to-[#800020] px-4 py-3 text-center shrink-0">
@@ -51,7 +51,7 @@ const Signup = ({ onGoToLogin }) => {
         </div>
 
         {/* Card Body */}
-        <div className="px-4 py-2.5">
+        <div className="px-4 py-2.5 max-h-[75vh] overflow-y-auto">
           <form className="grid grid-cols-2 gap-1.5">
 
             {/* Full Name */}
@@ -103,7 +103,7 @@ const Signup = ({ onGoToLogin }) => {
               </select>
             </div>
 
-            {/* Phone (Optional - No star) */}
+            {/* Phone */}
             <div className="col-span-2">
               <label className={labelClass}>Phone (Optional)</label>
               <input type="text" placeholder="+92..." className={inputClass} />
@@ -149,7 +149,7 @@ const Signup = ({ onGoToLogin }) => {
             {/* Submit Button */}
             <button
               type="button"
-              className="col-span-2 py-2 bg-gradient-to-r from-[#800020] to-[#4a0010] hover:from-[#a0002a] hover:to-[#800020] active:scale-95 text-[#fde8ec] font-bold text-[0.85rem] rounded-lg border-none cursor-pointer transition-all mt-1 shadow-md shadow-[#800020]/30"
+              className="col-span-2 py-2 bg-gradient-to-r from-[#800020] to-[#4a0010] hover:from-[#a0002a] hover:to-[#800020] active:scale-95 text-[#fde8ec] font-bold text-[0.85rem] rounded-lg border-none cursor-pointer transition-all mt-1 shadow-md"
             >
               Create Account →
             </button>
@@ -168,7 +168,7 @@ const Signup = ({ onGoToLogin }) => {
           </p>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
