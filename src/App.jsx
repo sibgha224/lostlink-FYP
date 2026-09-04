@@ -4,6 +4,7 @@ import Signup from "./component/Signup.jsx";
 import Login from "./component/Login.jsx";
 import ForgotPassword from "./component/ForgotPassword.jsx";
 import ReportLostFound from "./component/ReportLostFound.jsx";
+import FoundItems from "./component/FoundItems.jsx";
 
 function App() {
   const [screen, setScreen] = useState('home');
@@ -16,6 +17,11 @@ function App() {
     screen === 'report lost & found' ||
     screen === 'report lost & found item';
 
+  const isFoundPage = 
+    screen === 'Found Items' || 
+    screen === 'found-items' || 
+    screen === 'found items';
+
   return (
     <div 
       className={`relative min-h-screen flex flex-col w-full ${isAuthPage ? "bg-cover bg-center bg-no-repeat" : "bg-white"}`}
@@ -23,13 +29,24 @@ function App() {
     >
       <div className="relative z-[2] w-full flex-1 flex flex-col">
 
-        {!isReportPage && !isAuthPage && (
+        {!isReportPage && !isFoundPage && !isAuthPage && (
           <Home
             activeScreen={screen}
             onNavigate={(s) => setScreen(s)}
             onGoToLogin={() => setScreen('login')}
             onGoToSignup={() => setScreen('signup')}
             onGoToReportItem={() => setScreen('report-lost-found')}
+            onGoToFoundItems={() => setScreen('found-items')}
+          />
+        )}
+
+        {isFoundPage && (
+          <FoundItems 
+            onGoToHome={() => setScreen('home')}
+            onGoToReportItem={() => setScreen('report-lost-found')}
+            onGoToFoundItems={() => setScreen('found-items')}
+            onGoToLogin={() => setScreen('login')}
+            onGoToSignup={() => setScreen('signup')}
           />
         )}
 
