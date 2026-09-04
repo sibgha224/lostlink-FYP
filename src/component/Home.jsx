@@ -61,7 +61,11 @@ const Home = (props) => {
             <span key={link}
              onClick={() => {
               setActiveTab(i);
-              if (link === 'Report Lost & Found Items' && props.onNavigate) {
+             if (link === 'Found Items' && props.onGoToFoundItems) {
+               props.onGoToFoundItems();
+             } else if (link === 'Lost Items' && props.onGoToLostItems) {
+               props.onGoToLostItems();
+             } else if (link === 'Report Lost & Found Items' && props.onNavigate) {
                 props.onNavigate('Report Lost & Found Items');
               } else if (props.onNavigate) {
                 props.onNavigate(link.toLowerCase());
@@ -103,7 +107,11 @@ const Home = (props) => {
             <div key={link}
               onClick={() => { 
                 setActiveTab(i);
-                if (link === 'Report Lost & Found Items' && props.onNavigate) {
+                if (link === 'Found Items' && props.onGoToFoundItems) {
+                  props.onGoToFoundItems();
+                } else if (link === 'Lost Items' && props.onGoToLostItems) {
+                  props.onGoToLostItems();
+                } else if (link === 'Report Lost & Found Items' && props.onNavigate) {
                   props.onNavigate('Report Lost & Found Items');
                 } else if (props.onNavigate) {
                   props.onNavigate(link.toLowerCase());
@@ -214,8 +222,11 @@ const Home = (props) => {
             <h2 className="font-headings text-[#2e1a1a] m-0 mb-1.5" style={{ fontSize: 'clamp(1.6rem, 3vw, 2.3rem)' }}>Recently Reported Items</h2>
             <p className="m-0 text-[#c07080] text-[0.95rem]">Browse the latest lost and found reports from across college</p>
           </div>
-          <button className="px-5 py-2.5 rounded-[10px] font-bold cursor-pointer text-[0.9rem] transition-colors hover:bg-[#fff8f8]"
-            style={{ background: '#ffffff', border: '1.5px solid #e8d0d0', color: '#800020' }}>View All Items →</button>
+          <button onClick={props.onGoToAllItems}
+            className="px-5 py-2.5 rounded-[10px] font-bold cursor-pointer text-[0.9rem] transition-colors hover:bg-[#fff8f8]"
+            style={{ background: '#ffffff', border: '1.5px solid #e8d0d0', color: '#800020' }}>
+            View All Items →
+          </button>
         </div>
 
         <div className="grid gap-[22px]" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
