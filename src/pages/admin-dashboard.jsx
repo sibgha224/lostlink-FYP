@@ -20,13 +20,13 @@ const IcoBox     = () => <Ico d={["M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7
 const IcoChev    = () => <Ico d="M9 18l6-6-6-6" size={14} />;
 const IcoNotif   = () => <Ico d={["M22 17H2a3 3 0 000-6h.09A6.01 6.01 0 0112 3a6 6 0 015.91 8H18a3 3 0 010 6z","M13.73 21a2 2 0 01-3.46 0"]} />;
 
-const recentItems = [
-  { id:"LL-001", title:"Black Wallet",    cat:"Accessories", date:"12 May 2026", status:"Lost",     reporter:"Ali Hassan",  emoji:"💼" },
-  { id:"LL-002", title:"iPhone 14 Pro",   cat:"Electronics", date:"11 May 2026", status:"Found",    reporter:"Sara Malik",  emoji:"📱" },
-  { id:"LL-003", title:"Student ID Card", cat:"Documents",   date:"10 May 2026", status:"Claimed",  reporter:"Umar Sheikh", emoji:"🪪" },
-  { id:"LL-004", title:"Blue Backpack",   cat:"Bags",        date:"09 May 2026", status:"Lost",     reporter:"Ayesha Noor", emoji:"🎒" },
-  { id:"LL-005", title:"House Keys",      cat:"Keys",        date:"08 May 2026", status:"Found",    reporter:"Bilal Ahmed", emoji:"🔑" },
-  { id:"LL-006", title:"Glasses Case",    cat:"Accessories", date:"07 May 2026", status:"Resolved", reporter:"Fatima Khan", emoji:"👓" },
+const initialItems = [
+  { id:"LL-001", title:"Black Wallet",    cat:"Accessories", date:"12 May 2026", status:"Lost",     reporter:"Ali Hassan",  phone:"0300-1234567", location:"CS Block, Room 12", desc:"Leather wallet containing ID card and cash." },
+  { id:"LL-002", title:"iPhone 14 Pro",   cat:"Electronics", date:"11 May 2026", status:"Found",    reporter:"Sara Malik",  phone:"0312-9876543", location:"Library Hall",      desc:"Deep Purple color, has a clear protective case." },
+  { id:"LL-003", title:"Student ID Card", cat:"Documents",   date:"10 May 2026", status:"Claimed",  reporter:"Umar Sheikh", phone:"0321-5554433", location:"Main Cafeteria",    desc:"Roll No: CS-2022-45." },
+  { id:"LL-004", title:"Blue Backpack",   cat:"Bags",        date:"09 May 2026", status:"Lost",     reporter:"Ayesha Noor", phone:"0333-7778899", location:"Sports Ground",     desc:"Contains notebooks and a water bottle." },
+  { id:"LL-005", title:"House Keys",      cat:"Keys",        date:"08 May 2026", status:"Found",    reporter:"Bilal Ahmed", phone:"0345-1122334", location:"Admin Block",       desc:"A ring with 3 keys and a red keychain." },
+  { id:"LL-006", title:"Glasses Case",    cat:"Accessories", date:"07 May 2026", status:"Resolved", reporter:"Fatima Khan", phone:"0301-9988776", location:"Auditorium",      desc:"Black hard case with sight glasses." },
 ];
 
 const notifs = [
@@ -37,10 +37,10 @@ const notifs = [
 ];
 
 const statusCfg = {
-  Lost:     { bg:"#fef2f2", color:"#dc2626", dot:"#dc2626" },
-  Found:    { bg:"#f0fdf4", color:"#16a34a", dot:"#16a34a" },
-  Claimed:  { bg:"#fff7ed", color:"#c2410c", dot:"#c2410c" },
-  Resolved: { bg:"#fdf4ff", color:"#7c3aed", dot:"#7c3aed" },
+  Lost:     { bg:"#fef2f2", color:"#dc2626" },
+  Found:    { bg:"#f0fdf4", color:"#16a34a" },
+  Claimed:  { bg:"#fff7ed", color:"#c2410c" },
+  Resolved: { bg:"#fdf4ff", color:"#7c3aed" },
 };
 
 const navLinks = [
@@ -68,11 +68,20 @@ export default function AdminDashboard() {
   const [sideOpen, setSideOpen]   = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [search, setSearch]       = useState("");
+  const [itemsList, setItemsList] = useState(initialItems);
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  const filtered = recentItems.filter(i =>
-    i.title.toLowerCase().includes(search.toLowerCase()) ||
-    i.id.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleDelete = (id) => {
+    setItemsList(itemsList.filter(item => item.id !== id));
+  };
+
+  const filtered = itemsList.filter(i => {
+    const matchesSearch = i.title.toLowerCase().includes(search.toLowerCase()) ||
+                          i.id.toLowerCase().includes(search.toLowerCase());
+    if (active === "items") return matchesSearch && i.status === "Lost";
+    if (active === "found") return matchesSearch && i.status === "Found";
+    return matchesSearch;
+  });
 
   return (
     <div style={{ minHeight:"100vh", background:"#f5f0f0", display:"flex", fontFamily:"'DM Sans',sans-serif", color:"#2e1a1a" }}>
@@ -133,7 +142,6 @@ export default function AdminDashboard() {
             <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0 }}>A</div>
             <div style={{ flex:1, overflow:"hidden" }}>
               <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a", margin:0 }}>Admin</p>
-              <p style={{ fontSize:11, color:"#c07080", margin:0 }}>GGC Mandi B.</p>
             </div>
             <button style={{ background:"none", border:"none", cursor:"pointer", color:"#c07080", display:"flex", padding:2 }}><IcoLogout /></button>
           </div>
@@ -172,12 +180,12 @@ export default function AdminDashboard() {
             <div style={{ display:"flex", alignItems:"center", gap:6 }}>
               <span style={{ fontSize:13, color:"#c07080" }}>Home</span>
               <span style={{ color:"#e8d0d0" }}>→</span>
-              <span style={{ fontSize:13, color:"#800020", fontWeight:600 }}>Dashboard</span>
+              <span style={{ fontSize:13, color:"#800020", fontWeight:600, textTransform:"capitalize" }}>{active}</span>
             </div>
           </div>
           <div className="search-area" style={{ position:"relative" }}>
             <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:"#c5a3a3", pointerEvents:"none", display:"flex" }}><IcoSearch /></span>
-            <input className="al-search" placeholder="Quick finding..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="al-search" placeholder="Quick search..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <div style={{ position:"relative" }}>
@@ -207,114 +215,181 @@ export default function AdminDashboard() {
               <div style={{ width:30, height:30, borderRadius:8, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:700, fontSize:12 }}>A</div>
               <div>
                 <p style={{ fontSize:12, fontWeight:700, color:"#2e1a1a", margin:0, lineHeight:1.2 }}>Admin</p>
-                <p style={{ fontSize:10, color:"#c07080", margin:0 }}>@lostlink</p>
               </div>
             </div>
           </div>
         </header>
 
-        {/* DASHBOARD BODY */}
+        {/* PAGE CONTENT ROUTER */}
         <main style={{ flex:1, padding:"28px", overflowY:"auto" }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24 }}>
-            <div>
-              <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:26, fontWeight:800, color:"#2e1a1a", margin:0 }}>Dashboard</h1>
-              <p style={{ color:"#c07080", fontSize:13, marginTop:4 }}>Govt. Graduate College Mandi Bahauddin</p>
-            </div>
-            <button className="add-btn">+ Add Item</button>
-          </div>
+          {active === "dashboard" && (
+            <>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24 }}>
+                <div>
+                  <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:26, fontWeight:800, color:"#2e1a1a", margin:0 }}>Dashboard</h1>
+                  <p style={{ color:"#c07080", fontSize:13, marginTop:4 }}>Govt. Graduate College Mandi Bahauddin</p>
+                </div>
+                <button className="add-btn">+ Add Item</button>
+              </div>
 
-          {/* STATS & CHARTS */}
-          <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:18, marginBottom:24 }}>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:18 }}>
-              <div style={{ borderRadius:20, padding:"22px", background:"linear-gradient(135deg,#800020,#4a0010)", color:"#fde8ec", boxShadow:"0 6px 20px rgba(128,0,32,0.35)" }}>
-                <p style={{ fontSize:13, fontWeight:600, opacity:0.85, margin:0 }}>Total Lost</p>
-                <p style={{ fontSize:40, fontWeight:800, fontFamily:"'Fraunces',serif", margin:"10px 0", lineHeight:1 }}>48</p>
-                <span style={{ background:"rgba(255,255,255,0.2)", padding:"2px 10px", borderRadius:100, fontSize:11, fontWeight:700 }}>+5 Last Month</span>
-              </div>
-              <div style={{ borderRadius:20, padding:"22px", background:"linear-gradient(135deg,#c07080,#800020)", color:"#fff", boxShadow:"0 6px 20px rgba(192,112,128,0.35)" }}>
-                <p style={{ fontSize:13, fontWeight:600, opacity:0.9, margin:0 }}>Total Found</p>
-                <p style={{ fontSize:40, fontWeight:800, fontFamily:"'Fraunces',serif", margin:"10px 0", lineHeight:1 }}>35</p>
-                <span style={{ background:"rgba(255,255,255,0.2)", padding:"2px 10px", borderRadius:100, fontSize:11, fontWeight:700 }}>+3 Last Month</span>
-              </div>
-              <div style={{ borderRadius:20, padding:"22px", background:"linear-gradient(135deg,#fde8ec,#fbd0d8)", color:"#4a0010", boxShadow:"0 6px 20px rgba(128,0,32,0.1)" }}>
-                <p style={{ fontSize:13, fontWeight:600, opacity:0.8, margin:0 }}>Pending Claims</p>
-                <p style={{ fontSize:40, fontWeight:800, fontFamily:"'Fraunces',serif", margin:"10px 0", lineHeight:1 }}>12</p>
-                <span style={{ background:"rgba(128,0,32,0.12)", padding:"2px 10px", borderRadius:100, fontSize:11, fontWeight:700, color:"#800020" }}>2 Urgent</span>
-              </div>
-              <div style={{ borderRadius:20, padding:"22px", background:"linear-gradient(135deg,#f5f0f0,#ecdede)", color:"#2e1a1a", boxShadow:"0 6px 20px rgba(74,0,16,0.08)" }}>
-                <p style={{ fontSize:13, fontWeight:600, opacity:0.7, margin:0 }}>Total Resolved</p>
-                <p style={{ fontSize:40, fontWeight:800, fontFamily:"'Fraunces',serif", margin:"10px 0", lineHeight:1 }}>89</p>
-                <span style={{ background:"rgba(128,0,32,0.08)", padding:"2px 10px", borderRadius:100, fontSize:11, fontWeight:700, color:"#800020" }}>All Time</span>
-              </div>
-            </div>
-
-            <div style={{ background:"linear-gradient(160deg,#800020,#4a0010)", borderRadius:20, padding:"24px", color:"#fde8ec", boxShadow:"0 8px 28px rgba(128,0,32,0.35)", display:"flex", flexDirection:"column" }}>
-              <p style={{ fontSize:13, opacity:0.75, margin:"0 0 4px" }}>Monthly Overview</p>
-              <p style={{ fontFamily:"'Fraunces',serif", fontSize:22, fontWeight:800, margin:0 }}>Lost & Found</p>
-              <div style={{ flex:1, display:"flex", alignItems:"flex-end", gap:6, marginTop:20 }}>
-                {barData.map((b, i) => (
-                  <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
-                    <div style={{ width:"100%", display:"flex", gap:2, alignItems:"flex-end", height:80 }}>
-                      <div style={{ flex:1, height:`${(b.lost/25)*80}px`, background:"rgba(255,255,255,0.35)", borderRadius:"3px 3px 0 0" }} />
-                      <div style={{ flex:1, height:`${(b.found/25)*80}px`, background:"rgba(255,255,255,0.6)", borderRadius:"3px 3px 0 0" }} />
-                    </div>
-                    <span style={{ fontSize:9, opacity:0.6 }}>{b.month}</span>
+              {/* STATS & CHARTS */}
+              <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:18, marginBottom:24 }}>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:18 }}>
+                  <div style={{ borderRadius:20, padding:"22px", background:"linear-gradient(135deg,#800020,#4a0010)", color:"#fde8ec", boxShadow:"0 6px 20px rgba(128,0,32,0.35)" }}>
+                    <p style={{ fontSize:13, fontWeight:600, opacity:0.85, margin:0 }}>Total Lost</p>
+                    <p style={{ fontSize:40, fontWeight:800, fontFamily:"'Fraunces',serif", margin:"10px 0", lineHeight:1 }}>48</p>
+                    <span style={{ background:"rgba(255,255,255,0.2)", padding:"2px 10px", borderRadius:100, fontSize:11, fontWeight:700 }}>+5 Last Month</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                  <div style={{ borderRadius:20, padding:"22px", background:"linear-gradient(135deg,#c07080,#800020)", color:"#fff", boxShadow:"0 6px 20px rgba(192,112,128,0.35)" }}>
+                    <p style={{ fontSize:13, fontWeight:600, opacity:0.9, margin:0 }}>Total Found</p>
+                    <p style={{ fontSize:40, fontWeight:800, fontFamily:"'Fraunces',serif", margin:"10px 0", lineHeight:1 }}>35</p>
+                    <span style={{ background:"rgba(255,255,255,0.2)", padding:"2px 10px", borderRadius:100, fontSize:11, fontWeight:700 }}>+3 Last Month</span>
+                  </div>
+                  <div style={{ borderRadius:20, padding:"22px", background:"linear-gradient(135deg,#fde8ec,#fbd0d8)", color:"#4a0010", boxShadow:"0 6px 20px rgba(128,0,32,0.1)" }}>
+                    <p style={{ fontSize:13, fontWeight:600, opacity:0.8, margin:0 }}>Pending Claims</p>
+                    <p style={{ fontSize:40, fontWeight:800, fontFamily:"'Fraunces',serif", margin:"10px 0", lineHeight:1 }}>12</p>
+                    <span style={{ background:"rgba(128,0,32,0.12)", padding:"2px 10px", borderRadius:100, fontSize:11, fontWeight:700, color:"#800020" }}>2 Urgent</span>
+                  </div>
+                  <div style={{ borderRadius:20, padding:"22px", background:"linear-gradient(135deg,#f5f0f0,#ecdede)", color:"#2e1a1a", boxShadow:"0 6px 20px rgba(74,0,16,0.08)" }}>
+                    <p style={{ fontSize:13, fontWeight:600, opacity:0.7, margin:0 }}>Total Resolved</p>
+                    <p style={{ fontSize:40, fontWeight:800, fontFamily:"'Fraunces',serif", margin:"10px 0", lineHeight:1 }}>89</p>
+                    <span style={{ background:"rgba(128,0,32,0.08)", padding:"2px 10px", borderRadius:100, fontSize:11, fontWeight:700, color:"#800020" }}>All Time</span>
+                  </div>
+                </div>
 
-          {/* RECENT ITEMS TABLE */}
-          <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, overflow:"hidden", boxShadow:"0 2px 12px rgba(74,0,16,0.05)" }}>
-            <div style={{ padding:"18px 24px", borderBottom:"1px solid #f0e0e0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-              <div>
-                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:17, fontWeight:700, color:"#2e1a1a", margin:0 }}>Recent Items</h2>
-                <p style={{ fontSize:12, color:"#c07080", marginTop:2 }}>{filtered.length} records</p>
-              </div>
-              <button className="add-btn">View All</button>
-            </div>
-            <div style={{ overflowX:"auto" }}>
-              <table style={{ width:"100%", borderCollapse:"collapse" }}>
-                <thead>
-                  <tr style={{ background:"#fdf6f7", borderBottom:"1px solid #f0e0e0" }}>
-                    {["ID","Item","Category","Date","Status","Reporter","Action"].map(h => (
-                      <th key={h} style={{ padding:"10px 16px", textAlign:"left", fontSize:10, fontWeight:700, color:"#c07080", letterSpacing:"1px", textTransform:"uppercase", whiteSpace:"nowrap" }}>{h}</th>
+                <div style={{ background:"linear-gradient(160deg,#800020,#4a0010)", borderRadius:20, padding:"24px", color:"#fde8ec", boxShadow:"0 8px 28px rgba(128,0,32,0.35)", display:"flex", flexDirection:"column" }}>
+                  <p style={{ fontSize:13, opacity:0.75, margin:"0 0 4px" }}>Monthly Overview</p>
+                  <p style={{ fontFamily:"'Fraunces',serif", fontSize:22, fontWeight:800, margin:0 }}>Lost & Found</p>
+                  <div style={{ flex:1, display:"flex", alignItems:"flex-end", gap:6, marginTop:20 }}>
+                    {barData.map((b, i) => (
+                      <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
+                        <div style={{ width:"100%", display:"flex", gap:2, alignItems:"flex-end", height:80 }}>
+                          <div style={{ flex:1, height:`${(b.lost/25)*80}px`, background:"rgba(255,255,255,0.35)", borderRadius:"3px 3px 0 0" }} />
+                          <div style={{ flex:1, height:`${(b.found/25)*80}px`, background:"rgba(255,255,255,0.6)", borderRadius:"3px 3px 0 0" }} />
+                        </div>
+                        <span style={{ fontSize:9, opacity:0.6 }}>{b.month}</span>
+                      </div>
                     ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((item) => {
-                    const s = statusCfg[item.status];
-                    return (
-                      <tr key={item.id} className="trow" style={{ borderBottom:"1px solid #fdf0f0" }}>
-                        <td style={{ padding:"13px 16px", fontSize:12, color:"#800020", fontWeight:700 }}>{item.id}</td>
-                        <td style={{ padding:"13px 16px" }}>
-                          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                            <span style={{ fontSize:16 }}>{item.emoji}</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* TABLE FOR ITEMS */}
+          {(active === "dashboard" || active === "items" || active === "found") && (
+            <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, overflow:"hidden", boxShadow:"0 2px 12px rgba(74,0,16,0.05)" }}>
+              <div style={{ padding:"18px 24px", borderBottom:"1px solid #f0e0e0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <div>
+                  <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:17, fontWeight:700, color:"#2e1a1a", margin:0 }}>
+                    {active === "items" ? "Lost Items List" : active === "found" ? "Found Items List" : "Recent Items"}
+                  </h2>
+                  <p style={{ fontSize:12, color:"#c07080", marginTop:2 }}>{filtered.length} records found</p>
+                </div>
+                <button className="add-btn">+ Report Item</button>
+              </div>
+              <div style={{ overflowX:"auto" }}>
+                <table style={{ width:"100%", borderCollapse:"collapse" }}>
+                  <thead>
+                    <tr style={{ background:"#fdf6f7", borderBottom:"1px solid #f0e0e0" }}>
+                      {["ID","Item","Category","Date","Status","Reporter","Action"].map(h => (
+                        <th key={h} style={{ padding:"10px 16px", textAlign:"left", fontSize:10, fontWeight:700, color:"#c07080", letterSpacing:"1px", textTransform:"uppercase", whiteSpace:"nowrap" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((item) => {
+                      const s = statusCfg[item.status];
+                      return (
+                        <tr key={item.id} className="trow" style={{ borderBottom:"1px solid #fdf0f0" }}>
+                          <td style={{ padding:"13px 16px", fontSize:12, color:"#800020", fontWeight:700 }}>{item.id}</td>
+                          <td style={{ padding:"13px 16px" }}>
                             <span style={{ fontSize:13, color:"#2e1a1a", fontWeight:500 }}>{item.title}</span>
-                          </div>
-                        </td>
-                        <td style={{ padding:"13px 16px", fontSize:12, color:"#6b4848" }}>{item.cat}</td>
-                        <td style={{ padding:"13px 16px", fontSize:12, color:"#c07080" }}>{item.date}</td>
-                        <td style={{ padding:"13px 16px" }}>
-                          <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"3px 10px", borderRadius:100, fontSize:11, fontWeight:600, background:s.bg, color:s.color }}>
-                            {item.status}
-                          </span>
-                        </td>
-                        <td style={{ padding:"13px 16px", fontSize:12, color:"#6b4848" }}>{item.reporter}</td>
-                        <td style={{ padding:"13px 16px" }}>
-                          <button style={{ background:"rgba(128,0,32,0.07)", border:"1px solid rgba(128,0,32,0.15)", borderRadius:8, padding:"5px 12px", color:"#800020", fontSize:11, fontWeight:600, cursor:"pointer" }}>View</button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td style={{ padding:"13px 16px", fontSize:12, color:"#6b4848" }}>{item.cat}</td>
+                          <td style={{ padding:"13px 16px", fontSize:12, color:"#c07080" }}>{item.date}</td>
+                          <td style={{ padding:"13px 16px" }}>
+                            <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"3px 10px", borderRadius:100, fontSize:11, fontWeight:600, background:s.bg, color:s.color }}>
+                              {item.status}
+                            </span>
+                          </td>
+                          <td style={{ padding:"13px 16px", fontSize:12, color:"#6b4848" }}>{item.reporter}</td>
+                          <td style={{ padding:"13px 16px" }}>
+                            <div style={{ display:"flex", gap:6 }}>
+                              <button onClick={() => setSelectedItem(item)} style={{ background:"rgba(128,0,32,0.07)", border:"1px solid rgba(128,0,32,0.15)", borderRadius:8, padding:"5px 12px", color:"#800020", fontSize:11, fontWeight:600, cursor:"pointer" }}>View</button>
+                              <button onClick={() => handleDelete(item.id)} style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"5px 12px", color:"#dc2626", fontSize:11, fontWeight:600, cursor:"pointer" }}>Remove</button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* OTHER PAGES PLACEHOLDER */}
+          {!["dashboard", "items", "found"].includes(active) && (
+            <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, padding:40, textAlign:"center" }}>
+              <h2 style={{ fontFamily:"'Fraunces',serif", color:"#800020", textTransform:"capitalize" }}>{active} Page</h2>
+              <p style={{ color:"#c07080", marginTop:8 }}>This section is active now.</p>
+            </div>
+          )}
         </main>
       </div>
+
+      {/* VIEW ITEM DETAILS MODAL */}
+      {selectedItem && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(46,26,26,0.5)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:300, padding:20 }}>
+          <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, width:"100%", maxWidth:480, overflow:"hidden", boxShadow:"0 20px 50px rgba(74,0,16,0.2)" }}>
+            <div style={{ padding:"18px 24px", background:"linear-gradient(135deg,#800020,#4a0010)", color:"#fde8ec", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <div>
+                <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:18, fontWeight:700, margin:0 }}>Item Details</h3>
+                <span style={{ fontSize:11, opacity:0.8 }}>ID: {selectedItem.id}</span>
+              </div>
+              <button onClick={() => setSelectedItem(null)} style={{ background:"none", border:"none", color:"#fff", fontSize:18, cursor:"pointer" }}>✕</button>
+            </div>
+            <div style={{ padding:24, display:"flex", flexDirection:"column", gap:14 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ fontSize:18, fontWeight:700, color:"#2e1a1a" }}>{selectedItem.title}</span>
+                <span style={{ padding:"4px 12px", borderRadius:100, fontSize:12, fontWeight:700, background:statusCfg[selectedItem.status]?.bg, color:statusCfg[selectedItem.status]?.color }}>
+                  {selectedItem.status}
+                </span>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, background:"#fdf6f7", padding:14, borderRadius:12 }}>
+                <div>
+                  <p style={{ fontSize:10, textTransform:"uppercase", color:"#c07080", fontWeight:700 }}>Category</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a" }}>{selectedItem.cat}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize:10, textTransform:"uppercase", color:"#c07080", fontWeight:700 }}>Date Reported</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a" }}>{selectedItem.date}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize:10, textTransform:"uppercase", color:"#c07080", fontWeight:700 }}>Reporter Name</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a" }}>{selectedItem.reporter}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize:10, textTransform:"uppercase", color:"#c07080", fontWeight:700 }}>Contact Number</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a" }}>{selectedItem.phone}</p>
+                </div>
+              </div>
+              <div>
+                <p style={{ fontSize:10, textTransform:"uppercase", color:"#c07080", fontWeight:700, marginBottom:4 }}>Location</p>
+                <p style={{ fontSize:13, color:"#2e1a1a" }}>{selectedItem.location}</p>
+              </div>
+              <div>
+                <p style={{ fontSize:10, textTransform:"uppercase", color:"#c07080", fontWeight:700, marginBottom:4 }}>Description</p>
+                <p style={{ fontSize:13, color:"#6b4848", lineHeight:1.5 }}>{selectedItem.desc}</p>
+              </div>
+            </div>
+            <div style={{ padding:"12px 24px 20px", display:"flex", justifyContent:"flex-end" }}>
+              <button className="add-btn" onClick={() => setSelectedItem(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
