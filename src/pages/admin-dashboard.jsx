@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ClaimsPage from "./claims-page";
 
 const Ico = ({ d, size = 18, sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -30,7 +31,7 @@ const initialItems = [
 ];
 
 const notifs = [
-  { msg:"New claim: iPhone 14 Pro",     time:"2 min ago", dot:"#800020" },
+  { msg:"New claim: iPhone 14 Pro",    time:"2 min ago", dot:"#800020" },
   { msg:"LL-003 marked as resolved",   time:"1 hr ago",  dot:"#16a34a" },
   { msg:"New lost item: Blue Backpack", time:"3 hrs ago", dot:"#dc2626" },
   { msg:"Sara Malik updated profile",  time:"Yesterday", dot:"#7c3aed" },
@@ -329,8 +330,11 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* CLAIMS PAGE INTEGRATION */}
+          {active === "claims" && <ClaimsPage />}
+
           {/* OTHER PAGES PLACEHOLDER */}
-          {!["dashboard", "items", "found"].includes(active) && (
+          {!["dashboard", "items", "found", "claims"].includes(active) && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, padding:40, textAlign:"center" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", color:"#800020", textTransform:"capitalize" }}>{active} Page</h2>
               <p style={{ color:"#c07080", marginTop:8 }}>This section is active now.</p>
