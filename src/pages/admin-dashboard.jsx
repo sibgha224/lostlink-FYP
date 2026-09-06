@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ClaimsPage from "./claims-page";
+import UsersPage from "./Users-Page";
 
 const Ico = ({ d, size = 18, sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -333,8 +334,11 @@ export default function AdminDashboard() {
           {/* CLAIMS PAGE INTEGRATION */}
           {active === "claims" && <ClaimsPage />}
 
+          {/* USERS PAGE INTEGRATION */}
+          {active === "users" && <UsersPage />}
+
           {/* OTHER PAGES PLACEHOLDER */}
-          {!["dashboard", "items", "found", "claims"].includes(active) && (
+          {!["dashboard", "items", "found", "claims", "users"].includes(active) && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, padding:40, textAlign:"center" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", color:"#800020", textTransform:"capitalize" }}>{active} Page</h2>
               <p style={{ color:"#c07080", marginTop:8 }}>This section is active now.</p>
