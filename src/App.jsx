@@ -7,6 +7,8 @@ import ReportLostFound from "./component/ReportLostFound.jsx";
 import FoundItems from "./component/FoundItems.jsx";
 import LostItems from "./component/LostItems.jsx";
 import AllItems from "./component/AllItems.jsx";
+import Guide from "./component/Guide.jsx";
+import SecurityOffice from "./component/SecurityOffice.jsx";
 
 function App() {
   const [screen, setScreen] = useState('home');
@@ -33,6 +35,9 @@ function App() {
     screen === 'all-items' || 
     screen === 'all items';
 
+  const isGuidePage = screen === 'guide';
+  const isSecurityPage = screen === 'security';
+
   return (
     <div 
       className={`relative min-h-screen flex flex-col w-full ${isAuthPage ? "bg-cover bg-center bg-no-repeat" : "bg-white"}`}
@@ -40,7 +45,7 @@ function App() {
     >
       <div className="relative z-[2] w-full flex-1 flex flex-col">
 
-        {!isReportPage && !isFoundPage && !isLostPage && !isAllPage && !isAuthPage && (
+        {!isReportPage && !isFoundPage && !isLostPage && !isAllPage && !isGuidePage && !isSecurityPage && !isAuthPage && (
           <Home
             activeScreen={screen}
             onNavigate={(s) => setScreen(s)}
@@ -50,7 +55,17 @@ function App() {
             onGoToFoundItems={() => setScreen('found-items')}
             onGoToLostItems={() => setScreen('lost-items')}
             onGoToAllItems={() => setScreen('all-items')}
+            onGoToGuide={() => setScreen('guide')}
+            onGoToSecurity={() => setScreen('security')}
           />
+        )}
+
+        {isGuidePage && (
+          <Guide onGoToHome={() => setScreen('home')} />
+        )}
+
+        {isSecurityPage && (
+          <SecurityOffice onGoToHome={() => setScreen('home')} />
         )}
 
         {isAllPage && (
@@ -60,7 +75,7 @@ function App() {
             onGoToLostItems={() => setScreen('lost-items')}
             onGoToReportItem={() => setScreen('report-lost-found')}
             onGoToLogin={() => setScreen('login')}
-            onGoToSignup={() => setScreen('signup')}
+            onGoToSignup={() => setSignup ? setScreen('signup') : null}
           />
         )}
 

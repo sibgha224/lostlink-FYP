@@ -254,29 +254,29 @@ const Home = (props) => {
       </section>
 
       {/* ===== INFO CARDS ===== */}
-      <section className="px-[5%] pb-[70px]">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+<section className="px-[5%] pb-[70px]">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-          <div className="card-hover bg-white rounded-2xl p-8">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: '#800020', boxShadow: '0 4px 12px rgba(128,0,32,0.2)' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            </div>
-            <h3 className="font-headings text-[#2e1a1a] text-[1.1rem] m-0 mb-2">Not sure where to start?</h3>
-            <p className="text-[#c07080] text-[0.95rem] leading-[1.6] m-0 mb-4 font-medium">Our guide helps you understand the process of claiming an item and verifying ownership safely.</p>
-            <span className="text-[#800020] font-bold text-[0.9rem] cursor-pointer hover:underline">Read the Guide ↗</span>
-          </div>
+    <div className="card-hover bg-white rounded-2xl p-8">
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: '#800020', boxShadow: '0 4px 12px rgba(128,0,32,0.2)' }}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <h3 className="font-headings text-[#2e1a1a] text-[1.1rem] m-0 mb-2">Not sure where to start?</h3>
+      <p className="text-[#c07080] text-[0.95rem] leading-[1.6] m-0 mb-4 font-medium">Our guide helps you understand the process of claiming an item and verifying ownership safely.</p>
+      <span onClick={props.onGoToGuide} className="text-[#800020] font-bold text-[0.9rem] cursor-pointer hover:underline">Read the Guide ↗</span>
+    </div>
 
-          <div className="card-hover bg-white rounded-2xl p-8">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: '#4a0010' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </div>
-            <h3 className="font-headings text-[#2e1a1a] text-[1.1rem] m-0 mb-2">Security Office</h3>
-            <p className="text-[#c07080] text-[0.95rem] leading-[1.6] m-0 mb-4 font-medium">Valuable items like laptops and phones are often held at the security office for 30 days.</p>
-            <span className="text-[#800020] font-bold text-[0.9rem] cursor-pointer hover:underline">Contact Security ↗</span>
-          </div>
+    <div className="card-hover bg-white rounded-2xl p-8">
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: '#4a0010' }}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3 className="font-headings text-[#2e1a1a] text-[1.1rem] m-0 mb-2">Security Office</h3>
+      <p className="text-[#c07080] text-[0.95rem] leading-[1.6] m-0 mb-4 font-medium">Valuable items like laptops and phones are often held at the security office for 30 days.</p>
+      <span onClick={props.onGoToSecurity} className="text-[#800020] font-bold text-[0.9rem] cursor-pointer hover:underline">Contact Security ↗</span>
+    </div>
 
-        </div>
-      </section>
+  </div>
+</section>
 
       {/* ===== TESTIMONIALS ===== */}
       <section className="px-[5%] py-[70px]">
