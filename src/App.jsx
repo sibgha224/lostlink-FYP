@@ -5,6 +5,7 @@ import LostItems from "./pages/lostItems";
 import Claims from "./pages/claims-page";
 import UsersPage from "./pages/user-page"; 
 import MessagesPage from "./pages/messages-page";
+import NotificationsPage from "./pages/Notification-page";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/admin/claims" element={<Claims />} />
         <Route path="/admin/users" element={<UsersPage />} /> 
         <Route path="/admin/messages" element={<MessagesPage />} />
+        <Route path="/admin/notifications" element={<NotificationsPage />} />
       </Routes>
     </Router>
   );

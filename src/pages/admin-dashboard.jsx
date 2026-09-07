@@ -2,6 +2,7 @@ import { useState } from "react";
 import ClaimsPage from "./claims-page";
 import UsersPage from "./user-page";
 import MessagesPage from "./messages-page";
+import NotificationsPage from "./Notification-page";
 
 const Ico = ({ d, size = 18, sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -32,11 +33,11 @@ const initialItems = [
   { id:"LL-006", title:"Glasses Case",    cat:"Accessories", date:"07 May 2026", status:"Resolved", reporter:"Fatima Khan", phone:"0301-9988776", location:"Auditorium",      desc:"Black hard case with sight glasses." },
 ];
 
-const notifs = [
-  { msg:"New claim: iPhone 14 Pro",    time:"2 min ago", dot:"#800020" },
-  { msg:"LL-003 marked as resolved",   time:"1 hr ago",  dot:"#16a34a" },
-  { msg:"New lost item: Blue Backpack", time:"3 hrs ago", dot:"#dc2626" },
-  { msg:"Sara Malik updated profile",  time:"Yesterday", dot:"#7c3aed" },
+const initialNotifs = [
+  { id: 1, msg:"New claim: iPhone 14 Pro",     time:"2 min ago", dot:"#800020", unread: true },
+  { id: 2, msg:"LL-003 marked as resolved",   time:"1 hr ago",  dot:"#16a34a", unread: true },
+  { id: 3, msg:"New lost item: Blue Backpack", time:"3 hrs ago", dot:"#dc2626", unread: true },
+  { id: 4, msg:"Sara Malik updated profile",  time:"Yesterday", dot:"#7c3aed", unread: false },
 ];
 
 const statusCfg = {
@@ -45,17 +46,6 @@ const statusCfg = {
   Claimed:  { bg:"#fff7ed", color:"#c2410c" },
   Resolved: { bg:"#fdf4ff", color:"#7c3aed" },
 };
-
-const navLinks = [
-  { id:"dashboard", label:"Dashboard",    icon: IcoDash,  badge:null },
-  { id:"items",     label:"Lost Items",    icon: IcoBox,   badge:"12" },
-  { id:"found",     label:"Found Items",   icon: IcoItems, badge:"8"  },
-  { id:"claims",    label:"Claims",        icon: IcoClaim, badge:"5"  },
-  { id:"users",     label:"Users",         icon: IcoUsers, badge:null },
-  { id:"messages",  label:"Messages",      icon: IcoMsg,   badge:"3"  },
-  { id:"notif",     label:"Notifications", icon: IcoNotif, badge:"4"  },
-  { id:"settings",  label:"Settings",      icon: IcoSet,   badge:null },
-];
 
 const barData = [
   { month:"Jan", lost:12, found:8  },
@@ -73,6 +63,30 @@ export default function AdminDashboard() {
   const [search, setSearch]       = useState("");
   const [itemsList, setItemsList] = useState(initialItems);
   const [selectedItem, setSelectedItem] = useState(null);
+  
+  // Active notifications state
+  const [notifications, setNotifications] = useState(initialNotifs);
+
+  const unreadCount = notifications.filter(n => n.unread).length;
+
+  const markAllRead = () => {
+    setNotifications(notifications.map(n => ({ ...n, unread: false })));
+  };
+
+  const markSingleRead = (id) => {
+    setNotifications(notifications.map(n => n.id === id ? { ...n, unread: false } : n));
+  };
+
+  const navLinks = [
+    { id:"dashboard", label:"Dashboard",     icon: IcoDash,  badge:null },
+    { id:"items",     label:"Lost Items",    icon: IcoBox,   badge:"12" },
+    { id:"found",     label:"Found Items",   icon: IcoItems, badge:"8"  },
+    { id:"claims",    label:"Claims",        icon: IcoClaim, badge:"5"  },
+    { id:"users",     label:"Users",         icon: IcoUsers, badge:null },
+    { id:"messages",  label:"Messages",      icon: IcoMsg,   badge:"3"  },
+    { id:"notif",     label:"Notifications", icon: IcoNotif, badge: unreadCount > 0 ? `${unreadCount}` : null },
+    { id:"settings",  label:"Settings",      icon: IcoSet,   badge:null },
+  ];
 
   const handleDelete = (id) => {
     setItemsList(itemsList.filter(item => item.id !== id));
@@ -191,29 +205,53 @@ export default function AdminDashboard() {
             <input className="al-search" placeholder="Quick search..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+            
+            {/* NOTIFICATION DROP-DOWN BUTTON */}
             <div style={{ position:"relative" }}>
               <button className="icon-btn" onClick={() => setNotifOpen(!notifOpen)}>
                 <IcoBell />
-                <span style={{ position:"absolute", top:4, right:4, width:7, height:7, borderRadius:"50%", background:"#800020", border:"1.5px solid #fff" }} />
+                {unreadCount > 0 && (
+                  <span style={{ position:"absolute", top:4, right:4, width:8, height:8, borderRadius:"50%", background:"#800020", border:"1.5px solid #fff" }} />
+                )}
               </button>
               {notifOpen && (
                 <div className="notif-panel">
                   <div style={{ padding:"14px 16px 10px", borderBottom:"1px solid #f0e0e0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a" }}>Notifications</p>
-                    <span style={{ fontSize:11, color:"#800020", fontWeight:600, cursor:"pointer" }}>Mark all read</span>
+                    <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a" }}>Notifications ({unreadCount})</p>
+                    <span onClick={markAllRead} style={{ fontSize:11, color:"#800020", fontWeight:600, cursor:"pointer" }}>Mark all read</span>
                   </div>
-                  {notifs.map((n, i) => (
-                    <div key={i} style={{ padding:"11px 16px", borderBottom: i < notifs.length-1 ? "1px solid #fdf0f0":"none", display:"flex", gap:10, alignItems:"flex-start", cursor:"pointer" }}>
-                      <div style={{ width:7, height:7, borderRadius:"50%", background:n.dot, marginTop:5, flexShrink:0 }} />
-                      <div>
-                        <p style={{ fontSize:12, color:"#2e1a1a", lineHeight:1.5 }}>{n.msg}</p>
-                        <p style={{ fontSize:11, color:"#c5a3a3", marginTop:2 }}>{n.time}</p>
-                      </div>
-                    </div>
-                  ))}
+                  <div style={{ maxHeight:280, overflowY:"auto" }}>
+                    {notifications.length > 0 ? (
+                      notifications.map((n) => (
+                        <div 
+                          key={n.id} 
+                          onClick={() => markSingleRead(n.id)}
+                          style={{ 
+                            padding:"11px 16px", 
+                            borderBottom:"1px solid #fdf0f0", 
+                            display:"flex", 
+                            gap:10, 
+                            alignItems:"flex-start", 
+                            cursor:"pointer",
+                            background: n.unread ? "#fff" : "#faf6f6",
+                            opacity: n.unread ? 1 : 0.7 
+                          }}
+                        >
+                          <div style={{ width:7, height:7, borderRadius:"50%", background:n.dot, marginTop:5, flexShrink:0 }} />
+                          <div style={{ flex:1 }}>
+                            <p style={{ fontSize:12, color:"#2e1a1a", lineHeight:1.5, fontWeight: n.unread ? 600 : 400 }}>{n.msg}</p>
+                            <p style={{ fontSize:11, color:"#c5a3a3", marginTop:2 }}>{n.time}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p style={{ padding: 16, fontSize: 12, color: "#c5a3a3", textAlign: "center" }}>No notifications</p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
+
             <div style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 12px 6px 6px", background:"#fdf6f7", border:"1px solid #e8d0d0", borderRadius:12, cursor:"pointer" }}>
               <div style={{ width:30, height:30, borderRadius:8, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:700, fontSize:12 }}>A</div>
               <div>
@@ -341,8 +379,13 @@ export default function AdminDashboard() {
           {/* MESSAGES PAGE INTEGRATION */}
           {active === "messages" && <MessagesPage />}
 
+          {/* NOTIFICATIONS PAGE INTEGRATION */}
+          {active === "notif" && (
+            <NotificationsPage notifications={notifications} setNotifications={setNotifications} />
+          )}
+
           {/* OTHER PAGES PLACEHOLDER */}
-          {!["dashboard", "items", "found", "claims", "users", "messages"].includes(active) && (
+          {!["dashboard", "items", "found", "claims", "users", "messages", "notif"].includes(active) && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, padding:40, textAlign:"center" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", color:"#800020", textTransform:"capitalize" }}>{active} Page</h2>
               <p style={{ color:"#c07080", marginTop:8 }}>This section is active now.</p>
