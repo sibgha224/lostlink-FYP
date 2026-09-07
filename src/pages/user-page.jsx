@@ -41,7 +41,7 @@ export default function UsersPage() {
       <div
         style={{
           display: "flex",
-          justifySpace: "between",
+          justifyContent: "space-between",
           alignItems: "center",
           marginBottom: 20,
           flexWrap: "wrap",
@@ -54,6 +54,7 @@ export default function UsersPage() {
               fontFamily: "'Fraunces',serif",
               fontSize: 20,
               color: "#2e1a1a",
+              margin: 0,
             }}
           >
             User Management

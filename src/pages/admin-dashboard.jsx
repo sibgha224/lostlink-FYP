@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ClaimsPage from "./claims-page";
-import UsersPage from "./Users-Page";
+import UsersPage from "./user-page";
 
 const Ico = ({ d, size = 18, sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -24,7 +24,7 @@ const IcoNotif   = () => <Ico d={["M22 17H2a3 3 0 000-6h.09A6.01 6.01 0 0112 3a6
 
 const initialItems = [
   { id:"LL-001", title:"Black Wallet",    cat:"Accessories", date:"12 May 2026", status:"Lost",     reporter:"Ali Hassan",  phone:"0300-1234567", location:"CS Block, Room 12", desc:"Leather wallet containing ID card and cash." },
-  { id:"LL-002", title:"iPhone 14 Pro",   cat:"Electronics", date:"11 May 2026", status:"Found",    reporter:"Sara Malik",  phone:"0312-9876543", location:"Library Hall",      desc:"Deep Purple color, has a clear protective case." },
+  { id:"LL-002", title:"iPhone 14 Pro",   cat:"Electronics", date:"11 May 2026", status:"Found",    reporter:"Sara Malik",  phone:"0312-9876543", location:"Library Hall",    desc:"Deep Purple color, has a clear protective case." },
   { id:"LL-003", title:"Student ID Card", cat:"Documents",   date:"10 May 2026", status:"Claimed",  reporter:"Umar Sheikh", phone:"0321-5554433", location:"Main Cafeteria",    desc:"Roll No: CS-2022-45." },
   { id:"LL-004", title:"Blue Backpack",   cat:"Bags",        date:"09 May 2026", status:"Lost",     reporter:"Ayesha Noor", phone:"0333-7778899", location:"Sports Ground",     desc:"Contains notebooks and a water bottle." },
   { id:"LL-005", title:"House Keys",      cat:"Keys",        date:"08 May 2026", status:"Found",    reporter:"Bilal Ahmed", phone:"0345-1122334", location:"Admin Block",       desc:"A ring with 3 keys and a red keychain." },
