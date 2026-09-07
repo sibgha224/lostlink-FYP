@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ClaimsPage from "./claims-page";
 import UsersPage from "./user-page";
+import MessagesPage from "./messages-page";
 
 const Ico = ({ d, size = 18, sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -23,11 +24,11 @@ const IcoChev    = () => <Ico d="M9 18l6-6-6-6" size={14} />;
 const IcoNotif   = () => <Ico d={["M22 17H2a3 3 0 000-6h.09A6.01 6.01 0 0112 3a6 6 0 015.91 8H18a3 3 0 010 6z","M13.73 21a2 2 0 01-3.46 0"]} />;
 
 const initialItems = [
-  { id:"LL-001", title:"Black Wallet",    cat:"Accessories", date:"12 May 2026", status:"Lost",     reporter:"Ali Hassan",  phone:"0300-1234567", location:"CS Block, Room 12", desc:"Leather wallet containing ID card and cash." },
-  { id:"LL-002", title:"iPhone 14 Pro",   cat:"Electronics", date:"11 May 2026", status:"Found",    reporter:"Sara Malik",  phone:"0312-9876543", location:"Library Hall",    desc:"Deep Purple color, has a clear protective case." },
+  { id:"LL-001", title:"Black Wallet",    cat:"Accessories", date:"12 May 2026", status:"Lost",    reporter:"Ali Hassan",  phone:"0300-1234567", location:"CS Block, Room 12", desc:"Leather wallet containing ID card and cash." },
+  { id:"LL-002", title:"iPhone 14 Pro",   cat:"Electronics", date:"11 May 2026", status:"Found",   reporter:"Sara Malik",  phone:"0312-9876543", location:"Library Hall",    desc:"Deep Purple color, has a clear protective case." },
   { id:"LL-003", title:"Student ID Card", cat:"Documents",   date:"10 May 2026", status:"Claimed",  reporter:"Umar Sheikh", phone:"0321-5554433", location:"Main Cafeteria",    desc:"Roll No: CS-2022-45." },
-  { id:"LL-004", title:"Blue Backpack",   cat:"Bags",        date:"09 May 2026", status:"Lost",     reporter:"Ayesha Noor", phone:"0333-7778899", location:"Sports Ground",     desc:"Contains notebooks and a water bottle." },
-  { id:"LL-005", title:"House Keys",      cat:"Keys",        date:"08 May 2026", status:"Found",    reporter:"Bilal Ahmed", phone:"0345-1122334", location:"Admin Block",       desc:"A ring with 3 keys and a red keychain." },
+  { id:"LL-004", title:"Blue Backpack",   cat:"Bags",        date:"09 May 2026", status:"Lost",    reporter:"Ayesha Noor", phone:"0333-7778899", location:"Sports Ground",     desc:"Contains notebooks and a water bottle." },
+  { id:"LL-005", title:"House Keys",      cat:"Keys",        date:"08 May 2026", status:"Found",   reporter:"Bilal Ahmed", phone:"0345-1122334", location:"Admin Block",       desc:"A ring with 3 keys and a red keychain." },
   { id:"LL-006", title:"Glasses Case",    cat:"Accessories", date:"07 May 2026", status:"Resolved", reporter:"Fatima Khan", phone:"0301-9988776", location:"Auditorium",      desc:"Black hard case with sight glasses." },
 ];
 
@@ -337,8 +338,11 @@ export default function AdminDashboard() {
           {/* USERS PAGE INTEGRATION */}
           {active === "users" && <UsersPage />}
 
+          {/* MESSAGES PAGE INTEGRATION */}
+          {active === "messages" && <MessagesPage />}
+
           {/* OTHER PAGES PLACEHOLDER */}
-          {!["dashboard", "items", "found", "claims", "users"].includes(active) && (
+          {!["dashboard", "items", "found", "claims", "users", "messages"].includes(active) && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, padding:40, textAlign:"center" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", color:"#800020", textTransform:"capitalize" }}>{active} Page</h2>
               <p style={{ color:"#c07080", marginTop:8 }}>This section is active now.</p>
