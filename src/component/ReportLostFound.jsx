@@ -90,13 +90,6 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  const navLinks = [
-    { label: 'Home', action: onGoToHome },
-    { label: 'Report Lost & Found Item', action: onGoToReportItem },
-    { label: 'Found Items', action: onGoToFoundItems },
-    { label: 'My Reports', action: onGoToMyReports },
-  ];
-
   return (
     <div className="min-h-screen" style={{ fontFamily: "'DM Sans', system-ui, sans-serif", backgroundColor: '#f5f0f0' }}>
 
@@ -120,60 +113,7 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
         input:focus, select:focus, textarea:focus {
           box-shadow: 0 0 0 3px rgba(128, 0, 32, 0.1);
         }
-        .nav-link {
-          text-decoration: none;
-          font-size: 0.875rem;
-          color: #4b5563;
-          transition: color 0.15s;
-          cursor: pointer;
-          background: none;
-          border: none;
-          padding: 0;
-          font-family: inherit;
-        }
-        .nav-link:hover { color: #111827; }
-        .nav-link.active {
-          color: #800020;
-          font-weight: 600;
-          border-bottom: 2px solid #800020;
-          padding-bottom: 2px;
-        }
       `}</style>
-
-      {/* ===== NAVBAR ===== */}
-      <nav className="bg-white border-b px-6 py-3 flex items-center justify-between sticky top-0 z-[1000] fade-down" style={{ borderColor: '#e8d0d0', boxShadow: '0 2px 20px rgba(128, 0, 32, 0.06)' }}>
-
-        {/* Logo */}
-        <div className="flex items-center gap-2 cursor-pointer" onClick={onGoToHome}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', boxShadow: '0 4px 12px rgba(128, 0, 32, 0.3)' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </div>
-          <span className="text-xl font-extrabold text-[#2e1a1a] tracking-tight" style={{ fontFamily: "'Fraunces', serif" }}>LostLink</span>
-        </div>
-
-        {/* Nav Links */}
-        <div className="hidden md:flex items-center gap-6">
-          {navLinks.map(({ label, action }, i) => (
-            <button
-              key={label}
-              onClick={action}
-              className={`nav-link${i === 1 ? ' active' : ''}`}
-            >
-              {label}
-            </button>
-          ))}
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center ml-2 cursor-pointer"
-            style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', boxShadow: '0 4px 12px rgba(128, 0, 32, 0.3)' }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-            </svg>
-          </div>
-        </div>
-      </nav>
 
       {/* ===== MAIN CONTENT ===== */}
       <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1">

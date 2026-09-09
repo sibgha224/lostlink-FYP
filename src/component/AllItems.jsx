@@ -42,39 +42,6 @@ const AllItems = (props) => {
         .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(128,0,32,0.08) !important; }
       `}</style>
 
-      {/* NAVBAR */}
-      <nav className="flex justify-between items-center px-[5%] h-[68px] sticky top-0 z-[1000]"
-        style={{ background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e8d0d0', boxShadow: '0 2px 20px rgba(128,0,32,0.04)' }}>
-
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={props.onGoToHome}>
-          <div className="w-[38px] h-[38px] rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', boxShadow: '0 4px 12px rgba(128,0,32,0.2)' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </div>
-          <span className="font-headings text-[1.35rem] text-[#2e1a1a] tracking-tight">LostLink</span>
-        </div>
-
-        <div className="hidden md:flex gap-1">
-          {['Home', 'Found Items', 'Lost Items', 'Report Lost & Found Items'].map((link) => (
-            <span key={link}
-              onClick={() => {
-                if (link === 'Home' && props.onGoToHome) props.onGoToHome();
-                if (link === 'Found Items' && props.onGoToFoundItems) props.onGoToFoundItems();
-                if (link === 'Lost Items' && props.onGoToLostItems) props.onGoToLostItems();
-                if (link === 'Report Lost & Found Items' && props.onGoToReportItem) props.onGoToReportItem();
-              }}
-              className="px-4 py-2 rounded-lg cursor-pointer text-[0.9rem] font-bold transition-all hover:bg-[#fff8f8]"
-              style={{ color: '#5a3a3a' }}>
-              {link}
-            </span>
-          ))}
-        </div>
-
-        <div className="hidden md:flex gap-2.5 items-center">
-          <button onClick={props.onGoToLogin} className="px-5 py-2 rounded-[10px] font-bold cursor-pointer text-[0.9rem]" style={{ border: '1.5px solid #e8d0d0', background: 'transparent', color: '#800020' }}>Login</button>
-          <button onClick={props.onGoToSignup} className="px-5 py-2 rounded-[10px] border-none font-bold cursor-pointer text-[0.9rem] text-white" style={{ background: 'linear-gradient(135deg, #800020, #4a0010)' }}>Register</button>
-        </div>
-      </nav>
-
       {/* CONTENT WRAPPER */}
       <div className="max-w-7xl mx-auto px-[4%] py-10">
 

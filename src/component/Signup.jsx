@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const Signup = ({ onGoToLogin }) => {
+const Signup = ({ onSignupSuccess, onGoToLogin }) => {
   const [level, setLevel] = useState('BS');
 
   const bsDepartments = [
@@ -149,6 +149,7 @@ const Signup = ({ onGoToLogin }) => {
             {/* Submit Button */}
             <button
               type="button"
+              onClick={onSignupSuccess}
               className="col-span-2 py-2 bg-gradient-to-r from-[#800020] to-[#4a0010] hover:from-[#a0002a] hover:to-[#800020] active:scale-95 text-[#fde8ec] font-bold text-[0.85rem] rounded-lg border-none cursor-pointer transition-all mt-1 shadow-md"
             >
               Create Account →

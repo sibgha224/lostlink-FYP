@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Login = ({ onGoToSignup, onGoToForget }) => {
+const Login = ({ onLoginSuccess, onGoToSignup, onGoToForget }) => {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-[420px] px-4 flex flex-col items-center">
@@ -103,6 +103,7 @@ const Login = ({ onGoToSignup, onGoToForget }) => {
               {/* Login Button */}
               <button
                 type="button"
+                onClick={onLoginSuccess}
                 className="flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-[#800020] to-[#4a0010] hover:from-[#a0002a] hover:to-[#800020] active:scale-95 text-[#fde8ec] font-bold text-base rounded-3xl border-none cursor-pointer transition-all shadow-md shadow-[#800020]/20 mt-2"
               >
                 Log In

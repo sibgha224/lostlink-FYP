@@ -1,15 +1,34 @@
 import React, { useState } from 'react';
 
 const Home = (props) => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const reportedItems = [
-    { type: 'LOST', name: 'Blue Backpack', location: 'Science Block', status: 'Reported 3h ago', image: '/backpack.jpeg' },
-    { type: 'FOUND', name: 'Apple AirPods', location: 'Library', status: 'Reported 12h ago', image: '/airpods.jpeg' },
-    { type: 'LOST', name: 'House Keys', location: 'Cafeteria', status: 'Reported yesterday', image: '/keys.jpeg' },
-    { type: 'FOUND', name: 'Scientific Calculator', location: 'Admin Block', status: 'Reported yesterday', image: '/calculator.jpeg' },
+    { id: 1, type: 'LOST', name: 'Blue Backpack', location: 'Science Block', status: 'Reported 3h ago', image: '/backpack.jpeg' },
+    { id: 2, type: 'FOUND', name: 'Apple AirPods', location: 'Library', status: 'Reported 12h ago', image: '/airpods.jpeg' },
+    { id: 3, type: 'LOST', name: 'House Keys', location: 'Cafeteria', status: 'Reported yesterday', image: '/keys.jpeg' },
+    { id: 4, type: 'FOUND', name: 'Scientific Calculator', location: 'Admin Block', status: 'Reported yesterday', image: '/calculator.jpeg' },
   ];
+
+  // Jaise hi user kuch likhega, ye matching items ko filter kar dega
+  const matchedSuggestions = searchQuery.trim() === '' ? [] : reportedItems.filter(item => 
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.location.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim() && props.onGoToAllItems) {
+      props.onGoToAllItems(searchQuery);
+    }
+  };
+
+  const handleItemClick = (item) => {
+    // Jab user kisi suggestion par click karega, tou wo AllItems page ya details par chala jayega
+    if (props.onGoToAllItems) {
+      props.onGoToAllItems(item.name);
+    }
+  };
 
   const testimonials = [
     { name: 'Ali Raza', dept: 'Information Technology', text: 'Found my keys within an hour! I was so stressed about getting back into my dorm, but someone had already posted them here.', avatar: 'AR' },
@@ -45,91 +64,6 @@ const Home = (props) => {
         }
       `}</style>
 
-      {/* ===== NAVBAR ===== */}
-      <nav className="flex justify-between items-center px-[5%] h-[68px] sticky top-0 z-[1000]"
-        style={{ background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e8d0d0', boxShadow: '0 2px 20px rgba(128,0,32,0.04)' }}>
-
-        <div className="flex items-center gap-2.5">
-          <div className="w-[38px] h-[38px] rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', boxShadow: '0 4px 12px rgba(128,0,32,0.2)' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </div>
-          <span className="font-headings text-[1.35rem] text-[#2e1a1a] tracking-tight">LostLink</span>
-        </div>
-
-        <div className="hidden md:flex gap-1">
-          {['Home', 'Found Items', 'Lost Items', 'Report Lost & Found Items'].map((link, i) => (
-            <span key={link}
-             onClick={() => {
-              setActiveTab(i);
-             if (link === 'Found Items' && props.onGoToFoundItems) {
-               props.onGoToFoundItems();
-             } else if (link === 'Lost Items' && props.onGoToLostItems) {
-               props.onGoToLostItems();
-             } else if (link === 'Report Lost & Found Items' && props.onNavigate) {
-                props.onNavigate('Report Lost & Found Items');
-              } else if (props.onNavigate) {
-                props.onNavigate(link.toLowerCase());
-              }
-            }}
-              className="px-4 py-2 rounded-lg cursor-pointer text-[0.9rem] font-bold transition-all hover:bg-[#fff8f8]"
-              style={{ 
-                color: '#800020', 
-                background: activeTab === i ? '#fff8f8' : 'transparent' 
-              }}>
-              {link}
-            </span>
-          ))}
-        </div>
-
-        <div className="hidden md:flex gap-2.5 items-center">
-          <button onClick={props.onGoToLogin}
-            className="px-5 py-2 rounded-[10px] font-bold cursor-pointer text-[0.9rem] transition-all hover:bg-[#fff8f8]"
-            style={{ border: '1.5px solid #e8d0d0', background: 'transparent', color: '#800020' }}>
-            Login
-          </button>
-          <button onClick={props.onGoToSignup}
-            className="btn-primary px-5 py-2 rounded-[10px] border-none font-bold cursor-pointer text-[0.9rem]"
-            style={{ boxShadow: '0 4px 15px rgba(128,0,32,0.2)' }}>
-            Register
-          </button>
-        </div>
-
-        <button className="md:hidden flex flex-col gap-[5px] bg-transparent border-none cursor-pointer p-2 rounded-lg"
-          onClick={() => setMenuOpen(!menuOpen)}>
-          {[0,1,2].map(i => <span key={i} className="block w-6 h-[2.5px] rounded-sm bg-[#2e1a1a]"></span>)}
-        </button>
-      </nav>
-
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="md:hidden bg-white px-[5%] py-4" style={{ borderBottom: '1px solid #e8d0d0', boxShadow: '0 8px 20px rgba(0,0,0,0.05)' }}>
-          {['Home', 'Found Items', 'Lost Items', 'Report Lost & Found Items'].map((link, i) => (
-            <div key={link}
-              onClick={() => { 
-                setActiveTab(i);
-                if (link === 'Found Items' && props.onGoToFoundItems) {
-                  props.onGoToFoundItems();
-                } else if (link === 'Lost Items' && props.onGoToLostItems) {
-                  props.onGoToLostItems();
-                } else if (link === 'Report Lost & Found Items' && props.onNavigate) {
-                  props.onNavigate('Report Lost & Found Items');
-                } else if (props.onNavigate) {
-                  props.onNavigate(link.toLowerCase());
-                }
-                setMenuOpen(false); 
-              }}
-              className="py-3 font-bold cursor-pointer text-[0.95rem]"
-              style={{ borderBottom: '1px solid #fff8f8', color: '#800020' }}>
-              {link}
-            </div>
-          ))}
-          <div className="flex gap-2.5 pt-4">
-            <button onClick={props.onGoToLogin} className="flex-1 py-3 rounded-[10px] font-bold cursor-pointer" style={{ border: '1.5px solid #e8d0d0', background: 'transparent', color: '#800020' }}>Login</button>
-            <button onClick={props.onGoToSignup} className="btn-primary flex-1 py-3 rounded-[10px] border-none font-bold cursor-pointer">Register</button>
-          </div>
-        </div>
-      )}
-
       {/* ===== HERO ===== */}
       <section className="flex flex-col md:flex-row items-center justify-between px-[5%] py-[70px] gap-12"
         style={{ background: 'linear-gradient(135deg, #F5F0F0 0%, #fff8f8 50%, #F5F0F0 100%)' }}>
@@ -149,22 +83,63 @@ const Home = (props) => {
             The central hub for recovering lost belongings across the college. Fast, secure, and student-run.
           </p>
 
-          {/* Search */}
-          <div className="flex gap-2.5 mb-6 p-2 rounded-2xl bg-white" style={{ border: '2px solid #e8d0d0', boxShadow: '0 4px 20px rgba(128,0,32,0.04)' }}>
-            <div className="flex items-center flex-1 gap-2 px-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c07080" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" placeholder="Search for lost or found items..."
-                className="flex-1 py-3 border-none outline-none text-[0.95rem] text-[#2e1a1a] bg-transparent min-w-0" 
-                style={{ color: '#2e1a1a' }} />
-            </div>
-            <button className="btn-primary px-6 py-0 rounded-[10px] border-none font-bold cursor-pointer text-[0.95rem] min-h-[46px] whitespace-nowrap"
-              style={{ boxShadow: '0 4px 15px rgba(128,0,32,0.2)' }}>
-              Search
-            </button>
+          {/* Search Form with Live Suggestions Dropdown */}
+          <div className="relative">
+            <form onSubmit={handleSearchSubmit} className="flex gap-2.5 p-2 rounded-2xl bg-white" style={{ border: '2px solid #e8d0d0', boxShadow: '0 4px 20px rgba(128,0,32,0.04)' }}>
+              <div className="flex items-center flex-1 gap-2 px-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c07080" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input 
+                  type="text" 
+                  placeholder="Type 'a', 'b', or search item name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 py-3 border-none outline-none text-[0.95rem] text-[#2e1a1a] bg-transparent min-w-0" 
+                  style={{ color: '#2e1a1a' }} 
+                />
+              </div>
+              {searchQuery && (
+                <button 
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="px-3 text-xs font-bold text-[#c07080] bg-transparent border-none cursor-pointer">
+                  Clear
+                </button>
+              )}
+              <button 
+                type="submit"
+                className="btn-primary px-6 py-0 rounded-[10px] border-none font-bold cursor-pointer text-[0.95rem] min-h-[46px] whitespace-nowrap"
+                style={{ boxShadow: '0 4px 15px rgba(128,0,32,0.2)' }}>
+                Search
+              </button>
+            </form>
+
+            {/* LIVE SUGGESTIONS DROPDOWN CONTAINER */}
+            {matchedSuggestions.length > 0 && (
+              <div className="absolute left-0 right-0 mt-2 bg-white rounded-2xl overflow-hidden z-50" style={{ border: '1.5px solid #e8d0d0', boxShadow: '0 10px 30px rgba(128,0,32,0.12)' }}>
+                {matchedSuggestions.map((item) => (
+                  <div 
+                    key={item.id}
+                    onClick={() => handleItemClick(item)}
+                    className="flex items-center justify-between px-4 py-3 cursor-pointer transition-colors hover:bg-[#fff8f8]"
+                    style={{ borderBottom: '1px solid #f5f0f0' }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-[1.2rem]">📦</span>
+                      <div>
+                        <p className="text-[0.92rem] font-bold text-[#2e1a1a] m-0">{item.name}</p>
+                        <p className="text-[0.78rem] text-[#c07080] m-0">📍 {item.location}</p>
+                      </div>
+                    </div>
+                    <span className="text-[0.7rem] font-bold px-2 py-1 rounded uppercase" style={{ color: item.type === 'LOST' ? '#a0002a' : '#16a34a', background: item.type === 'LOST' ? '#fff8f8' : '#f0fdf4' }}>
+                      {item.type}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Single Combined CTA Button */}
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-3 flex-wrap mt-6">
             <button onClick={props.onGoToReportItem}
               className="btn-primary flex items-center gap-2 px-6 py-3 rounded-xl border-none font-bold cursor-pointer text-[0.95rem]"
               style={{ boxShadow: '0 4px 15px rgba(128,0,32,0.2)' }}>
@@ -254,29 +229,29 @@ const Home = (props) => {
       </section>
 
       {/* ===== INFO CARDS ===== */}
-<section className="px-[5%] pb-[70px]">
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section className="px-[5%] pb-[70px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-    <div className="card-hover bg-white rounded-2xl p-8">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: '#800020', boxShadow: '0 4px 12px rgba(128,0,32,0.2)' }}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      </div>
-      <h3 className="font-headings text-[#2e1a1a] text-[1.1rem] m-0 mb-2">Not sure where to start?</h3>
-      <p className="text-[#c07080] text-[0.95rem] leading-[1.6] m-0 mb-4 font-medium">Our guide helps you understand the process of claiming an item and verifying ownership safely.</p>
-      <span onClick={props.onGoToGuide} className="text-[#800020] font-bold text-[0.9rem] cursor-pointer hover:underline">Read the Guide ↗</span>
-    </div>
+          <div className="card-hover bg-white rounded-2xl p-8">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: '#800020', boxShadow: '0 4px 12px rgba(128,0,32,0.2)' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <h3 className="font-headings text-[#2e1a1a] text-[1.1rem] m-0 mb-2">Not sure where to start?</h3>
+            <p className="text-[#c07080] text-[0.95rem] leading-[1.6] m-0 mb-4 font-medium">Our guide helps you understand the process of claiming an item and verifying ownership safely.</p>
+            <span onClick={props.onGoToGuide} className="text-[#800020] font-bold text-[0.9rem] cursor-pointer hover:underline">Read the Guide ↗</span>
+          </div>
 
-    <div className="card-hover bg-white rounded-2xl p-8">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: '#4a0010' }}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-      <h3 className="font-headings text-[#2e1a1a] text-[1.1rem] m-0 mb-2">Security Office</h3>
-      <p className="text-[#c07080] text-[0.95rem] leading-[1.6] m-0 mb-4 font-medium">Valuable items like laptops and phones are often held at the security office for 30 days.</p>
-      <span onClick={props.onGoToSecurity} className="text-[#800020] font-bold text-[0.9rem] cursor-pointer hover:underline">Contact Security ↗</span>
-    </div>
+          <div className="card-hover bg-white rounded-2xl p-8">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: '#4a0010' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3 className="font-headings text-[#2e1a1a] text-[1.1rem] m-0 mb-2">Security Office</h3>
+            <p className="text-[#c07080] text-[0.95rem] leading-[1.6] m-0 mb-4 font-medium">Valuable items like laptops and phones are often held at the security office for 30 days.</p>
+            <span onClick={props.onGoToSecurity} className="text-[#800020] font-bold text-[0.9rem] cursor-pointer hover:underline">Contact Security ↗</span>
+          </div>
 
-  </div>
-</section>
+        </div>
+      </section>
 
       {/* ===== TESTIMONIALS ===== */}
       <section className="px-[5%] py-[70px]">
@@ -387,7 +362,7 @@ const Home = (props) => {
 
         <div className="pt-6 flex flex-col md:flex-row justify-between items-center text-[#5a3a3a] text-[0.85rem] font-medium" style={{ borderTop: '1px solid #e8d0d0' }}>
           <span>© 2026 LostLink. Developed with care for the student body.</span>
-          <div className="flex gap-4 mt-2 md:mt-0">
+          <div className="footer-links flex gap-4 mt-2 md:mt-0">
             <span className="cursor-pointer hover:text-[#800020] transition-colors">University Guidelines</span>
             <span className="cursor-pointer hover:text-[#800020] transition-colors">Sitemap</span>
           </div>
