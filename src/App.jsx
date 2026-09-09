@@ -6,6 +6,7 @@ import Claims from "./pages/claims-page";
 import UsersPage from "./pages/user-page"; 
 import MessagesPage from "./pages/messages-page";
 import NotificationsPage from "./pages/Notification-page";
+import SettingsPage from "./pages/settings-page";
 
 function App() {
   return (
@@ -18,6 +19,8 @@ function App() {
         <Route path="/admin/users" element={<UsersPage />} /> 
         <Route path="/admin/messages" element={<MessagesPage />} />
         <Route path="/admin/notifications" element={<NotificationsPage />} />
+        <Route path="/admin/settings" element={<SettingsPage />} />
+
       </Routes>
     </Router>
   );
