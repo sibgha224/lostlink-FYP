@@ -11,6 +11,17 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Reset password screen states
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+
+  // Recovery email (mock OTP flow — no real email sent)
+  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => { setTimeout(() => setMounted(true), 50); }, []);
@@ -33,6 +44,65 @@ const AdminLogin = () => {
     } else {
       alert("Invalid Email or Password! (Use: admin@college.edu.pk / admin123)");
     }
+  };
+
+  // Step 1: Email entry par "Send Code" click hone par yeh chalta hai (mock — koi asli email nahi jati)
+  const sendOtpEmail = (e) => {
+    e.preventDefault();
+    if (!recoveryEmail) {
+      alert("Please enter your registered email address.");
+      return;
+    }
+
+    setSendingOtp(true);
+    setTimeout(() => {
+      setOtp(["", "", "", "", "", ""]);
+      setScreen("otp");
+      alert("Demo mode: verification code would be sent to " + recoveryEmail + ". Enter any 6 digits to continue.");
+      setSendingOtp(false);
+    }, 500);
+  };
+
+  // Step 2: OTP screen par "Verify Code" click hone par yeh chalta hai (mock — sirf 6 digits check karta hai)
+  const handleVerifyOtp = () => {
+    const code = otp.join("");
+    if (code.length < 6) {
+      alert("Please enter the complete 6-digit code.");
+      return;
+    }
+
+    setVerifyingOtp(true);
+    setScreen("reset");
+    setVerifyingOtp(false);
+  };
+
+  // OTP dobara bhejne ke liye (mock)
+  const handleResendOtp = () => {
+    setSendingOtp(true);
+    setTimeout(() => {
+      setOtp(["", "", "", "", "", ""]);
+      alert("Demo mode: a new code would be sent to " + recoveryEmail);
+      setSendingOtp(false);
+    }, 500);
+  };
+
+  // Step 3: Reset Password screen par "Update Password" click hone par yeh chalta hai
+  const handleResetPassword = (e) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      alert("Password must be at least 6 characters long.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      alert("Passwords do not match. Please try again.");
+      return;
+    }
+    alert("Password updated successfully! Please sign in with your new password.");
+    setNewPassword("");
+    setConfirmPassword("");
+    setOtp(["", "", "", "", "", ""]);
+    setRecoveryEmail("");
+    setScreen("login");
   };
 
   return (
@@ -120,6 +190,7 @@ const AdminLogin = () => {
           background: linear-gradient(135deg, #a0002a 0%, #800020 100%);
         }
         .al-btn:active { transform: translateY(0); }
+        .al-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
         .al-ghost {
           background: none; border: none;
@@ -219,7 +290,10 @@ const AdminLogin = () => {
             }}>
               <div style={{ width:6, height:6, borderRadius:"50%", background:"#800020" }} />
               <span style={{ color:"#800020", fontSize:10, fontWeight:700, letterSpacing:"1.5px", textTransform:"uppercase" }}>
-                {screen === "login" ? "Admin Access Only" : "Account Recovery"}
+                {screen === "login" && "Admin Access Only"}
+                {screen === "email-entry" && "Account Recovery"}
+                {screen === "otp" && "Account Recovery"}
+                {screen === "reset" && "Set New Password"}
               </span>
             </div>
           </div>
@@ -283,7 +357,7 @@ const AdminLogin = () => {
 
               {/* Forgot */}
               <div style={{ textAlign:"right", marginTop:-6 }}>
-                <button type="button" className="al-ghost" onClick={() => setScreen("forgot")}
+                <button type="button" className="al-ghost" onClick={() => setScreen("email-entry")}
                   style={{ color:"#800020", fontSize:12, fontWeight:500, textDecoration:"underline", textDecorationColor:"rgba(128,0,32,0.3)", textUnderlineOffset:3 }}>
                   Forgot your password?
                 </button>
@@ -299,13 +373,53 @@ const AdminLogin = () => {
             </form>
           )}
 
-          {/* ── OTP ── */}
-          {screen === "forgot" && (
+          {/* ── EMAIL ENTRY (Forgot Password click hone par yeh khulta hai) ── */}
+          {screen === "email-entry" && (
+            <form onSubmit={sendOtpEmail} className="al-slide" style={{ display:"flex", flexDirection:"column", gap:18 }}>
+              <div style={{ textAlign:"center", marginBottom:4 }}>
+                <h1 style={{ fontFamily:"'Fraunces', serif", fontSize:26, fontWeight:800, color:"#2e1a1a", lineHeight:1.2 }}>Reset Password</h1>
+                <p style={{ color:"#c07080", fontSize:13, marginTop:6 }}>
+                  Enter your registered email address to receive a 6-digit code
+                </p>
+              </div>
+
+              <div>
+                <label className="al-label">Registered Email</label>
+                <div style={{ position:"relative" }}>
+                  <span className="al-icon">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                  </span>
+                  <input
+                    className="al-inp"
+                    type="email"
+                    placeholder="admin@college.edu.pk"
+                    required
+                    value={recoveryEmail}
+                    onChange={(e) => setRecoveryEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="al-btn" disabled={sendingOtp}>
+                {sendingOtp ? "Sending..." : "Send Code"}
+              </button>
+
+              <button type="button" className="al-ghost" onClick={() => setScreen("login")}
+                style={{ color:"#c5a3a3", fontSize:13, display:"flex", alignItems:"center", gap:4, justifyContent:"center" }}>
+                ← Back to Login
+              </button>
+            </form>
+          )}
+
+          {/* ── OTP VERIFICATION ── */}
+          {screen === "otp" && (
             <div className="al-slide" style={{ textAlign:"center", display:"flex", flexDirection:"column", gap:22, alignItems:"center" }}>
               <div>
                 <h2 style={{ fontFamily:"'Fraunces', serif", fontSize:26, fontWeight:800, color:"#2e1a1a", marginBottom:8 }}>Verification</h2>
                 <p style={{ color:"#c07080", fontSize:13, lineHeight:1.6 }}>
-                  Enter the 6-digit code<br/>sent to your email
+                  Enter the 6-digit code sent to<br/><strong>{recoveryEmail}</strong>
                 </p>
               </div>
 
@@ -321,8 +435,13 @@ const AdminLogin = () => {
                 ))}
               </div>
 
-              <button className="al-btn" style={{ width:"100%" }} onClick={() => setScreen("login")}>
-                Verify Code
+              <button className="al-btn" style={{ width:"100%" }} onClick={handleVerifyOtp} disabled={verifyingOtp}>
+                {verifyingOtp ? "Verifying..." : "Verify Code"}
+              </button>
+
+              <button className="al-ghost" onClick={handleResendOtp} disabled={sendingOtp}
+                style={{ color:"#800020", fontSize:12, fontWeight:600 }}>
+                {sendingOtp ? "Resending..." : "Didn't receive the code? Resend"}
               </button>
 
               <button className="al-ghost" onClick={() => setScreen("login")}
@@ -330,6 +449,84 @@ const AdminLogin = () => {
                 ← Back to Login
               </button>
             </div>
+          )}
+
+          {/* ── RESET PASSWORD (OTP verify hone ke baad yeh khulta hai) ── */}
+          {screen === "reset" && (
+            <form onSubmit={handleResetPassword} className="al-slide" style={{ display:"flex", flexDirection:"column", gap:18 }}>
+
+              <div style={{ textAlign:"center", marginBottom:4 }}>
+                <h1 style={{ fontFamily:"'Fraunces', serif", fontSize:26, fontWeight:800, color:"#2e1a1a", lineHeight:1.2 }}>Create New Password</h1>
+                <p style={{ color:"#c07080", fontSize:13, marginTop:6 }}>Your new password must be different from previous ones</p>
+              </div>
+
+              {/* New Password */}
+              <div>
+                <label className="al-label">New Password</label>
+                <div style={{ position:"relative" }}>
+                  <span className="al-icon">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                  </span>
+                  <input
+                    className="al-inp"
+                    type={showNewPass ? "text" : "password"}
+                    placeholder="Enter new password"
+                    style={{ paddingRight:48 }}
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <button type="button" className="al-ghost" onClick={() => setShowNewPass(!showNewPass)}
+                    style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", color:"#c07080", display:"flex" }}>
+                    {showNewPass
+                      ? <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
+                      : <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    }
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="al-label">Confirm Password</label>
+                <div style={{ position:"relative" }}>
+                  <span className="al-icon">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                    </svg>
+                  </span>
+                  <input
+                    className="al-inp"
+                    type={showConfirmPass ? "text" : "password"}
+                    placeholder="Re-enter new password"
+                    style={{ paddingRight:48 }}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                  <button type="button" className="al-ghost" onClick={() => setShowConfirmPass(!showConfirmPass)}
+                    style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", color:"#c07080", display:"flex" }}>
+                    {showConfirmPass
+                      ? <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
+                      : <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    }
+                  </button>
+                </div>
+              </div>
+
+              <p style={{ fontSize:11, color:"#c5a3a3", marginTop:-8 }}>
+                Password must be at least 6 characters long.
+              </p>
+
+              <button type="submit" className="al-btn">Update Password</button>
+
+              <button type="button" className="al-ghost" onClick={() => setScreen("login")}
+                style={{ color:"#c5a3a3", fontSize:13, display:"flex", alignItems:"center", gap:4, justifyContent:"center" }}>
+                ← Back to Login
+              </button>
+            </form>
           )}
 
         </div>
