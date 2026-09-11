@@ -35,7 +35,7 @@ const initialItems = [
 ];
 
 const initialNotifs = [
-  { id: 1, msg:"New claim: iPhone 14 Pro",     time:"2 min ago", dot:"#800020", unread: true },
+  { id: 1, msg:"New claim: iPhone 14 Pro",    time:"2 min ago", dot:"#800020", unread: true },
   { id: 2, msg:"LL-003 marked as resolved",   time:"1 hr ago",  dot:"#16a34a", unread: true },
   { id: 3, msg:"New lost item: Blue Backpack", time:"3 hrs ago", dot:"#dc2626", unread: true },
   { id: 4, msg:"Sara Malik updated profile",  time:"Yesterday", dot:"#7c3aed", unread: false },
@@ -219,7 +219,6 @@ export default function AdminDashboard() {
                   <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:26, fontWeight:800, color:"#2e1a1a", margin:0 }}>Dashboard</h1>
                   <p style={{ color:"#c07080", fontSize:13, marginTop:4 }}>Govt. Graduate College Mandi Bahauddin</p>
                 </div>
-                <button className="add-btn">+ Add Item</button>
               </div>
 
               {/* STATS & CHARTS */}
@@ -276,7 +275,6 @@ export default function AdminDashboard() {
                   </h2>
                   <p style={{ fontSize:12, color:"#c07080", marginTop:2 }}>{filtered.length} records found</p>
                 </div>
-                <button className="add-btn">+ Report Item</button>
               </div>
               <div style={{ overflowX:"auto" }}>
                 <table style={{ width:"100%", borderCollapse:"collapse" }}>
