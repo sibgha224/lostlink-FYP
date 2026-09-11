@@ -19,7 +19,7 @@ const timeAgo = (dateStr) => {
   return `Reported ${days}d ago`;
 };
 
-const AllItems = ({ initialSearchQuery, ...props }) => {
+const AllItems = ({ initialSearchQuery, onViewDetails, ...props }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
   const [items, setItems] = useState([]);
@@ -77,8 +77,6 @@ const AllItems = ({ initialSearchQuery, ...props }) => {
         .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; border: 1.5px solid #e8d0d0; }
         .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(128,0,32,0.08) !important; }
       `}</style>
-
-      {/* CONTENT WRAPPER */}
       <div className="max-w-7xl mx-auto px-[4%] py-10">
 
         <div className="text-center mb-10">
@@ -87,8 +85,6 @@ const AllItems = ({ initialSearchQuery, ...props }) => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
-
-          {/* SIDEBAR */}
           <aside className="bg-white rounded-2xl p-5 border border-[#e8d0d0] h-fit shadow-sm">
             <h3 className="font-headings text-lg text-[#2e1a1a] mb-4 pb-2 border-b border-[#e8d0d0]">Categories</h3>
             <ul className="flex flex-col gap-1.5">
@@ -105,16 +101,17 @@ const AllItems = ({ initialSearchQuery, ...props }) => {
               ))}
             </ul>
           </aside>
-
-          {/* GRID */}
           <main>
-            <div className="mb-6">
+            <div className="mb-6 relative">
+              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" fill="none" stroke="#c07080" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
               <input
                 type="text"
                 placeholder="Search all items..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-[#e8d0d0] bg-white text-[#2e1a1a] outline-none focus:border-[#800020] shadow-sm"
+                className="w-full pl-11 pr-4 py-3 rounded-xl border border-[#e8d0d0] bg-white text-[#2e1a1a] outline-none focus:border-[#800020] shadow-sm"
               />
             </div>
 
@@ -154,7 +151,7 @@ const AllItems = ({ initialSearchQuery, ...props }) => {
                         <p className="text-[0.85rem] text-[#c07080] m-0 mb-4 flex-1 font-medium">📍 {item.location?.buildingName || 'Unknown location'}</p>
                         <div className="flex justify-between items-center text-[0.78rem] text-[#c07080] pt-3 border-t border-[#fff8f8]">
                           <span>{timeAgo(item.createdAt)}</span>
-                          <button onClick={() => alert(`${item.itemName}\n\nCategory: ${item.category}\nDescription: ${item.description || 'N/A'}\nLocation: ${item.location?.buildingName || 'N/A'}${item.location?.specificLocation ? ', ' + item.location.specificLocation : ''}\nContact: ${item.contactName || item.userId?.name || 'N/A'} (${item.contactEmail || item.userId?.email || 'N/A'})`)} className="bg-transparent text-[#800020] border-none font-bold cursor-pointer text-[0.83rem] hover:underline">
+                          <button onClick={() => onViewDetails && onViewDetails(item)} className="bg-transparent text-[#800020] border-none font-bold cursor-pointer text-[0.83rem] hover:underline">
                             Details
                           </button>
                         </div>

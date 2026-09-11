@@ -18,12 +18,14 @@ import AboutSystem from "./component/AboutSystem.jsx";
 import TermsOfService from "./component/TermsOfService.jsx";
 import PrivacyPolicy from "./component/PrivacyPolicy.jsx";
 import Faq from "./component/Faq.jsx";
+import ItemDetails from "./component/ItemDetails.jsx";
 
 function App() {
   const [screen, setScreen] = useState('login');
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const [searchQueryParam, setSearchQueryParam] = useState('');
   const [activeChat, setActiveChat] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   React.useEffect(() => {
     if (localStorage.getItem('token')) {
@@ -63,7 +65,8 @@ function App() {
   const isTermsPage = screen === 'terms-of-service';
   const isPrivacyPage = screen === 'privacy-policy';
   const isFaqPage = screen === 'faq';
-  const isHomePage = screen === 'home' || (!isAuthPage && !isReportPage && !isFoundPage && !isLostPage && !isAllPage && !isGuidePage && !isSecurityPage && !isChatPage && !isMyReportsPage && !isProfilePage && !isAboutPage && !isTermsPage && !isPrivacyPage && !isFaqPage);
+  const isItemDetailsPage = screen === 'item-details';
+  const isHomePage = screen === 'home' || (!isAuthPage && !isReportPage && !isFoundPage && !isLostPage && !isAllPage && !isGuidePage && !isSecurityPage && !isChatPage && !isMyReportsPage && !isProfilePage && !isAboutPage && !isTermsPage && !isPrivacyPage && !isFaqPage && !isItemDetailsPage);
   if (!isLoggedIn && !isAuthPage) {
     if (screen !== 'login') {
       setTimeout(() => setScreen('login'), 0);
@@ -169,7 +172,7 @@ function App() {
           <Faq onGoToHome={() => setScreen('home')} />
         )}
         {isAllPage && (
-          <AllItems 
+          <AllItems
             initialSearchQuery={searchQueryParam}
             onGoToHome={() => setScreen('home')}
             onGoToFoundItems={() => setScreen('found-items')}
@@ -177,6 +180,16 @@ function App() {
             onGoToReportItem={() => setScreen('report-lost-found')}
             onGoToLogin={() => setScreen('login')}
             onGoToSignup={() => setScreen('signup')}
+            onViewDetails={(item) => {
+              setSelectedItem(item);
+              setScreen('item-details');
+            }}
+          />
+        )}
+        {isItemDetailsPage && (
+          <ItemDetails
+            item={selectedItem}
+            onBack={() => setScreen('all-items')}
           />
         )}
         {isLostPage && (
