@@ -14,12 +14,16 @@ import SecurityOffice from "./component/SecurityOffice.jsx";
 import ChatScreen from "./component/ChatScreen.jsx";
 import MyReports from "./component/MyReports.jsx";
 import ProfileModal from "./component/ProfileModal.jsx";
+import AboutSystem from "./component/AboutSystem.jsx";
+import TermsOfService from "./component/TermsOfService.jsx";
+import PrivacyPolicy from "./component/PrivacyPolicy.jsx";
+import Faq from "./component/Faq.jsx";
 
 function App() {
   const [screen, setScreen] = useState('login');
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
-  const [searchQueryParam, setSearchQueryParam] = useState(''); // Search query store karne ke liye state
-  const [activeChat, setActiveChat] = useState(null); // { claimId, partnerName }
+  const [searchQueryParam, setSearchQueryParam] = useState('');
+  const [activeChat, setActiveChat] = useState(null);
 
   React.useEffect(() => {
     if (localStorage.getItem('token')) {
@@ -55,9 +59,11 @@ function App() {
   const isChatPage = screen === 'chat';
   const isMyReportsPage = screen === 'my-reports';
   const isProfilePage = screen === 'profile';
-  const isHomePage = screen === 'home' || (!isAuthPage && !isReportPage && !isFoundPage && !isLostPage && !isAllPage && !isGuidePage && !isSecurityPage && !isChatPage && !isMyReportsPage && !isProfilePage);
-
-  // SECURITY GUARD: Agar user login nahi hai, aur auth pages ke ilawa kisi aur page par jane ki koshish kare, toh forcefully login par bhej dein
+  const isAboutPage = screen === 'about-system';
+  const isTermsPage = screen === 'terms-of-service';
+  const isPrivacyPage = screen === 'privacy-policy';
+  const isFaqPage = screen === 'faq';
+  const isHomePage = screen === 'home' || (!isAuthPage && !isReportPage && !isFoundPage && !isLostPage && !isAllPage && !isGuidePage && !isSecurityPage && !isChatPage && !isMyReportsPage && !isProfilePage && !isAboutPage && !isTermsPage && !isPrivacyPage && !isFaqPage);
   if (!isLoggedIn && !isAuthPage) {
     if (screen !== 'login') {
       setTimeout(() => setScreen('login'), 0);
@@ -69,7 +75,6 @@ function App() {
       className={`relative min-h-screen flex flex-col w-full ${isAuthPage ? "bg-cover bg-center bg-no-repeat" : "bg-white"}`}
       style={isAuthPage ? { backgroundImage: "url('/college_bg.jpeg')" } : {}}
     >
-      {/* COMMON NAVBAR */}
       {!isAuthPage && (
         <Navbar 
           isLoggedIn={isLoggedIn}
@@ -89,8 +94,6 @@ function App() {
       )}
 
       <div className="relative z-[2] w-full flex-1 flex flex-col">
-
-        {/* 1. HOME PAGE */}
         {isLoggedIn && isHomePage && (
           <Home
             activeScreen={screen}
@@ -119,18 +122,12 @@ function App() {
             onGoToProfile={() => setScreen('profile')}
           />
         )}
-
-        {/* 2. GUIDE PAGE */}
         {isGuidePage && (
           <Guide onGoToHome={() => setScreen('home')} />
         )}
-
-        {/* 3. SECURITY OFFICE PAGE */}
         {isSecurityPage && (
           <SecurityOffice onGoToHome={() => setScreen('home')} />
         )}
-
-        {/* 4. CHAT SCREEN */}
         {isChatPage && (
           <ChatScreen
             claimId={activeChat?.claimId}
@@ -138,8 +135,6 @@ function App() {
             onBack={() => setScreen('my-reports')}
           />
         )}
-
-        {/* 5. MY REPORTS PAGE */}
         {isMyReportsPage && (
           <MyReports
             onGoToHome={() => setScreen('home')}
@@ -149,8 +144,6 @@ function App() {
             }}
           />
         )}
-
-        {/* 6. PROFILE MODAL / PAGE */}
         {isProfilePage && (
           <ProfileModal 
             onGoToHome={() => setScreen('home')}
@@ -163,8 +156,18 @@ function App() {
             }}
           />
         )}
-
-        {/* 7. ALL ITEMS */}
+        {isAboutPage && (
+          <AboutSystem onGoToHome={() => setScreen('home')} />
+        )}
+        {isTermsPage && (
+          <TermsOfService onGoToHome={() => setScreen('home')} />
+        )}
+        {isPrivacyPage && (
+          <PrivacyPolicy onGoToHome={() => setScreen('home')} />
+        )}
+        {isFaqPage && (
+          <Faq onGoToHome={() => setScreen('home')} />
+        )}
         {isAllPage && (
           <AllItems 
             initialSearchQuery={searchQueryParam}
@@ -176,8 +179,6 @@ function App() {
             onGoToSignup={() => setScreen('signup')}
           />
         )}
-
-        {/* 8. LOST ITEMS */}
         {isLostPage && (
           <LostItems 
             onGoToHome={() => setScreen('home')}
@@ -187,8 +188,6 @@ function App() {
             onGoToSignup={() => setScreen('signup')}
           />
         )}
-
-        {/* 9. FOUND ITEMS */}
         {isFoundPage && (
           <FoundItems 
             onGoToHome={() => setScreen('home')}
@@ -198,8 +197,6 @@ function App() {
             onGoToSignup={() => setScreen('signup')}
           />
         )}
-
-        {/* 10. REPORT LOST & FOUND */}
         {isReportPage && (
           <ReportLostFound 
             onNavigate={(s) => setScreen(s)} 
@@ -214,8 +211,6 @@ function App() {
             }}
           />
         )}
-
-        {/* AUTHENTICATION PAGES */}
         {screen === 'signup' && (
           <Signup 
             onSignupSuccess={() => {

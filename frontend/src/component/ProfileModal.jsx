@@ -13,7 +13,7 @@ const ProfileModal = (props) => {
     try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; }
   });
   const [reportCount, setReportCount] = useState(null);
-  const [rating, setRating] = useState(null); // { average, count }
+  const [rating, setRating] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -44,20 +44,6 @@ const ProfileModal = (props) => {
         .font-headings { font-family: 'Fraunces', serif; }
       `}</style>
 
-      {/* NAVBAR */}
-      <nav className="flex justify-between items-center px-[5%] h-[68px] sticky top-0 z-[1000] bg-white/95 backdrop-blur border-b border-[#e8d0d0]">
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={props.onGoToHome}>
-          <div className="w-[38px] h-[38px] rounded-xl flex items-center justify-center bg-[#800020] text-white">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </div>
-          <span className="font-headings text-[1.35rem] text-[#2e1a1a]">LostLink</span>
-        </div>
-        <button onClick={props.onGoToHome} className="px-5 py-2 rounded-xl bg-[#800020] text-white font-bold text-sm cursor-pointer hover:opacity-90">
-          Back to Home
-        </button>
-      </nav>
-
-      {/* PROFILE CONTENT */}
       <div className="max-w-2xl mx-auto px-6 py-10">
         <h1 className="font-headings text-2xl md:text-3xl text-[#2e1a1a] mb-2 font-bold">My Profile</h1>
         <p className="text-[#c07080] text-sm md:text-base mb-8 font-medium">
@@ -66,7 +52,6 @@ const ProfileModal = (props) => {
 
         <div className="bg-white rounded-3xl border border-[#e8d0d0] p-8 shadow-sm space-y-6">
 
-          {/* Avatar & Name */}
           <div className="flex items-center gap-4 pb-6 border-b border-[#e8d0d0]">
             <div className="w-20 h-20 rounded-full bg-[#800020] text-white flex items-center justify-center text-2xl font-bold shadow">
               {getInitials(user?.name)}
@@ -82,14 +67,13 @@ const ProfileModal = (props) => {
                 )}
                 {rating && rating.count > 0 && (
                   <span className="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 font-bold px-3 py-1 rounded-full border border-amber-200">
-                    ⭐ {rating.average} <span className="font-normal">({rating.count})</span>
+                     {rating.average} <span className="font-normal">({rating.count})</span>
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Details Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#F5F0F0] p-4 rounded-2xl">
               <p className="text-xs text-[#c07080] font-bold uppercase">Department</p>
@@ -109,7 +93,6 @@ const ProfileModal = (props) => {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="pt-4 flex gap-3">
             <button
               onClick={props.onGoToMyReports}

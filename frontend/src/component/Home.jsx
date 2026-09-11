@@ -44,8 +44,6 @@ const Home = (props) => {
     };
     fetchRecent();
   }, []);
-
-  // Jaise hi user kuch likhega, ye matching items ko filter kar dega
   const matchedSuggestions = searchQuery.trim() === '' ? [] : reportedItems.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.location.toLowerCase().includes(searchQuery.toLowerCase())
@@ -59,7 +57,6 @@ const Home = (props) => {
   };
 
   const handleItemClick = (item) => {
-    // Jab user kisi suggestion par click karega, tou wo AllItems page ya details par chala jayega
     if (props.onGoToAllItems) {
       props.onGoToAllItems(item.name);
     }
@@ -98,8 +95,6 @@ const Home = (props) => {
           background: linear-gradient(135deg, #a0002a, #800020); 
         }
       `}</style>
-
-      {/* ===== HERO ===== */}
       <section className="flex flex-col md:flex-row items-center justify-between px-[5%] py-[70px] gap-12"
         style={{ background: 'linear-gradient(135deg, #F5F0F0 0%, #fff8f8 50%, #F5F0F0 100%)' }}>
 
@@ -117,8 +112,6 @@ const Home = (props) => {
           <p className="text-[#c07080] text-[1.05rem] leading-[1.75] mb-8 font-medium">
             The central hub for recovering lost belongings across the college. Fast, secure, and student-run.
           </p>
-
-          {/* Search Form with Live Suggestions Dropdown */}
           <div className="relative">
             <form onSubmit={handleSearchSubmit} className="flex gap-2.5 p-2 rounded-2xl bg-white" style={{ border: '2px solid #e8d0d0', boxShadow: '0 4px 20px rgba(128,0,32,0.04)' }}>
               <div className="flex items-center flex-1 gap-2 px-2">
@@ -147,8 +140,6 @@ const Home = (props) => {
                 Search
               </button>
             </form>
-
-            {/* LIVE SUGGESTIONS DROPDOWN CONTAINER */}
             {matchedSuggestions.length > 0 && (
               <div className="absolute left-0 right-0 mt-2 bg-white rounded-2xl overflow-hidden z-50" style={{ border: '1.5px solid #e8d0d0', boxShadow: '0 10px 30px rgba(128,0,32,0.12)' }}>
                 {matchedSuggestions.map((item) => (
@@ -186,8 +177,6 @@ const Home = (props) => {
             </button>
           </div>
         </div>
-
-        {/* Hero Image */}
         <div className="relative flex-1 max-w-[460px] w-full md:w-auto h-[360px] rounded-3xl overflow-hidden flex items-center justify-center"
           style={{ boxShadow: '0 30px 60px rgba(74,0,16,0.1)', border: '3px solid #e8d0d0', background: '#fff8f8' }}>
           <img src="/hero-students.jpeg" alt="Students" className="w-full h-full object-cover"
@@ -209,8 +198,6 @@ const Home = (props) => {
           </div>
         </div>
       </section>
-
-      {/* ===== STATS ===== */}
       <div className="mx-[5%] mb-[60px] mt-[60px]">
         <div className="rounded-3xl px-[5%] py-[50px]" style={{ background: 'linear-gradient(135deg, #4a0010 0%, #800020 50%, #4a0010 100%)', boxShadow: '0 20px 50px rgba(74,0,16,0.2)' }}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
@@ -224,8 +211,6 @@ const Home = (props) => {
           </div>
         </div>
       </div>
-
-      {/* ===== RECENTLY REPORTED ===== */}
       <section className="px-[5%] pb-[70px]">
         <div className="flex justify-between items-center mb-9 flex-wrap gap-3">
           <div>
@@ -272,8 +257,6 @@ const Home = (props) => {
           </div>
         )}
       </section>
-
-      {/* ===== INFO CARDS ===== */}
       <section className="px-[5%] pb-[70px]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -297,8 +280,6 @@ const Home = (props) => {
 
         </div>
       </section>
-
-      {/* ===== TESTIMONIALS ===== */}
       <section className="px-[5%] py-[70px]">
         <div className="text-center mb-12">
           <h2 className="font-headings text-[#2e1a1a] m-0 mb-2.5" style={{ fontSize: 'clamp(1.6rem, 3vw, 2.3rem)' }}>Student Success Stories</h2>
@@ -321,8 +302,6 @@ const Home = (props) => {
           ))}
         </div>
       </section>
-
-      {/* ===== CTA BANNER ===== */}
       <section className="mx-[5%] mb-[60px] rounded-3xl px-[5%] py-[60px] text-center"
         style={{ background: 'linear-gradient(135deg, #4a0010, #800020, #a0002a)', boxShadow: '0 20px 50px rgba(128,0,32,0.25)' }}>
         <h2 className="font-headings text-[#fde8ec] m-0 mb-3" style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)' }}>Lost something? Don't stress!</h2>
@@ -340,12 +319,10 @@ const Home = (props) => {
           </button>
         </div>
       </section>
-
-      {/* ===== FOOTER ===== */}
       <footer className="bg-white px-[5%] pt-[60px] pb-[30px]" style={{ borderTop: '1px solid #e8d0d0' }}>
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] gap-10 mb-10">
+        <div className="flex flex-col md:flex-row md:justify-between gap-10 mb-10">
 
-          <div>
+          <div className="max-w-[320px]">
             <div className="flex items-center gap-2.5 mb-4">
               <div className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center"
                 style={{ background: 'linear-gradient(135deg, #800020, #4a0010)' }}>
@@ -354,54 +331,20 @@ const Home = (props) => {
               <span className="font-headings text-[1.3rem] text-[#2e1a1a]">LostLink</span>
             </div>
             <p className="text-[#5a3a3a] text-[0.9rem] leading-[1.7] max-w-[280px] mb-5 font-medium">Helping college students recover what they've lost through community cooperation and technology.</p>
-            <div className="flex gap-3">
-              {[
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>,
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>,
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-              ].map((icon, i) => (
-                <div key={i} className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-all hover:bg-[#800020] hover:text-[#fde8ec]"
-                  style={{ background: '#f5f0f0', color: '#800020', border: '1px solid #e8d0d0' }}>
-                  {icon}
-                </div>
-              ))}
-            </div>
           </div>
 
-          <div>
+          <div className="md:w-56">
             <h4 className="font-headings mb-4 text-[#2e1a1a] text-[1.05rem]">Quick Links</h4>
             <ul className="list-none p-0 m-0 text-[#5a3a3a] text-[0.9rem] flex flex-col gap-2.5 font-medium">
-              {['About the System', 'Terms of Service', 'Privacy Policy', 'FAQ'].map(l => (
-                <li key={l} className="cursor-pointer hover:text-[#800020] transition-colors">{l}</li>
+              {[
+                { label: 'About the System', screen: 'about-system' },
+                { label: 'Terms of Service', screen: 'terms-of-service' },
+                { label: 'Privacy Policy', screen: 'privacy-policy' },
+                { label: 'FAQ', screen: 'faq' },
+              ].map(l => (
+                <li key={l.screen} onClick={() => props.onNavigate(l.screen)} className="cursor-pointer hover:text-[#800020] transition-colors">{l.label}</li>
               ))}
             </ul>
-          </div>
-
-          <div>
-            <h4 className="font-headings mb-4 text-[#2e1a1a] text-[1.05rem]">Resources</h4>
-            <ul className="list-none p-0 m-0 text-[#5a3a3a] text-[0.9rem] flex flex-col gap-2.5 font-medium">
-              {['Main Map', 'Security Services', 'Student Union', 'Library Hours'].map(l => (
-                <li key={l} className="cursor-pointer hover:text-[#800020] transition-colors">{l}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-headings mb-4 text-[#2e1a1a] text-[1.05rem]">Contact Support</h4>
-            <div className="flex flex-col gap-3 font-medium">
-              <div className="flex items-center gap-2 text-[#5a3a3a] text-[0.9rem]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#800020" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                gcmbdin@gmail.com
-              </div>
-              <div className="flex items-center gap-2 text-[#5a3a3a] text-[0.9rem]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#800020" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13A19.79 19.79 0 0 1 1.62 4.33 2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                0546-504504
-              </div>
-              <div className="flex items-center gap-2 text-[#5a3a3a] text-[0.9rem]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#800020" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                Admin Block
-              </div>
-            </div>
           </div>
         </div>
 

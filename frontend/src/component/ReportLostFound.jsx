@@ -4,8 +4,10 @@ const API_BASE = 'http://localhost:5000/api';
 
 const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToFoundItems, onGoToMyReports, onGoToReportItem }) => {
   const [step, setStep] = useState(1);
+  const [maxStepReached, setMaxStepReached] = useState(1);
+  const [stepError, setStepError] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
-  const [reportType, setReportType] = useState('lost'); // 'lost' | 'found'
+  const [reportType, setReportType] = useState('lost');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [formData, setFormData] = useState({
@@ -42,6 +44,60 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setStepError('');
+  };
+
+  const validateStep = (n) => {
+    if (n === 1) {
+      if (!formData.itemName || !formData.category || !formData.dateLost || !formData.description) {
+        return 'Please fill in Item Name, Category, Date and Description before continuing.';
+      }
+      const now = new Date();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selectedDate = new Date(formData.dateLost);
+      if (selectedDate > today) {
+        return 'Date cannot be in the future.';
+      }
+      if (selectedDate.getTime() === today.getTime() && formData.timeLost) {
+        const [h, m] = formData.timeLost.split(':').map(Number);
+        const selectedMinutes = h * 60 + m;
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        if (selectedMinutes > currentMinutes) {
+          return "Time cannot be in the future for today's date.";
+        }
+      }
+    }
+    if (n === 2) {
+      if (!formData.building) {
+        return 'Please select a Building before continuing.';
+      }
+    }
+    if (n === 3) {
+      if (!formData.contactName || !formData.contactEmail) {
+        return 'Please fill in your Name and Email before continuing.';
+      }
+    }
+    return '';
+  };
+
+  const goToStep = (target) => {
+    if (target <= step) {
+      setStepError('');
+      setStep(target);
+      return;
+    }
+    for (let s = step; s < target; s++) {
+      const err = validateStep(s);
+      if (err) {
+        setStepError(err);
+        setStep(s);
+        return;
+      }
+    }
+    setStepError('');
+    setMaxStepReached((prev) => Math.max(prev, target));
+    setStep(target);
   };
 
   const handleImageChange = (e) => {
@@ -71,7 +127,6 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
   const handleSubmit = async () => {
     setSubmitError('');
 
-    // Basic required-field guard so we don't fire an invalid request
     if (!formData.itemName || !formData.category || !formData.dateLost || !formData.description) {
       setSubmitError('Please fill in the required item details (name, category, date, description).');
       setStep(1);
@@ -186,10 +241,8 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
         }
       `}</style>
 
-      {/* ===== MAIN CONTENT ===== */}
       <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1">
 
-        {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm mb-6 fade-down" style={{ animationDelay: '0.1s', color: '#c07080' }}>
           {[
             { label: 'Item Details', stepNum: 1 },
@@ -200,7 +253,7 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
             <React.Fragment key={item.stepNum}>
               <span
                 className="cursor-pointer hover:underline transition-colors"
-                onClick={() => setStep(item.stepNum)}
+                onClick={() => goToStep(item.stepNum)}
                 style={{ color: step === item.stepNum ? '#2e1a1a' : step > item.stepNum ? '#800020' : '#c5a3a3', fontWeight: step === item.stepNum ? 600 : 400 }}>
                 {item.label}
               </span>
@@ -209,7 +262,6 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
           ))}
         </div>
 
-        {/* Page Title */}
         <div className="mb-8 fade-up" style={{ animationDelay: '0.15s' }}>
           <h1 className="text-3xl font-extrabold mb-2 tracking-tight" style={{ color: '#2e1a1a', fontFamily: "'Fraunces', serif" }}>
             {step === 4 ? 'Review Your Lost Or Found Item Report' : 'Report Lost & Found Item'}
@@ -221,7 +273,6 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
           </p>
         </div>
 
-        {/* Steps Indicator */}
         <div className="flex items-center mb-8 fade-up" style={{ animationDelay: '0.2s' }}>
           {[
             ['1', 'Basic Details'],
@@ -230,25 +281,30 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
             ['4', 'Review']
           ].map(([num, label], i) => (
             <React.Fragment key={num}>
-              <div className="flex items-center gap-2 cursor-pointer" onClick={() => setStep(i + 1)}>
+              <div className="flex items-center gap-2 cursor-pointer" onClick={() => goToStep(i + 1)}>
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-[0.82rem] font-bold transition-all duration-300"
-                  style={step === i + 1 ? { background: 'linear-gradient(135deg, #800020, #4a0010)', color: '#fde8ec', boxShadow: '0 4px 12px rgba(128, 0, 32, 0.3)' } : step > i + 1 ? { background: '#22c55e', color: '#ffffff' } : { background: '#f5f0f0', color: '#c5a3a3' }}>
-                  {step > i + 1 ? '✓' : num}
+                  style={step === i + 1 ? { background: 'linear-gradient(135deg, #800020, #4a0010)', color: '#fde8ec', boxShadow: '0 4px 12px rgba(128, 0, 32, 0.3)' } : maxStepReached > i + 1 ? { background: '#22c55e', color: '#ffffff' } : { background: '#f5f0f0', color: '#c5a3a3' }}>
+                  {maxStepReached > i + 1 ? '✓' : num}
                 </div>
                 <span className="text-[0.85rem] font-semibold hidden sm:block transition-colors"
-                  style={step === i + 1 ? { color: '#800020' } : step > i + 1 ? { color: '#22c55e' } : { color: '#c5a3a3' }}>
+                  style={step === i + 1 ? { color: '#800020' } : maxStepReached > i + 1 ? { color: '#22c55e' } : { color: '#c5a3a3' }}>
                   {label}
                 </span>
               </div>
               {i < 3 && (
                 <div className="flex-1 mx-3 h-[2px] rounded-full transition-all duration-500"
-                  style={{ background: step > i + 1 ? '#22c55e' : '#e8d0d0' }}></div>
+                  style={{ background: maxStepReached > i + 1 ? '#22c55e' : '#e8d0d0' }}></div>
               )}
             </React.Fragment>
           ))}
         </div>
 
-        {/* ===== STEP 1: Basic Details ===== */}
+        {stepError && (
+          <div className="mb-6 p-3 bg-red-100 text-red-700 text-sm rounded-xl font-medium">
+            {stepError}
+          </div>
+        )}
+
         {step === 1 && (
           <div className="bg-white rounded-xl border p-8 step-card" style={{ borderColor: '#e8d0d0' }}>
             <div className="mb-6">
@@ -357,7 +413,7 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
                 onMouseLeave={(e) => e.currentTarget.style.background = '#f5f0f0'}>
                 Cancel
               </button>
-              <button onClick={() => setStep(2)} className="px-6 py-2.5 rounded-lg font-semibold text-sm text-white cursor-pointer transition-colors"
+              <button onClick={() => goToStep(2)} className="px-6 py-2.5 rounded-lg font-semibold text-sm text-white cursor-pointer transition-colors"
                 style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', boxShadow: '0 4px 12px rgba(128, 0, 32, 0.25)' }}
                 onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #a0002a, #800020)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #800020, #4a0010)'}>
@@ -367,7 +423,6 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
           </div>
         )}
 
-        {/* ===== STEP 2: Set Location ===== */}
         {step === 2 && (
           <div className="slide-in">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
@@ -427,7 +482,7 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
                     onMouseLeave={(e) => e.currentTarget.style.background = '#f5f0f0'}>
                     ← Back
                   </button>
-                  <button onClick={() => setStep(3)} className="px-6 py-2.5 rounded-lg font-semibold text-sm text-white cursor-pointer transition-colors"
+                  <button onClick={() => goToStep(3)} className="px-6 py-2.5 rounded-lg font-semibold text-sm text-white cursor-pointer transition-colors"
                     style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', boxShadow: '0 4px 12px rgba(128, 0, 32, 0.25)' }}
                     onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #a0002a, #800020)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #800020, #4a0010)'}>
@@ -455,7 +510,6 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
           </div>
         )}
 
-        {/* ===== STEP 3: Contact Info ===== */}
         {step === 3 && (
           <div className="bg-white rounded-xl border p-8 step-card" style={{ borderColor: '#e8d0d0' }}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
@@ -471,18 +525,6 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
             <div className="mb-5">
               <label className={labelClass}>Phone Number (Optional)</label>
               <input type="text" name="contactPhone" value={formData.contactPhone} onChange={handleChange} placeholder="+92..." className={inputClass} />
-            </div>
-            <div className="mb-2">
-              <label className={labelClass}>Preferred Contact Method</label>
-              <div className="flex gap-3 mt-1">
-                {['email', 'phone', 'both'].map(method => (
-                  <label key={method} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border cursor-pointer transition-all duration-200 text-[0.85rem] font-semibold capitalize"
-                    style={{ borderColor: formData.preferredContact === method ? '#800020' : '#e8d0d0', background: formData.preferredContact === method ? '#fff8f8' : '#ffffff', color: formData.preferredContact === method ? '#800020' : '#c07080' }}>
-                    <input type="radio" name="preferredContact" value={method} checked={formData.preferredContact === method} onChange={handleChange} className="hidden" />
-                    {method}
-                  </label>
-                ))}
-              </div>
             </div>
             <div className="mt-6 p-4 rounded-xl" style={{ background: '#fff8f8', border: '1px solid #e8d0d0' }}>
               <p className="text-sm font-bold mb-3" style={{ color: '#800020' }}>📋 Quick Summary</p>
@@ -500,7 +542,7 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
                 onMouseLeave={(e) => e.currentTarget.style.background = '#f5f0f0'}>
                 ← Back
               </button>
-              <button onClick={() => setStep(4)} className="px-6 py-2.5 rounded-lg font-semibold text-sm text-white cursor-pointer transition-colors"
+              <button onClick={() => goToStep(4)} className="px-6 py-2.5 rounded-lg font-semibold text-sm text-white cursor-pointer transition-colors"
                 style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', boxShadow: '0 4px 12px rgba(128, 0, 32, 0.25)' }}
                 onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #a0002a, #800020)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #800020, #4a0010)'}>
@@ -510,7 +552,6 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
           </div>
         )}
 
-        {/* ===== STEP 4: Review ===== */}
         {step === 4 && (
           <div className="slide-in">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
