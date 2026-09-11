@@ -5,33 +5,62 @@ const sendEmail = require('../utils/sendemail');
 
 const register = async (req, res) => {
   try {
-    const { name, email, password, rollNo, department, shift, session } = req.body;
+    const { name, email, password, rollNo, department, session, academicLevel, phone } = req.body;
+    let { shift } = req.body;
 
-    if (!name || !email || !password || !rollNo || !department || !shift || !session) {
+    if (!name || !email || !password || !rollNo || !department || !session || !academicLevel) {
       return res.status(400).json({ message: 'Please fill all required fields' });
     }
 
+    if (!['BS', 'Inter'].includes(academicLevel)) {
+      return res.status(400).json({ message: 'Invalid academic level' });
+    }
+
     let validationErrors = [];
+
+    if (academicLevel === 'BS') {
+      if (!shift) {
+        validationErrors.push('Shift is required for BS programs.');
+      }
+    } else {
+      shift = '';
+    }
 
     const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
     if (!strongPasswordRegex.test(password)) {
       validationErrors.push('Password must be at least 8 characters long and contain a mix of uppercase letters, lowercase letters, numbers, and special characters.');
     }
 
-    const numericRollNoRegex = /^\d+$/;
-    if (!numericRollNoRegex.test(rollNo)) {
-      validationErrors.push('Roll Number must contain digits only (e.g., 085246).');
+    const rollNoRegex = academicLevel === 'BS' ? /^\d{5,8}$/ : /^\d{2,5}$/;
+    if (!rollNoRegex.test(rollNo)) {
+      validationErrors.push(
+        academicLevel === 'BS'
+          ? 'Roll Number must be 5-8 digits (e.g., 085675).'
+          : 'Roll Number must be 2-5 digits (e.g., 08524).'
+      );
     }
 
     const sessionRegex = /^(\d{4})-(\d{4})$/;
     const match = session.match(sessionRegex);
+    const requiredDuration = academicLevel === 'BS' ? 4 : 2;
     if (!match) {
       validationErrors.push('Session must be in YYYY-YYYY format (e.g., 2022-2026).');
     } else {
       const startYear = parseInt(match[1]);
       const endYear = parseInt(match[2]);
-      if (endYear - startYear !== 4) {
-        validationErrors.push('Session must be a valid 4-year degree duration (e.g., 2022-2026).');
+      if (endYear - startYear !== requiredDuration) {
+        validationErrors.push(
+          academicLevel === 'BS'
+            ? 'Session must be a valid 4-year degree duration (e.g., 2022-2026).'
+            : 'Session must be a valid 2-year Intermediate duration (e.g., 2024-2026).'
+        );
+      }
+    }
+
+    if (phone) {
+      const phoneRegex = /^03\d{9}$/;
+      if (!phoneRegex.test(phone)) {
+        validationErrors.push('Phone number must be in the format 03XXXXXXXXX (11 digits).');
       }
     }
 
@@ -59,7 +88,9 @@ const register = async (req, res) => {
       rollNo,
       department,
       shift,
-      session
+      session,
+      academicLevel,
+      phone: phone || ''
     });
 
     const otp = String(Math.floor(100000 + Math.random() * 900000));
@@ -125,7 +156,14 @@ const verifyEmail = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        rollNo: user.rollNo,
+        department: user.department,
+        academicLevel: user.academicLevel,
+        shift: user.shift,
+        session: user.session,
+        phone: user.phone,
+        isVerified: user.isVerified
       }
     });
 
@@ -169,7 +207,14 @@ const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        rollNo: user.rollNo,
+        department: user.department,
+        academicLevel: user.academicLevel,
+        shift: user.shift,
+        session: user.session,
+        phone: user.phone,
+        isVerified: user.isVerified
       }
     });
 
