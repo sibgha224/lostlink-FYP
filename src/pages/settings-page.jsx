@@ -9,7 +9,7 @@ const initialCategories = [
 ];
 
 const initialItemsForExport = [
-  { id:"LL-001", title:"Black Wallet",  cat:"Accessories", date:"12 May 2026", status:"Lost",  reporter:"Ali Hassan" },
+  { id:"LL-001", title:"Black Wallet",   cat:"Accessories", date:"12 May 2026", status:"Lost",  reporter:"Ali Hassan" },
   { id:"LL-002", title:"iPhone 14 Pro", cat:"Electronics", date:"11 May 2026", status:"Found", reporter:"Sara Malik" },
   { id:"LL-003", title:"Student ID Card", cat:"Documents", date:"10 May 2026", status:"Claimed", reporter:"Umar Sheikh" },
 ];
@@ -33,9 +33,6 @@ export default function SettingsPage() {
   });
   const handleProfileChange = (e) =>
     setProfile({ ...profile, [e.target.name]: e.target.value });
-
-  /* ---------------- Password ---------------- */
-  const [passwords, setPasswords] = useState({ current: "", newPass: "", confirm: "" });
 
   /* ---------------- Institute Info ---------------- */
   const [systemInfo, setSystemInfo] = useState({
@@ -191,31 +188,6 @@ export default function SettingsPage() {
 
           <div style={{ marginTop: 18, textAlign: "right" }}>
             <button style={saveBtn} onClick={() => showSaved("Profile updated successfully")}>Save Changes</button>
-          </div>
-        </div>
-
-        {/* ============ PASSWORD ============ */}
-        <div style={cardStyle}>
-          <h3 style={sectionTitle}>Change Password</h3>
-          <p style={sectionSub}>Use a strong password you don't use elsewhere</p>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-            <div>
-              <label style={labelStyle}>Current Password</label>
-              <input className="settings-input" style={inputStyle} type="password" placeholder="••••••••" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} />
-            </div>
-            <div>
-              <label style={labelStyle}>New Password</label>
-              <input className="settings-input" style={inputStyle} type="password" placeholder="••••••••" value={passwords.newPass} onChange={(e) => setPasswords({ ...passwords, newPass: e.target.value })} />
-            </div>
-            <div>
-              <label style={labelStyle}>Confirm Password</label>
-              <input className="settings-input" style={inputStyle} type="password" placeholder="••••••••" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} />
-            </div>
-          </div>
-
-          <div style={{ marginTop: 18, textAlign: "right" }}>
-            <button style={saveBtn} onClick={() => showSaved("Password updated successfully")}>Update Password</button>
           </div>
         </div>
 
