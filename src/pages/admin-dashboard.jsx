@@ -4,6 +4,7 @@ import UsersPage from "./user-page";
 import MessagesPage from "./messages-page";
 import NotificationsPage from "./Notification-page";
 import SettingsPage from "./settings-page";
+import AdminProfilePage from "./admin-profile-page";
 
 const Ico = ({ d, size = 18, sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -15,7 +16,6 @@ const IcoDash    = () => <Ico d={["M3 3h7v7H3z","M14 3h7v7h-7z","M14 14h7v7h-7z"
 const IcoItems   = () => <Ico d={["M21 10H3","M21 6H3","M21 14H3","M21 18H3"]} />;
 const IcoClaim   = () => <Ico d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />;
 const IcoUsers   = () => <Ico d={["M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2","M23 21v-2a4 4 0 00-3-3.87","M16 3.13a4 4 0 010 7.75"]} />;
-const IcoBell    = () => <Ico d={["M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9","M13.73 21a2 2 0 01-3.46 0"]} />;
 const IcoSearch  = () => <Ico d="M11 19a8 8 0 100-16 8 8 0 000 16zm10 2l-4.35-4.35" />;
 const IcoLogout  = () => <Ico d={["M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4","M16 17l5-5-5-5","M21 12H9"]} />;
 const IcoMenu    = () => <Ico d={["M3 12h18","M3 6h18","M3 18h18"]} />;
@@ -60,7 +60,6 @@ const barData = [
 export default function AdminDashboard() {
   const [active, setActive]       = useState("dashboard");
   const [sideOpen, setSideOpen]   = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
   const [search, setSearch]       = useState("");
   const [itemsList, setItemsList] = useState(initialItems);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -69,14 +68,6 @@ export default function AdminDashboard() {
   const [notifications, setNotifications] = useState(initialNotifs);
 
   const unreadCount = notifications.filter(n => n.unread).length;
-
-  const markAllRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, unread: false })));
-  };
-
-  const markSingleRead = (id) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, unread: false } : n));
-  };
 
   const navLinks = [
     { id:"dashboard", label:"Dashboard",     icon: IcoDash,  badge:null },
@@ -157,11 +148,21 @@ export default function AdminDashboard() {
         </nav>
         <div style={{ marginTop:16, padding:"12px", background:"linear-gradient(135deg,rgba(128,0,32,0.06),rgba(74,0,16,0.04))", border:"1px solid #e8d0d0", borderRadius:14 }}>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0 }}>A</div>
-            <div style={{ flex:1, overflow:"hidden" }}>
-              <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a", margin:0 }}>Admin</p>
+            <div
+              onClick={() => setActive("profile")}
+              style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer", flex:1, overflow:"hidden" }}
+            >
+              <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0 }}>A</div>
+              <div style={{ flex:1, overflow:"hidden" }}>
+                <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a", margin:0 }}>Admin</p>
+              </div>
             </div>
-            <button style={{ background:"none", border:"none", cursor:"pointer", color:"#c07080", display:"flex", padding:2 }}><IcoLogout /></button>
+            <button
+              onClick={(e) => { e.stopPropagation(); alert("Logout clicked"); }}
+              style={{ background:"none", border:"none", cursor:"pointer", color:"#c07080", display:"flex", padding:2 }}
+            >
+              <IcoLogout />
+            </button>
           </div>
         </div>
       </aside>
@@ -206,59 +207,6 @@ export default function AdminDashboard() {
             <input className="al-search" placeholder="Quick search..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            
-            {/* NOTIFICATION DROP-DOWN BUTTON */}
-            <div style={{ position:"relative" }}>
-              <button className="icon-btn" onClick={() => setNotifOpen(!notifOpen)}>
-                <IcoBell />
-                {unreadCount > 0 && (
-                  <span style={{ position:"absolute", top:4, right:4, width:8, height:8, borderRadius:"50%", background:"#800020", border:"1.5px solid #fff" }} />
-                )}
-              </button>
-              {notifOpen && (
-                <div className="notif-panel">
-                  <div style={{ padding:"14px 16px 10px", borderBottom:"1px solid #f0e0e0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a" }}>Notifications ({unreadCount})</p>
-                    <span onClick={markAllRead} style={{ fontSize:11, color:"#800020", fontWeight:600, cursor:"pointer" }}>Mark all read</span>
-                  </div>
-                  <div style={{ maxHeight:280, overflowY:"auto" }}>
-                    {notifications.length > 0 ? (
-                      notifications.map((n) => (
-                        <div 
-                          key={n.id} 
-                          onClick={() => markSingleRead(n.id)}
-                          style={{ 
-                            padding:"11px 16px", 
-                            borderBottom:"1px solid #fdf0f0", 
-                            display:"flex", 
-                            gap:10, 
-                            alignItems:"flex-start", 
-                            cursor:"pointer",
-                            background: n.unread ? "#fff" : "#faf6f6",
-                            opacity: n.unread ? 1 : 0.7 
-                          }}
-                        >
-                          <div style={{ width:7, height:7, borderRadius:"50%", background:n.dot, marginTop:5, flexShrink:0 }} />
-                          <div style={{ flex:1 }}>
-                            <p style={{ fontSize:12, color:"#2e1a1a", lineHeight:1.5, fontWeight: n.unread ? 600 : 400 }}>{n.msg}</p>
-                            <p style={{ fontSize:11, color:"#c5a3a3", marginTop:2 }}>{n.time}</p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p style={{ padding: 16, fontSize: 12, color: "#c5a3a3", textAlign: "center" }}>No notifications</p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 12px 6px 6px", background:"#fdf6f7", border:"1px solid #e8d0d0", borderRadius:12, cursor:"pointer" }}>
-              <div style={{ width:30, height:30, borderRadius:8, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:700, fontSize:12 }}>A</div>
-              <div>
-                <p style={{ fontSize:12, fontWeight:700, color:"#2e1a1a", margin:0, lineHeight:1.2 }}>Admin</p>
-              </div>
-            </div>
           </div>
         </header>
 
@@ -388,8 +336,16 @@ export default function AdminDashboard() {
           {/* SETTINGS PAGE INTEGRATION */}
           {active === "settings" && <SettingsPage />}
 
+          {/* ADMIN PROFILE PAGE INTEGRATION */}
+          {active === "profile" && (
+            <AdminProfilePage
+              onEditProfile={() => setActive("settings")}
+              onLogout={() => alert("Logout clicked")}
+            />
+          )}
+
           {/* OTHER PAGES PLACEHOLDER */}
-          {!["dashboard", "items", "found", "claims", "users", "messages", "notif", "settings"].includes(active) && (
+          {!["dashboard", "items", "found", "claims", "users", "messages", "notif", "settings", "profile"].includes(active) && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, padding:40, textAlign:"center" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", color:"#800020", textTransform:"capitalize" }}>{active} Page</h2>
               <p style={{ color:"#c07080", marginTop:8 }}>This section is active now.</p>
