@@ -11,8 +11,8 @@ const { protect } = require('../middleware/authmiddleware');
 const upload = require('../middleware/uploadmiddleware');
 
 router.post('/:claimId', protect, (req, res, next) => {
-  upload.single('image')(req, res, (err) => {
-    if (err) return res.status(400).json({ message: 'Image upload failed', error: err.message });
+  upload.fields([{ name: 'image', maxCount: 1 }, { name: 'audio', maxCount: 1 }, { name: 'file', maxCount: 1 }])(req, res, (err) => {
+    if (err) return res.status(400).json({ message: 'Upload failed', error: err.message });
     next();
   });
 }, sendMessage);

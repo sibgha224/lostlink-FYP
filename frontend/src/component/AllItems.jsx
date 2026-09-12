@@ -19,7 +19,7 @@ const timeAgo = (dateStr) => {
   return `Reported ${days}d ago`;
 };
 
-const AllItems = ({ initialSearchQuery, onViewDetails, ...props }) => {
+const AllItems = ({ initialSearchQuery, onViewDetails, onGoToHome, ...props }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
   const [items, setItems] = useState([]);
@@ -79,7 +79,9 @@ const AllItems = ({ initialSearchQuery, onViewDetails, ...props }) => {
       `}</style>
       <div className="max-w-7xl mx-auto px-[4%] py-10">
 
-        <div className="text-center mb-10">
+        <span onClick={onGoToHome} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: '#800020' }}>← Back to Home</span>
+
+        <div className="text-center mb-10 mt-6">
           <h1 className="font-headings text-3xl md:text-4xl text-[#2e1a1a] mb-2">All Reported Items</h1>
           <p className="text-sm text-[#c07080] italic mb-1">(Browse all lost and found reports from across the college)</p>
         </div>

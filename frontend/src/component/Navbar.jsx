@@ -10,7 +10,7 @@ const getInitials = (name) => {
   return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase();
 };
 
-const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, onLogout, onGoToProfile, onGoToMyReports }) => {
+const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, onLogout, onGoToProfile, onGoToMyReports, onGoToMessages, onOpenMatchedItem }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -32,7 +32,7 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
         const res = await fetch(`${API_BASE}/notifications`, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
         if (res.ok) setNotifications(Array.isArray(data) ? data : []);
-      } catch { /* silent */ }
+      } catch { }
     };
     fetchNotifications();
 
@@ -54,14 +54,13 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
       try {
         await fetch(`${API_BASE}/notifications/read-all`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } });
         setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-      } catch { /* silent */ }
+      } catch { }
     }
   };
 
   return (
     <nav className="flex justify-between items-center px-[5%] h-[68px] sticky top-0 z-[1000] bg-white/95 backdrop-blur border-b border-[#e8d0d0]" style={{ boxShadow: '0 2px 20px rgba(128, 0, 32, 0.04)' }}>
 
-      {/* Logo */}
       <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => onNavigate('home')}>
         <div className="w-[38px] h-[38px] rounded-xl flex items-center justify-center bg-[#800020] text-white shadow-md">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -69,7 +68,6 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
         <span className="text-[1.35rem] font-bold text-[#2e1a1a]" style={{ fontFamily: "'Fraunces', serif" }}>LostLink</span>
       </div>
 
-      {/* Navigation Links */}
       <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-[#4b5563]">
         <span onClick={() => onNavigate('home')} className="cursor-pointer hover:text-[#800020] transition-colors">Home</span>
         <span onClick={() => onNavigate('found-items')} className="cursor-pointer hover:text-[#800020] transition-colors">Found Items</span>
@@ -78,13 +76,14 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
         {isLoggedIn && (
           <span onClick={() => onNavigate('my-reports')} className="cursor-pointer hover:text-[#800020] transition-colors">My Reports</span>
         )}
+        {isLoggedIn && (
+          <span onClick={() => onGoToMessages && onGoToMessages()} className="cursor-pointer hover:text-[#800020] transition-colors">Messages</span>
+        )}
       </div>
 
-      {/* Right Side Actions */}
       <div className="flex items-center gap-3 relative">
         {isLoggedIn ? (
           <>
-            {/* Notification Bell */}
             <div className="relative">
               <button onClick={toggleNotifs} className="relative w-10 h-10 rounded-full flex items-center justify-center text-[#800020] hover:bg-[#fff8f8] cursor-pointer">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -103,7 +102,18 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
                     <p className="px-4 py-6 text-center text-sm text-[#c07080]">No notifications yet.</p>
                   ) : (
                     notifications.map((n) => (
-                      <div key={n._id} className={`px-4 py-2.5 text-sm border-b border-[#f5f0f0] last:border-0 ${n.isRead ? 'text-[#5a3a3a]' : 'text-[#2e1a1a] font-semibold bg-[#fff8f8]'}`}>
+                      <div
+                        key={n._id}
+                        onClick={() => {
+                          if (n.type === 'item_matched' && n.relatedItem && onOpenMatchedItem) {
+                            setShowNotifs(false);
+                            onOpenMatchedItem(n.relatedItem);
+                          } else if (['claim_submitted', 'claim_approved', 'claim_rejected', 'message'].includes(n.type) && onGoToMyReports) {
+                            setShowNotifs(false);
+                            onGoToMyReports();
+                          }
+                        }}
+                        className={`px-4 py-2.5 text-sm border-b border-[#f5f0f0] last:border-0 cursor-pointer hover:bg-[#fff8f8] ${n.isRead ? 'text-[#5a3a3a]' : 'text-[#2e1a1a] font-semibold bg-[#fff8f8]'}`}>
                         {n.message}
                         <div className="text-[10px] text-[#c5a3a3] mt-0.5">{new Date(n.createdAt).toLocaleString()}</div>
                       </div>
@@ -124,6 +134,7 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-[#e8d0d0] rounded-2xl shadow-xl py-2 z-50">
                   <button onClick={() => { setShowDropdown(false); onGoToProfile(); }} className="w-full text-left px-4 py-2 text-sm text-[#2e1a1a] hover:bg-[#fff8f8] font-medium">Profile</button>
                   <button onClick={() => { setShowDropdown(false); onGoToMyReports(); }} className="w-full text-left px-4 py-2 text-sm text-[#2e1a1a] hover:bg-[#fff8f8] font-medium">My Reports</button>
+                  <button onClick={() => { setShowDropdown(false); onGoToMessages && onGoToMessages(); }} className="w-full text-left px-4 py-2 text-sm text-[#2e1a1a] hover:bg-[#fff8f8] font-medium">Messages</button>
                   <div className="border-t border-[#e8d0d0] my-1"></div>
                   <button onClick={() => { setShowDropdown(false); onLogout(); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-medium">Logout</button>
                 </div>

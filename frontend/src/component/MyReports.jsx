@@ -45,13 +45,14 @@ const MyReports = (props) => {
   const [lostItems, setLostItems] = useState([]);
   const [foundItems, setFoundItems] = useState([]);
   const [myClaims, setMyClaims] = useState([]);
-  const [claimsReceived, setClaimsReceived] = useState({}); // foundItemId -> [claims]
-  const [myReviews, setMyReviews] = useState([]); // reviews I've already given: [{claim, rating, comment}]
+  const [claimsReceived, setClaimsReceived] = useState({});
+  const [myReviews, setMyReviews] = useState([]);
+  const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionError, setActionError] = useState('');
   const [busyClaimId, setBusyClaimId] = useState(null);
-  const [rateTarget, setRateTarget] = useState(null); // { claimId, personName }
+  const [rateTarget, setRateTarget] = useState(null);
   const [rateValue, setRateValue] = useState(5);
   const [rateComment, setRateComment] = useState('');
   const [rateSubmitting, setRateSubmitting] = useState(false);
@@ -62,16 +63,18 @@ const MyReports = (props) => {
     setError('');
     try {
       const headers = authHeaders();
-      const [lostRes, foundRes, claimsRes, reviewsRes] = await Promise.all([
+      const [lostRes, foundRes, claimsRes, reviewsRes, matchesRes] = await Promise.all([
         fetch(`${API_BASE}/lost-items/my-items`, { headers }),
         fetch(`${API_BASE}/found-items/my-items`, { headers }),
         fetch(`${API_BASE}/claims/my-claims`, { headers }),
         fetch(`${API_BASE}/reviews/my-reviews`, { headers }),
+        fetch(`${API_BASE}/matching/my-matches`, { headers }),
       ]);
       const lostData = await lostRes.json();
       const foundData = await foundRes.json();
       const claimsData = await claimsRes.json();
       const reviewsData = await reviewsRes.json().catch(() => []);
+      const matchesData = await matchesRes.json().catch(() => ({ matches: [] }));
       if (!lostRes.ok) throw new Error(lostData.message || 'Failed to load lost reports');
       if (!foundRes.ok) throw new Error(foundData.message || 'Failed to load found reports');
       if (!claimsRes.ok) throw new Error(claimsData.message || 'Failed to load claims');
@@ -80,8 +83,8 @@ const MyReports = (props) => {
       setFoundItems(Array.isArray(foundData) ? foundData : []);
       setMyClaims(Array.isArray(claimsData) ? claimsData : []);
       setMyReviews(Array.isArray(reviewsData) ? reviewsData : []);
+      setMatches(Array.isArray(matchesData.matches) ? matchesData.matches : []);
 
-      // For each found item I posted, fetch the claims filed against it
       const foundList = Array.isArray(foundData) ? foundData : [];
       const claimEntries = await Promise.all(
         foundList.map(async (item) => {
@@ -159,6 +162,13 @@ const MyReports = (props) => {
     ...foundItems.map(i => ({ ...i, __kind: 'Found' })),
   ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
+  const matchesByLostId = matches.reduce((acc, m) => {
+    const id = m.lostItem._id;
+    if (!acc[id]) acc[id] = [];
+    acc[id].push(m);
+    return acc;
+  }, {});
+
   return (
     <div className="min-h-screen bg-[#F5F0F0]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
@@ -166,7 +176,6 @@ const MyReports = (props) => {
         .font-headings { font-family: 'Fraunces', serif; }
       `}</style>
 
-      {/* CONTENT AREA */}
       <div className="max-w-4xl mx-auto px-6 py-10">
         <h1 className="font-headings text-2xl md:text-3xl text-[#2e1a1a] mb-2 font-bold">My Reports & Claims</h1>
         <p className="text-[#c07080] text-sm md:text-base mb-8 font-medium">
@@ -186,7 +195,6 @@ const MyReports = (props) => {
           </div>
         ) : (
           <>
-            {/* SECTION 1: My Reported Items */}
             <h2 className="font-headings text-lg text-[#2e1a1a] mb-3 font-bold">Items I Reported</h2>
             {allMyReports.length === 0 ? (
               <div className="bg-white p-8 rounded-3xl text-center border border-[#e8d0d0] text-[#c07080] mb-10">
@@ -223,7 +231,6 @@ const MyReports = (props) => {
                         )}
                       </div>
 
-                      {/* Claims received on this found item (founder review) */}
                       {item.__kind === 'Found' && pendingClaims.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-[#f5f0f0] space-y-3">
                           {pendingClaims.map((claim) => (
@@ -249,7 +256,36 @@ const MyReports = (props) => {
                         </div>
                       )}
 
-                      {/* Approved claims — leave a review for the claimant */}
+                      {item.__kind === 'Lost' && (matchesByLostId[item._id] || []).length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-[#f5f0f0]">
+                          <p className="text-xs font-bold text-[#800020] mb-2">
+                            💡 {(matchesByLostId[item._id] || []).length} possible match{(matchesByLostId[item._id] || []).length > 1 ? 'es' : ''} found
+                          </p>
+                          <div className="space-y-2">
+                            {(matchesByLostId[item._id] || []).map((m) => (
+                              <div key={m.foundItem._id} className="flex items-center justify-between bg-[#fff8f8] rounded-xl p-3 border border-[#e8d0d0] gap-3">
+                                <div className="min-w-0">
+                                  <p className="text-sm font-bold text-[#2e1a1a] truncate">{m.foundItem.itemName}</p>
+                                  <p className="text-xs text-[#c07080]">📍 {m.foundItem.location?.buildingName || 'Unknown location'} · {m.score}% match</p>
+                                </div>
+                                <div className="flex gap-2 flex-shrink-0">
+                                  <button
+                                    onClick={() => props.onViewDetails && props.onViewDetails({ ...m.foundItem, __type: 'FOUND' })}
+                                    className="text-xs font-bold text-[#800020] bg-white border border-[#e8d0d0] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#fff0f0]">
+                                    View
+                                  </button>
+                                  <button
+                                    onClick={() => props.onGoToFoundItems && props.onGoToFoundItems()}
+                                    className="text-xs font-bold text-white bg-[#800020] hover:bg-[#a0002a] px-3 py-1.5 rounded-lg cursor-pointer">
+                                    Go Claim It
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {item.__kind === 'Found' && approvedClaims.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-[#f5f0f0] space-y-2">
                           {approvedClaims.map((claim) => (
@@ -257,15 +293,22 @@ const MyReports = (props) => {
                               <p className="text-sm text-[#2e1a1a]">
                                 Given to <span className="font-bold">{claim.claimedBy?.name || 'the claimant'}</span>
                               </p>
-                              {hasReviewed(claim._id) ? (
-                                <span className="text-xs font-bold text-green-700">✓ Reviewed</span>
-                              ) : (
+                              <div className="flex gap-2">
                                 <button
-                                  onClick={() => openRateModal(claim._id, claim.claimedBy?.name || 'this student')}
-                                  className="text-xs font-bold text-[#800020] bg-white border border-[#e8d0d0] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#fff0f0]">
-                                  ⭐ Rate
+                                  onClick={() => props.onOpenChat && props.onOpenChat(claim._id, claim.claimedBy?.name || 'the claimant')}
+                                  className="text-xs font-bold text-white bg-[#800020] hover:bg-[#a0002a] px-3 py-1.5 rounded-lg cursor-pointer">
+                                  💬 Chat
                                 </button>
-                              )}
+                                {hasReviewed(claim._id) ? (
+                                  <span className="text-xs font-bold text-green-700 self-center">✓ Reviewed</span>
+                                ) : (
+                                  <button
+                                    onClick={() => openRateModal(claim._id, claim.claimedBy?.name || 'this student')}
+                                    className="text-xs font-bold text-[#800020] bg-white border border-[#e8d0d0] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#fff0f0]">
+                                    ⭐ Rate
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -276,7 +319,6 @@ const MyReports = (props) => {
               </div>
             )}
 
-            {/* SECTION 2: Claims I Submitted */}
             <h2 className="font-headings text-lg text-[#2e1a1a] mb-3 font-bold">Claims I've Made</h2>
             {myClaims.length === 0 ? (
               <div className="bg-white p-8 rounded-3xl text-center border border-[#e8d0d0] text-[#c07080]">
@@ -332,7 +374,6 @@ const MyReports = (props) => {
         )}
       </div>
 
-      {/* RATE MODAL */}
       {rateTarget && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">

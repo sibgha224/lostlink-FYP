@@ -1,13 +1,3 @@
-// One-time script to create (or promote) an admin account.
-// The signup form only ever creates role: 'student' accounts, and there is
-// no in-app way to become an admin — this script is the missing piece.
-//
-// Usage (from the backend/ folder, after setting up your .env):
-//   node scripts/seedAdmin.js "Admin Name" admin@college.edu.pk "StrongPass123!"
-//
-// If a user with that email already exists, it is promoted to role:'admin',
-// verified, and unblocked instead of creating a duplicate account.
-
 require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -30,6 +20,15 @@ const run = async () => {
       user.role = 'admin';
       user.isVerified = true;
       user.isBlocked = false;
+      if (!user.academicLevel) user.academicLevel = 'BS';
+      if (!user.department) user.department = 'Administration';
+      if (!user.shift) user.shift = 'Morning';
+      if (!user.session) user.session = '2020-2024';
+      if (!user.rollNo) user.rollNo = `ADMIN-${Date.now().toString().slice(-6)}`;
+      if (passwordArg) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(passwordArg, salt);
+      }
       await user.save();
       console.log(`Existing user "${email}" promoted to admin.`);
     } else {
@@ -41,6 +40,7 @@ const run = async () => {
         email,
         password: hashedPassword,
         rollNo: `ADMIN-${Date.now().toString().slice(-6)}`,
+        academicLevel: 'BS',
         department: 'Administration',
         shift: 'Morning',
         session: '2020-2024',

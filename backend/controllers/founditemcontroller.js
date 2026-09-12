@@ -1,4 +1,8 @@
-const FoundItem = require('../models/founditem'); 
+const FoundItem = require('../models/founditem');
+const LostItem = require('../models/lostitem');
+const { calculateMatchScore, MATCH_THRESHOLD } = require('./matchingcontroller');
+const { createNotification } = require('./notificationcontroller');
+
 const reportFoundItem = async (req, res) => {
   try {
     const {
@@ -168,7 +172,6 @@ const searchFoundItems = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-// Admin-only: found items still awaiting verification before they go public
 const getPendingFoundItems = async (req, res) => {
   try {
     const foundItems = await FoundItem.find({ isApproved: false })
@@ -196,6 +199,23 @@ const approveFoundItem = async (req, res) => {
       message: 'Found item approved successfully!',
       foundItem
     });
+
+    try {
+      const candidates = await LostItem.find({ status: 'active' });
+      for (const lostItem of candidates) {
+        const score = calculateMatchScore(lostItem, foundItem);
+        if (score >= MATCH_THRESHOLD) {
+          await createNotification(req, {
+            recipient: lostItem.userId,
+            type: 'item_matched',
+            message: `A found item "${foundItem.itemName}" might match your lost "${lostItem.itemName}".`,
+            relatedItem: foundItem._id
+          });
+        }
+      }
+    } catch (matchError) {
+      console.log('Match notification error:', matchError.message);
+    }
 
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

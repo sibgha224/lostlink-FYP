@@ -33,10 +33,13 @@ const sendMessage = async (req, res) => {
   try {
     const { claimId } = req.params;
     const { text } = req.body;
-    const image = req.file ? req.file.path : '';
+    const image = req.files?.image?.[0] ? req.files.image[0].path : '';
+    const audio = req.files?.audio?.[0] ? req.files.audio[0].path : '';
+    const file = req.files?.file?.[0] ? req.files.file[0].path : '';
+    const fileName = req.files?.file?.[0] ? req.files.file[0].originalname : '';
 
-    if ((!text || !text.trim()) && !image) {
-      return res.status(400).json({ message: 'Message text or image is required' });
+    if ((!text || !text.trim()) && !image && !audio && !file) {
+      return res.status(400).json({ message: 'Message text, image, voice note or file is required' });
     }
 
     const result = await getClaimParticipants(claimId, req.user._id, req.user.role);
@@ -51,7 +54,10 @@ const sendMessage = async (req, res) => {
       claim: claimId,
       sender: req.user._id,
       text: text ? text.trim() : '',
-      image
+      image,
+      audio,
+      file,
+      fileName
     });
 
     const io = req.app.get('socketio');
@@ -178,6 +184,9 @@ const deleteMessage = async (req, res) => {
     message.isDeleted = true;
     message.text = '';
     message.image = '';
+    message.audio = '';
+    message.file = '';
+    message.fileName = '';
     await message.save();
 
     const io = req.app.get('socketio');

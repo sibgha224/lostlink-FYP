@@ -25,7 +25,7 @@ const FoundItems = (props) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [claimTarget, setClaimTarget] = useState(null); // item being claimed
+  const [claimTarget, setClaimTarget] = useState(null);
   const [proofDescription, setProofDescription] = useState('');
   const [proofImage, setProofImage] = useState(null);
   const [claimSubmitting, setClaimSubmitting] = useState(false);
@@ -66,6 +66,7 @@ const FoundItems = (props) => {
       if (!response.ok) throw new Error(data.message || 'Failed to submit claim');
       setClaimedIds(prev => [...prev, claimTarget._id]);
       setClaimTarget(null);
+      props.onClaimSuccess && props.onClaimSuccess();
     } catch (err) {
       setClaimError(err.message);
     } finally {
@@ -111,10 +112,8 @@ const FoundItems = (props) => {
         .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(128,0,32,0.08) !important; }
       `}</style>
 
-      {/* ===== MAIN CONTENT WRAPPER ===== */}
       <div className="max-w-7xl mx-auto px-[4%] py-10">
 
-        {/* Page Title & Notice */}
         <div className="text-center mb-10">
           <h1 className="font-headings text-3xl md:text-4xl text-[#2e1a1a] mb-2">Found Items</h1>
           <p className="text-sm text-[#c07080] italic mb-1">(Please note that the pictures are for illustrative purposes only)</p>
@@ -123,7 +122,6 @@ const FoundItems = (props) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
 
-          {/* LEFT SIDEBAR: Categories */}
           <aside className="bg-white rounded-2xl p-5 border border-[#e8d0d0] h-fit shadow-sm">
             <h3 className="font-headings text-lg text-[#2e1a1a] mb-4 pb-2 border-b border-[#e8d0d0]">Categories</h3>
             <ul className="flex flex-col gap-1.5">
@@ -141,9 +139,7 @@ const FoundItems = (props) => {
             </ul>
           </aside>
 
-          {/* RIGHT CONTENT: Search & Items Grid */}
           <main>
-            {/* Search Bar */}
             <div className="mb-6">
               <input
                 type="text"
@@ -158,7 +154,6 @@ const FoundItems = (props) => {
               <div className="mb-4 p-3 bg-red-100 text-red-700 text-sm rounded-xl font-medium">{error}</div>
             )}
 
-            {/* Items Grid matching Home page card style */}
             {loading ? (
               <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-[#e8d0d0]">
                 <p className="text-[#c07080] font-medium">Loading found items...</p>
@@ -184,7 +179,7 @@ const FoundItems = (props) => {
                       <div className="flex justify-between items-center text-[0.78rem] text-[#c07080] pt-3 border-t border-[#fff8f8] mb-2">
                         <span>{timeAgo(item.createdAt)}</span>
                         <button
-                          onClick={() => alert(`${item.itemName}\n\nCategory: ${item.category}\nDescription: ${item.description || 'N/A'}\nLocation: ${item.location?.buildingName || 'N/A'}${item.location?.specificLocation ? ', ' + item.location.specificLocation : ''}`)}
+                          onClick={() => props.onViewDetails && props.onViewDetails({ ...item, __type: 'FOUND' })}
                           className="bg-transparent text-[#800020] border-none font-bold cursor-pointer text-[0.83rem] hover:underline">
                           Details
                         </button>
@@ -212,7 +207,6 @@ const FoundItems = (props) => {
         </div>
       </div>
 
-      {/* ===== CLAIM MODAL ===== */}
       {claimTarget && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => !claimSubmitting && setClaimTarget(null)}>
           <div className="bg-white rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
@@ -232,8 +226,23 @@ const FoundItems = (props) => {
             />
 
             <label className="block text-xs font-bold text-[#800020] mb-1.5">Proof Image (Optional)</label>
-            <input type="file" accept="image/*" onChange={(e) => setProofImage(e.target.files[0])}
-              className="w-full text-sm mb-4" />
+            {!proofImage ? (
+              <div
+                onClick={() => document.getElementById('claimImageInputFound').click()}
+                className="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors mb-4"
+                style={{ borderColor: '#e8d0d0' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#800020'; e.currentTarget.style.backgroundColor = '#fff8f8'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e8d0d0'; e.currentTarget.style.backgroundColor = 'transparent'; }}>
+                <input type="file" id="claimImageInputFound" accept="image/*" onChange={(e) => setProofImage(e.target.files[0])} className="hidden" />
+                <p className="text-xs font-semibold text-[#2e1a1a]">📷 Click to add a photo</p>
+                <p className="text-[0.7rem] text-[#c07080] mt-0.5">Optional — helps prove the item is yours</p>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between bg-[#fff8f8] rounded-xl px-3 py-2.5 border border-[#e8d0d0] mb-4">
+                <span className="text-xs font-semibold text-[#2e1a1a] truncate">📎 {proofImage.name}</span>
+                <button type="button" onClick={() => setProofImage(null)} className="text-xs font-bold text-[#800020] cursor-pointer ml-2 flex-shrink-0">Remove</button>
+              </div>
+            )}
 
             <div className="flex justify-end gap-3">
               <button onClick={() => setClaimTarget(null)} disabled={claimSubmitting}

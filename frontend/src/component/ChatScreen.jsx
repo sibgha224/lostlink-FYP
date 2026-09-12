@@ -8,6 +8,10 @@ const ChatScreen = ({ claimId, partnerName, onBack }) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [recordedAudio, setRecordedAudio] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
   const [isChatDisabled, setIsChatDisabled] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -17,13 +21,16 @@ const ChatScreen = ({ claimId, partnerName, onBack }) => {
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordTimerRef = useRef(null);
   const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+  const currentUserId = currentUser?._id || currentUser?.id;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  // Load message history + connect socket for this claim
   useEffect(() => {
     if (!claimId) {
       setLoading(false);
@@ -96,12 +103,14 @@ const ChatScreen = ({ claimId, partnerName, onBack }) => {
   };
 
   const handleSend = async () => {
-    if ((!inputText.trim() && !selectedImage) || !claimId || sending) return;
+    if ((!inputText.trim() && !selectedImage && !recordedAudio && !selectedFile) || !claimId || sending) return;
     const token = localStorage.getItem('token');
 
     const payload = new FormData();
     if (inputText.trim()) payload.append('text', inputText.trim());
     if (selectedImage) payload.append('image', selectedImage);
+    if (recordedAudio) payload.append('audio', recordedAudio, 'voice-note.webm');
+    if (selectedFile) payload.append('file', selectedFile);
 
     try {
       setSending(true);
@@ -115,6 +124,8 @@ const ChatScreen = ({ claimId, partnerName, onBack }) => {
       setMessages((prev) => [...prev, data]);
       setInputText('');
       setSelectedImage(null);
+      setRecordedAudio(null);
+      setSelectedFile(null);
       socketRef.current?.emit('stop_typing', { claimId });
     } catch (err) {
       setError(err.message);
@@ -122,6 +133,39 @@ const ChatScreen = ({ claimId, partnerName, onBack }) => {
       setSending(false);
     }
   };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setRecordedAudio(blob);
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+      setRecordSeconds(0);
+      recordTimerRef.current = setInterval(() => setRecordSeconds((s) => s + 1), 1000);
+    } catch (err) {
+      setError('Microphone access denied or unavailable.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (recordTimerRef.current) clearInterval(recordTimerRef.current);
+    }
+  };
+
+  const cancelRecordedAudio = () => setRecordedAudio(null);
 
   if (!claimId) {
     return (
@@ -141,7 +185,6 @@ const ChatScreen = ({ claimId, partnerName, onBack }) => {
         .font-headings { font-family: 'Fraunces', serif; }
       `}</style>
 
-      {/* HEADER */}
       <header className="sticky top-0 z-50 bg-white border-b border-[#e8d0d0] px-4 py-3 flex flex-col shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -173,7 +216,6 @@ const ChatScreen = ({ claimId, partnerName, onBack }) => {
         </div>
       )}
 
-      {/* MESSAGES AREA */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {loading ? (
           <div className="flex justify-center items-center h-full text-center text-[#c07080] font-medium text-sm">
@@ -185,7 +227,7 @@ const ChatScreen = ({ claimId, partnerName, onBack }) => {
           </div>
         ) : (
           messages.map((msg) => {
-            const isMe = (msg.sender?._id || msg.sender) === currentUser?._id;
+            const isMe = (msg.sender?._id || msg.sender) === currentUserId;
             return (
               <div key={msg._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[75%] md:max-w-[50%] rounded-2xl p-3 shadow-sm ${
@@ -199,6 +241,20 @@ const ChatScreen = ({ claimId, partnerName, onBack }) => {
                         <div className="mb-2 overflow-hidden rounded-xl">
                           <img src={msg.image} alt="attachment" className="w-full h-36 object-cover" />
                         </div>
+                      )}
+                      {msg.audio && (
+                        <audio controls src={msg.audio} className="mb-2 max-w-full" style={{ height: '36px' }} />
+                      )}
+                      {msg.file && (
+                        <a
+                          href={msg.file}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`mb-2 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold ${
+                            isMe ? 'bg-white/15 text-white' : 'bg-[#F5F0F0] text-[#2e1a1a]'
+                          }`}>
+                          📄 <span className="truncate max-w-[180px]">{msg.fileName || 'Download file'}</span>
+                        </a>
                       )}
                       {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
                     </>
@@ -222,37 +278,80 @@ const ChatScreen = ({ claimId, partnerName, onBack }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* TYPING BOX */}
       {!isChatDisabled && (
-        <div className="p-3 bg-white border-t border-[#e8d0d0] flex items-center gap-2">
-          <label className="cursor-pointer p-2 rounded-xl hover:bg-[#fff8f8] text-[#800020]">
-            📎
+        <div className="bg-white border-t border-[#e8d0d0]">
+          {recordedAudio && (
+            <div className="flex items-center justify-between px-4 pt-2">
+              <div className="flex items-center gap-2 bg-[#fff8f8] border border-[#e8d0d0] rounded-xl px-3 py-1.5">
+                <span className="text-xs font-semibold text-[#2e1a1a]">🎤 Voice note ready</span>
+                <audio controls src={URL.createObjectURL(recordedAudio)} style={{ height: '28px' }} />
+              </div>
+              <button onClick={cancelRecordedAudio} className="text-xs font-bold text-[#800020] cursor-pointer ml-2">Remove</button>
+            </div>
+          )}
+
+          {selectedFile && (
+            <div className="flex items-center justify-between px-4 pt-2">
+              <div className="flex items-center gap-2 bg-[#fff8f8] border border-[#e8d0d0] rounded-xl px-3 py-1.5">
+                <span className="text-xs font-semibold text-[#2e1a1a]">📄 {selectedFile.name}</span>
+              </div>
+              <button onClick={() => setSelectedFile(null)} className="text-xs font-bold text-[#800020] cursor-pointer ml-2">Remove</button>
+            </div>
+          )}
+
+          {isRecording && (
+            <div className="flex items-center justify-between px-4 pt-2">
+              <span className="text-xs font-semibold text-red-600">● Recording... {recordSeconds}s</span>
+              <button onClick={stopRecording} className="text-xs font-bold text-white bg-red-600 rounded-lg px-3 py-1.5 cursor-pointer">Stop</button>
+            </div>
+          )}
+
+          <div className="p-3 flex items-center gap-2">
+            <label className="cursor-pointer p-2 rounded-xl hover:bg-[#fff8f8] text-[#800020]">
+              📎
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => setSelectedImage(e.target.files[0])}
+              />
+            </label>
+
+            <button
+              type="button"
+              onClick={isRecording ? stopRecording : startRecording}
+              className={`p-2 rounded-xl cursor-pointer ${isRecording ? 'bg-red-50 text-red-600' : 'hover:bg-[#fff8f8] text-[#800020]'}`}>
+              🎤
+            </button>
+
+            <label className="cursor-pointer p-2 rounded-xl hover:bg-[#fff8f8] text-[#800020]">
+              📄
+              <input
+                type="file"
+                className="hidden"
+                onChange={(e) => setSelectedFile(e.target.files[0])}
+              />
+            </label>
+
             <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => setSelectedImage(e.target.files[0])}
+              type="text"
+              placeholder={selectedImage ? `Image attached: ${selectedImage.name}` : selectedFile ? `File attached: ${selectedFile.name}` : 'Type a message...'}
+              value={inputText}
+              onChange={(e) => {
+                setInputText(e.target.value);
+                emitTyping();
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              className="flex-1 bg-[#F5F0F0] border border-[#e8d0d0] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#800020] text-[#2e1a1a]"
             />
-          </label>
 
-          <input
-            type="text"
-            placeholder={selectedImage ? `Image attached: ${selectedImage.name}` : 'Type a message...'}
-            value={inputText}
-            onChange={(e) => {
-              setInputText(e.target.value);
-              emitTyping();
-            }}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            className="flex-1 bg-[#F5F0F0] border border-[#e8d0d0] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#800020] text-[#2e1a1a]"
-          />
-
-          <button
-            onClick={handleSend}
-            disabled={sending}
-            className="bg-gradient-to-r from-[#800020] to-[#4a0010] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow cursor-pointer disabled:opacity-60">
-            {sending ? '...' : 'Send'}
-          </button>
+            <button
+              onClick={handleSend}
+              disabled={sending}
+              className="bg-gradient-to-r from-[#800020] to-[#4a0010] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow cursor-pointer disabled:opacity-60">
+              {sending ? '...' : 'Send'}
+            </button>
+          </div>
         </div>
       )}
     </div>

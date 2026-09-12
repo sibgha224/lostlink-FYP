@@ -1,14 +1,6 @@
 const LostItem = require('../models/lostitem');
 const FoundItem = require('../models/founditem');
 
-// ============================================================
-// Automated Item Matching
-//
-// Rule-based matcher: category match + keyword overlap in the
-// description + location match. Scores each lost/found pair and
-// surfaces the ones above a threshold as likely matches.
-// ============================================================
-
 const STOPWORDS = new Set([
   'the', 'a', 'an', 'with', 'and', 'or', 'of', 'in', 'on', 'at', 'is', 'was',
   'it', 'its', 'to', 'for', 'my', 'i', 'this', 'that', 'near', 'has', 'had'
@@ -23,7 +15,6 @@ const tokenize = (text) => {
     .filter((w) => w.length > 1 && !STOPWORDS.has(w));
 };
 
-// Jaccard similarity between two word sets (0 to 1)
 const textSimilarity = (textA, textB) => {
   const setA = new Set(tokenize(textA));
   const setB = new Set(tokenize(textB));
@@ -41,34 +32,38 @@ const textSimilarity = (textA, textB) => {
 const calculateMatchScore = (lostItem, foundItem) => {
   let score = 0;
 
-  // Category match — 35%
   if (lostItem.category && foundItem.category && lostItem.category === foundItem.category) {
-    score += 0.35;
+    score += 0.30;
   }
 
-  // Description + item name text similarity — 45%
-  const lostText = `${lostItem.itemName} ${lostItem.description} ${lostItem.color || ''} ${lostItem.brand || ''}`;
-  const foundText = `${foundItem.itemName} ${foundItem.description} ${foundItem.color || ''} ${foundItem.brand || ''}`;
-  score += textSimilarity(lostText, foundText) * 0.45;
+  const lostName = (lostItem.itemName || '').trim().toLowerCase();
+  const foundName = (foundItem.itemName || '').trim().toLowerCase();
+  const nameSim = textSimilarity(lostName, foundName);
+  if (lostName && foundName && (lostName.includes(foundName) || foundName.includes(lostName))) {
+    score += 0.30;
+  } else {
+    score += nameSim * 0.30;
+  }
 
-  // Location match — 15%
+  const lostText = `${lostItem.description} ${lostItem.color || ''} ${lostItem.brand || ''}`;
+  const foundText = `${foundItem.description} ${foundItem.color || ''} ${foundItem.brand || ''}`;
+  score += textSimilarity(lostText, foundText) * 0.20;
+
   const lostLoc = (lostItem.location?.buildingName || '').trim().toLowerCase();
   const foundLoc = (foundItem.location?.buildingName || '').trim().toLowerCase();
   if (lostLoc && foundLoc && (lostLoc === foundLoc || lostLoc.includes(foundLoc) || foundLoc.includes(lostLoc))) {
     score += 0.15;
   }
 
-  // Color exact match bonus — 5%
   if (lostItem.color && foundItem.color && lostItem.color.trim().toLowerCase() === foundItem.color.trim().toLowerCase()) {
     score += 0.05;
   }
 
-  return Math.round(score * 100); // percentage 0-100
+  return Math.round(Math.min(score, 1) * 100);
 };
 
-const MATCH_THRESHOLD = 40; // % — only surface matches above this score
+const MATCH_THRESHOLD = 35;
 
-// GET /api/matching/lost/:lostItemId  → found-item candidates for one lost item
 const getMatchesForLostItem = async (req, res) => {
   try {
     const lostItem = await LostItem.findById(req.params.lostItemId);
@@ -96,7 +91,6 @@ const getMatchesForLostItem = async (req, res) => {
   }
 };
 
-// GET /api/matching/found/:foundItemId  → lost-item candidates for one found item
 const getMatchesForFoundItem = async (req, res) => {
   try {
     const foundItem = await FoundItem.findById(req.params.foundItemId);
@@ -124,7 +118,6 @@ const getMatchesForFoundItem = async (req, res) => {
   }
 };
 
-// GET /api/matching/my-matches  → best matches across all of the logged-in user's active lost items
 const getMyMatches = async (req, res) => {
   try {
     const myLostItems = await LostItem.find({ userId: req.user._id, status: 'active' });
@@ -153,5 +146,6 @@ module.exports = {
   calculateMatchScore,
   getMatchesForLostItem,
   getMatchesForFoundItem,
-  getMyMatches
+  getMyMatches,
+  MATCH_THRESHOLD
 };

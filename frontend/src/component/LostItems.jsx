@@ -64,10 +64,8 @@ const LostItems = (props) => {
         .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(128,0,32,0.08) !important; }
       `}</style>
 
-      {/* ===== MAIN CONTENT WRAPPER ===== */}
       <div className="max-w-7xl mx-auto px-[4%] py-10">
 
-        {/* Page Title & Notice */}
         <div className="text-center mb-10">
           <h1 className="font-headings text-3xl md:text-4xl text-[#2e1a1a] mb-2">Lost Items</h1>
           <p className="text-sm text-[#c07080] italic mb-1">(Please note that the pictures are for illustrative purposes only)</p>
@@ -76,7 +74,6 @@ const LostItems = (props) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
 
-          {/* LEFT SIDEBAR: Categories */}
           <aside className="bg-white rounded-2xl p-5 border border-[#e8d0d0] h-fit shadow-sm">
             <h3 className="font-headings text-lg text-[#2e1a1a] mb-4 pb-2 border-b border-[#e8d0d0]">Categories</h3>
             <ul className="flex flex-col gap-1.5">
@@ -94,9 +91,7 @@ const LostItems = (props) => {
             </ul>
           </aside>
 
-          {/* RIGHT CONTENT: Search & Items Grid */}
           <main>
-            {/* Search Bar */}
             <div className="mb-6">
               <input
                 type="text"
@@ -111,7 +106,6 @@ const LostItems = (props) => {
               <div className="mb-4 p-3 bg-red-100 text-red-700 text-sm rounded-xl font-medium">{error}</div>
             )}
 
-            {/* Items Grid */}
             {loading ? (
               <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-[#e8d0d0]">
                 <p className="text-[#c07080] font-medium">Loading lost items...</p>
@@ -137,7 +131,7 @@ const LostItems = (props) => {
                       <div className="flex justify-between items-center text-[0.78rem] text-[#c07080] pt-3 border-t border-[#fff8f8]">
                         <span>{timeAgo(item.createdAt)}</span>
                         <button
-                          onClick={() => alert(`${item.itemName}\n\nCategory: ${item.category}\nDescription: ${item.description || 'N/A'}\nLocation: ${item.location?.buildingName || 'N/A'}${item.location?.specificLocation ? ', ' + item.location.specificLocation : ''}\nContact: ${item.contactName || item.userId?.name || 'N/A'} (${item.contactEmail || item.userId?.email || 'N/A'})`)}
+                          onClick={() => props.onViewDetails && props.onViewDetails({ ...item, __type: 'LOST' })}
                           className="bg-transparent text-[#800020] border-none font-bold cursor-pointer text-[0.83rem] hover:underline">
                           Details
                         </button>

@@ -250,7 +250,7 @@ const Home = (props) => {
                 <p className="text-[0.85rem] text-[#c07080] m-0 mb-3.5 flex-1 leading-[1.5] font-medium">📍 {item.location}</p>
                 <div className="flex justify-between items-center text-[0.78rem] text-[#c07080] pt-3" style={{ borderTop: '1px solid #fff8f8' }}>
                   <span>{item.status}</span>
-                  <button onClick={() => props.onGoToAllItems && props.onGoToAllItems(item.name)} className="bg-transparent text-[#800020] border-none font-bold cursor-pointer text-[0.83rem]">Details</button>
+                  <button onClick={() => props.onGoToAllItems && props.onGoToAllItems()} className="bg-transparent text-[#800020] border-none font-bold cursor-pointer text-[0.83rem]">Details</button>
                 </div>
               </div>
             ))}

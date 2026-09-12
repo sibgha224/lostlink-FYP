@@ -1,4 +1,7 @@
 const LostItem = require('../models/lostitem');
+const FoundItem = require('../models/founditem');
+const { calculateMatchScore, MATCH_THRESHOLD } = require('./matchingcontroller');
+const { createNotification } = require('./notificationcontroller');
 
 
 const reportLostItem = async (req, res) => {
@@ -43,6 +46,23 @@ const reportLostItem = async (req, res) => {
       message: 'Lost item reported successfully!',
       lostItem
     });
+
+    try {
+      const candidates = await FoundItem.find({ status: 'active', isApproved: true });
+      for (const foundItem of candidates) {
+        const score = calculateMatchScore(lostItem, foundItem);
+        if (score >= MATCH_THRESHOLD) {
+          await createNotification(req, {
+            recipient: lostItem.userId,
+            type: 'item_matched',
+            message: `A found item "${foundItem.itemName}" might match your lost "${lostItem.itemName}".`,
+            relatedItem: foundItem._id
+          });
+        }
+      }
+    } catch (matchError) {
+      console.log('Match notification error:', matchError.message);
+    }
 
   } catch (error) {
     console.log('ReportLostItem error:', error.message);
