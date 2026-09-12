@@ -179,6 +179,19 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,800&display=swap');
         .font-headings { font-family: 'Fraunces', serif; }
+
+        /* Edge/IE ka built-in password reveal & clear icon hide karne ke liye,
+           taake sirf custom EyeIcon hi dikhe (double-eye issue fix) */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+          display: none;
+        }
+
+        /* Chrome/Safari autofill ka apna credentials icon bhi hide kar dein */
+        input::-webkit-credentials-auto-fill-button {
+          visibility: hidden;
+          display: none !important;
+        }
       `}</style>
 
       {/* Top-Left Logo */}
