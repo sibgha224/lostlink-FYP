@@ -1,7 +1,7 @@
 const FoundItem = require('../models/founditem');
 const LostItem = require('../models/lostitem');
 const { calculateMatchScore, MATCH_THRESHOLD } = require('./matchingcontroller');
-const { createNotification } = require('./notificationcontroller');
+const { createNotification, notifyAllUsersExcept, notifyAdmins } = require('./notificationcontroller');
 
 const reportFoundItem = async (req, res) => {
   try {
@@ -45,6 +45,21 @@ const reportFoundItem = async (req, res) => {
       message: 'Found item reported successfully!',
       foundItem
     });
+
+    try {
+      await notifyAllUsersExcept(req, req.user._id, {
+        type: 'new_found_item',
+        message: `${req.user.name || 'A user'} reported a found item: "${foundItem.itemName}".`,
+        relatedItem: foundItem._id
+      });
+      await notifyAdmins(req, {
+        type: 'new_found_item',
+        message: `${req.user.name || 'A user'} reported a found item: "${foundItem.itemName}".`,
+        relatedItem: foundItem._id
+      });
+    } catch (broadcastError) {
+      console.log('Found item broadcast notification error:', broadcastError.message);
+    }
 
   } catch (error) {
     console.log('ReportFoundItem error:', error.message);

@@ -1,7 +1,7 @@
 const Claim = require('../models/claim');
 const FoundItem = require('../models/founditem');
 const sendEmail = require('../utils/sendemail');
-const { createNotification } = require('./notificationcontroller');
+const { createNotification, notifyAdmins } = require('./notificationcontroller');
 
 const submitClaim = async (req, res) => {
   try {
@@ -50,6 +50,12 @@ const submitClaim = async (req, res) => {
         relatedItem: item._id
       });
     }
+
+    await notifyAdmins(req, {
+      type: 'claim_submitted',
+      message: `${req.user.name || 'A user'} submitted a claim on "${item.itemName || 'Found Item'}".`,
+      relatedItem: item._id
+    });
 
     res.status(201).json({
       message: 'Claim submitted successfully!',
@@ -113,7 +119,6 @@ const updateClaimStatus = async (req, res) => {
       });
     }
 
-    // Authorization 
     if (!item.userId || item.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -152,7 +157,6 @@ const updateClaimStatus = async (req, res) => {
       );
     }
 
-    // Claimer ko decision ki notification
     if (claim.claimedBy) {
       await createNotification(req, {
         recipient: claim.claimedBy._id,
@@ -161,6 +165,12 @@ const updateClaimStatus = async (req, res) => {
         relatedItem: item._id
       });
     }
+
+    await notifyAdmins(req, {
+      type: status === 'approved' ? 'claim_approved' : 'claim_rejected',
+      message: `A claim on "${item.itemName || 'Item'}" was ${status} by the finder.`,
+      relatedItem: item._id
+    });
 
     if (claim.claimedBy && claim.claimedBy.email) {
       try {
@@ -214,9 +224,6 @@ const getMyClaims = async (req, res) => {
   }
 };
 
-// Admin-only: every claim platform-wide, for oversight. Approve/reject stays
-// with the finder (peer-to-peer verification) — admins can only monitor here
-// and mark an item as returned once the finder has approved a claim.
 const getAllClaimsAdmin = async (req, res) => {
   try {
     const claims = await Claim.find({})
