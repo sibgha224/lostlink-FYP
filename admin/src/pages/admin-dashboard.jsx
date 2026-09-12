@@ -43,6 +43,8 @@ const NOTIF_TITLES = {
   claim_rejected: 'Claim Rejected',
   message: 'New Message',
   item_matched: 'Possible Item Match',
+  new_lost_item: 'New Lost Item Reported',
+  new_found_item: 'New Found Item Reported',
 };
 
 const buildMonthlyChart = (items) => {
@@ -77,21 +79,11 @@ export default function AdminDashboard() {
   const [loadError, setLoadError] = useState("");
   const [busyId, setBusyId] = useState(null);
 
-  // Active notifications state
   const [notifications, setNotifications] = useState([]);
 
   const unreadCount = notifications.filter(n => n.unread).length;
 
-  useEffect(() => {
-    if (!admin) {
-      navigate("/");
-      return;
-    }
-    loadDashboard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadDashboard = async () => {
+  async function loadDashboard() {
     setLoading(true);
     setLoadError("");
     try {
@@ -115,11 +107,30 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    if (!admin) {
+      navigate("/");
+      return;
+    }
+    
+    // ESLint fix: Async function to load data safely
+    const initDashboard = async () => {
+      await loadDashboard();
+    };
+    initDashboard();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const markAllRead = async () => {
     setNotifications(notifications.map(n => ({ ...n, unread: false })));
-    try { await adminFetch('/notifications/read-all', { method: 'PUT' }); } catch { /* silent */ }
+    try {
+      await adminFetch('/notifications/read-all', { method: 'PUT' });
+    } catch (err) {
+      console.error('Failed to mark notifications as read:', err.message);
+    }
   };
 
   const markSingleRead = (id) => {
@@ -202,7 +213,6 @@ export default function AdminDashboard() {
         @media(min-width:901px){.mob-overlay{display:none!important} .hamburger{display:none!important}}
       `}</style>
 
-      {/* SIDEBAR */}
       <aside className="sidebar-desk" style={{
         width:236, background:"#fff", borderRight:"1px solid #e8d0d0",
         position:"fixed", top:0, left:0, bottom:0, zIndex:50,
@@ -241,7 +251,6 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* MOBILE OVERLAY */}
       {sideOpen && (
         <div className="mob-overlay" style={{ position:"fixed", inset:0, zIndex:200 }}>
           <div onClick={() => setSideOpen(false)} style={{ position:"absolute", inset:0, background:"rgba(46,26,26,0.45)", backdropFilter:"blur(3px)" }} />
@@ -263,10 +272,8 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* MAIN CONTENT AREA */}
       <div className="main-wrap" style={{ marginLeft:236, flex:1, display:"flex", flexDirection:"column", minHeight:"100vh" }}>
 
-        {/* TOPBAR */}
         <header style={{ height:66, background:"rgba(255,255,255,0.95)", backdropFilter:"blur(10px)", borderBottom:"1px solid #e8d0d0", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 28px", position:"sticky", top:0, zIndex:40, boxShadow:"0 2px 10px rgba(74,0,16,0.05)" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
             <button className="hamburger icon-btn" onClick={() => setSideOpen(true)}><IcoMenu /></button>
@@ -282,7 +289,6 @@ export default function AdminDashboard() {
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             
-            {/* NOTIFICATION DROP-DOWN BUTTON */}
             <div style={{ position:"relative" }}>
               <button className="icon-btn" onClick={() => setNotifOpen(!notifOpen)}>
                 <IcoBell />
@@ -337,7 +343,6 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* PAGE CONTENT ROUTER */}
         <main style={{ flex:1, padding:"28px", overflowY:"auto" }}>
           {active === "dashboard" && (
             <>
@@ -352,7 +357,6 @@ export default function AdminDashboard() {
                 <div style={{ background:"#fee2e2", color:"#b91c1c", fontSize:13, fontWeight:600, padding:"12px 16px", borderRadius:14, marginBottom:20 }}>{loadError}</div>
               )}
 
-              {/* STATS & CHARTS */}
               <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:18, marginBottom:24 }}>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:18 }}>
                   <div style={{ borderRadius:20, padding:"22px", background:"linear-gradient(135deg,#800020,#4a0010)", color:"#fde8ec", boxShadow:"0 6px 20px rgba(128,0,32,0.35)" }}>
@@ -390,7 +394,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Pending approval queue */}
               {pendingApprovals.length > 0 && (
                 <div style={{ background:"#fffbeb", border:"1px solid #fde68a", borderRadius:20, padding:"18px 24px", marginBottom:24 }}>
                   <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:16, fontWeight:700, color:"#92400e", margin:"0 0 10px" }}>
@@ -416,7 +419,6 @@ export default function AdminDashboard() {
             </>
           )}
 
-          {/* TABLE FOR ITEMS */}
           {(active === "dashboard" || active === "items" || active === "found") && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, overflow:"hidden", boxShadow:"0 2px 12px rgba(74,0,16,0.05)" }}>
               <div style={{ padding:"18px 24px", borderBottom:"1px solid #f0e0e0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -468,24 +470,18 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* CLAIMS PAGE INTEGRATION */}
           {active === "claims" && <ClaimsPage />}
 
-          {/* USERS PAGE INTEGRATION */}
           {active === "users" && <UsersPage />}
 
-          {/* MESSAGES PAGE INTEGRATION */}
           {active === "messages" && <MessagesPage />}
 
-          {/* NOTIFICATIONS PAGE INTEGRATION */}
           {active === "notif" && (
             <NotificationsPage notifications={notifications} setNotifications={setNotifications} />
           )}
 
-          {/* SETTINGS PAGE INTEGRATION */}
           {active === "settings" && <SettingsPage />}
 
-          {/* OTHER PAGES PLACEHOLDER */}
           {!["dashboard", "items", "found", "claims", "users", "messages", "notif", "settings"].includes(active) && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, padding:40, textAlign:"center" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", color:"#800020", textTransform:"capitalize" }}>{active} Page</h2>
@@ -495,59 +491,52 @@ export default function AdminDashboard() {
         </main>
       </div>
 
-      {/* VIEW ITEM DETAILS MODAL */}
       {selectedItem && (
         <div style={{ position:"fixed", inset:0, background:"rgba(46,26,26,0.5)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:300, padding:20 }}>
-          <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, width:"100%", maxWidth:480, overflow:"hidden", boxShadow:"0 20px 50px rgba(74,0,16,0.2)" }}>
-            <div style={{ padding:"18px 24px", background:"linear-gradient(135deg,#800020,#4a0010)", color:"#fde8ec", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:24, width:"100%", maxWidth:480, overflow:"hidden", boxShadow:"0 20px 60px rgba(74,0,16,0.2)" }}>
+            <div style={{ padding:"20px 24px", borderBottom:"1px solid #f0e0e0", display:"flex", justifyContent:"space-between", alignItems:"center", background:"#fdf6f7" }}>
               <div>
-                <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:18, fontWeight:700, margin:0 }}>Item Details</h3>
-                <span style={{ fontSize:11, opacity:0.8 }}>ID: {shortId(selectedItem._id)}</span>
+                <span style={{ fontSize:10, fontWeight:700, color:"#800020", letterSpacing:"1px", textTransform:"uppercase" }}>{selectedItem.kind} Item Details</span>
+                <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:18, fontWeight:800, color:"#2e1a1a", margin:0 }}>{selectedItem.itemName}</h3>
               </div>
-              <button onClick={() => setSelectedItem(null)} style={{ background:"none", border:"none", color:"#fff", fontSize:18, cursor:"pointer" }}>✕</button>
+              <button onClick={() => setSelectedItem(null)} style={{ background:"none", border:"none", fontSize:18, color:"#c07080", cursor:"pointer", padding:4 }}>✕</button>
             </div>
-            <div style={{ padding:24, display:"flex", flexDirection:"column", gap:14 }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                <span style={{ fontSize:18, fontWeight:700, color:"#2e1a1a" }}>{selectedItem.itemName}</span>
-                <span style={{ padding:"4px 12px", borderRadius:100, fontSize:12, fontWeight:700, background:statusCfg[selectedItem.kind]?.bg, color:statusCfg[selectedItem.kind]?.color }}>
-                  {selectedItem.isApproved === false ? 'Pending' : (selectedItem.kind || 'Found')}
-                </span>
-              </div>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, background:"#fdf6f7", padding:14, borderRadius:12 }}>
-                <div>
-                  <p style={{ fontSize:10, textTransform:"uppercase", color:"#c07080", fontWeight:700 }}>Category</p>
-                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a" }}>{selectedItem.category}</p>
-                </div>
-                <div>
-                  <p style={{ fontSize:10, textTransform:"uppercase", color:"#c07080", fontWeight:700 }}>Date Reported</p>
-                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a" }}>{new Date(selectedItem.createdAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}</p>
-                </div>
-                <div>
-                  <p style={{ fontSize:10, textTransform:"uppercase", color:"#c07080", fontWeight:700 }}>Reporter Name</p>
-                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a" }}>{selectedItem.userId?.name || selectedItem.contactName || '—'}</p>
-                </div>
-                <div>
-                  <p style={{ fontSize:10, textTransform:"uppercase", color:"#c07080", fontWeight:700 }}>Contact</p>
-                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a" }}>{selectedItem.contactPhone || selectedItem.contactEmail || selectedItem.userId?.email || '—'}</p>
-                </div>
-              </div>
-              <div>
-                <p style={{ fontSize:10, textTransform:"uppercase", color:"#c07080", fontWeight:700, marginBottom:4 }}>Location</p>
-                <p style={{ fontSize:13, color:"#2e1a1a" }}>{selectedItem.location?.buildingName || '—'}{selectedItem.location?.specificLocation ? `, ${selectedItem.location.specificLocation}` : ''}</p>
-              </div>
-              <div>
-                <p style={{ fontSize:10, textTransform:"uppercase", color:"#c07080", fontWeight:700, marginBottom:4 }}>Description</p>
-                <p style={{ fontSize:13, color:"#6b4848", lineHeight:1.5 }}>{selectedItem.description}</p>
-              </div>
-              {selectedItem.imageURL && (
-                <img src={selectedItem.imageURL} alt={selectedItem.itemName} style={{ width:"100%", maxHeight:200, objectFit:"contain", borderRadius:12, background:"#fdf6f7" }} />
+            
+            <div style={{ padding:24, display:"flex", flexDirection:"column", gap:14, maxHeight:"70vh", overflowY:"auto" }}>
+              {selectedItem.image && (
+                <img src={selectedItem.image} alt={selectedItem.itemName} style={{ width:"100%", height:180, objectFit:"cover", borderRadius:14, border:"1px solid #e8d0d0" }} />
               )}
+              
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                <div>
+                  <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Category</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a", margin:"2px 0 0" }}>{selectedItem.category || '—'}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Reported Date</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a", margin:"2px 0 0" }}>{new Date(selectedItem.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Reporter</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a", margin:"2px 0 0" }}>{selectedItem.userId?.name || selectedItem.contactName || '—'}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Location</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a", margin:"2px 0 0" }}>{selectedItem.location?.buildingName || selectedItem.location || '—'}</p>
+                </div>
+              </div>
+
+              <div>
+                <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Description</p>
+                <p style={{ fontSize:13, color:"#2e1a1a", margin:"4px 0 0", lineHeight:1.5, background:"#f9f4f4", padding:12, borderRadius:10 }}>
+                  {selectedItem.description || 'No description provided.'}
+                </p>
+              </div>
             </div>
-            <div style={{ padding:"12px 24px 20px", display:"flex", justifyContent:"flex-end", gap:8 }}>
-              {selectedItem.isApproved === false && (
-                <button onClick={() => { handleApprove(selectedItem); setSelectedItem(null); }} style={{ background:"#16a34a", border:"none", borderRadius:10, padding:"8px 16px", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer" }}>✓ Approve</button>
-              )}
-              <button className="add-btn" onClick={() => setSelectedItem(null)}>Close</button>
+
+            <div style={{ padding:"16px 24px", background:"#fdf6f7", borderTop:"1px solid #f0e0e0", display:"flex", justifyContent:"flex-end", gap:10 }}>
+              <button onClick={() => setSelectedItem(null)} style={{ padding:"8px 16px", borderRadius:10, border:"1px solid #e8d0d0", background:"#fff", color:"#6b4848", fontSize:12, fontWeight:600, cursor:"pointer" }}>Close</button>
+              <button disabled={busyId === selectedItem._id} onClick={() => handleDelete(selectedItem)} style={{ padding:"8px 16px", borderRadius:10, border:"none", background:"#dc2626", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer" }}>Delete Item</button>
             </div>
           </div>
         </div>
