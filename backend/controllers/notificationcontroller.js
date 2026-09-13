@@ -1,4 +1,5 @@
 const Notification = require('../models/notification');
+const User = require('../models/user');
 
 const createNotification = async (req, { recipient, type, message, relatedItem }) => {
   try {
@@ -18,6 +19,28 @@ const createNotification = async (req, { recipient, type, message, relatedItem }
     return notification;
   } catch (error) {
     console.error('Notification creation failed:', error.message);
+  }
+};
+
+const notifyAllUsersExcept = async (req, excludeUserId, { type, message, relatedItem }) => {
+  try {
+    const users = await User.find({ role: 'student', _id: { $ne: excludeUserId } }).select('_id');
+    await Promise.all(
+      users.map(u => createNotification(req, { recipient: u._id, type, message, relatedItem }))
+    );
+  } catch (error) {
+    console.error('Broadcast notification failed:', error.message);
+  }
+};
+
+const notifyAdmins = async (req, { type, message, relatedItem }) => {
+  try {
+    const admins = await User.find({ role: 'admin' }).select('_id');
+    await Promise.all(
+      admins.map(a => createNotification(req, { recipient: a._id, type, message, relatedItem }))
+    );
+  } catch (error) {
+    console.error('Admin notification failed:', error.message);
   }
 };
 
@@ -63,4 +86,4 @@ const markAllAsRead = async (req, res) => {
   }
 };
 
-module.exports = { createNotification, getMyNotifications, markAsRead, markAllAsRead };
+module.exports = { createNotification, notifyAllUsersExcept, notifyAdmins, getMyNotifications, markAsRead, markAllAsRead };

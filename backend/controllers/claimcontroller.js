@@ -1,7 +1,7 @@
 const Claim = require('../models/claim');
 const FoundItem = require('../models/founditem');
 const sendEmail = require('../utils/sendemail');
-const { createNotification } = require('./notificationcontroller');
+const { createNotification, notifyAdmins } = require('./notificationcontroller');
 
 const submitClaim = async (req, res) => {
   try {
@@ -49,6 +49,16 @@ const submitClaim = async (req, res) => {
         message: `${req.user.name || 'A user'} has submitted a claim on your item "${item.itemName || 'Found Item'}".`,
         relatedItem: item._id
       });
+    }
+
+    try {
+      await notifyAdmins(req, {
+        type: 'claim_submitted',
+        message: `${req.user.name || 'A user'} submitted a claim on "${item.itemName || 'Found Item'}".`,
+        relatedItem: item._id
+      });
+    } catch (adminNotifyError) {
+      console.log('Admin claim notification error:', adminNotifyError.message);
     }
 
     res.status(201).json({
@@ -113,7 +123,6 @@ const updateClaimStatus = async (req, res) => {
       });
     }
 
-    // Authorization 
     if (!item.userId || item.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -152,7 +161,6 @@ const updateClaimStatus = async (req, res) => {
       );
     }
 
-    // Claimer ko decision ki notification
     if (claim.claimedBy) {
       await createNotification(req, {
         recipient: claim.claimedBy._id,
@@ -160,6 +168,16 @@ const updateClaimStatus = async (req, res) => {
         message: `Your claim for "${item.itemName || 'Item'}" has been ${status}.`,
         relatedItem: item._id
       });
+    }
+
+    try {
+      await notifyAdmins(req, {
+        type: status === 'approved' ? 'claim_approved' : 'claim_rejected',
+        message: `Claim on "${item.itemName || 'Item'}" was ${status} by the finder.`,
+        relatedItem: item._id
+      });
+    } catch (adminNotifyError) {
+      console.log('Admin claim-status notification error:', adminNotifyError.message);
     }
 
     if (claim.claimedBy && claim.claimedBy.email) {
@@ -214,9 +232,6 @@ const getMyClaims = async (req, res) => {
   }
 };
 
-// Admin-only: every claim platform-wide, for oversight. Approve/reject stays
-// with the finder (peer-to-peer verification) — admins can only monitor here
-// and mark an item as returned once the finder has approved a claim.
 const getAllClaimsAdmin = async (req, res) => {
   try {
     const claims = await Claim.find({})

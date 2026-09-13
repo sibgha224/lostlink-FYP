@@ -43,6 +43,8 @@ const NOTIF_TITLES = {
   claim_rejected: 'Claim Rejected',
   message: 'New Message',
   item_matched: 'Possible Item Match',
+  new_lost_item: 'New Lost Item Reported',
+  new_found_item: 'New Found Item Reported',
 };
 
 const buildMonthlyChart = (items) => {
@@ -77,19 +79,9 @@ export default function AdminDashboard() {
   const [loadError, setLoadError] = useState("");
   const [busyId, setBusyId] = useState(null);
 
-  // Active notifications state
   const [notifications, setNotifications] = useState([]);
 
   const unreadCount = notifications.filter(n => n.unread).length;
-
-  useEffect(() => {
-    if (!admin) {
-      navigate("/");
-      return;
-    }
-    loadDashboard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const loadDashboard = async () => {
     setLoading(true);
@@ -117,9 +109,21 @@ export default function AdminDashboard() {
     }
   };
 
+  useEffect(() => {
+    if (!admin) {
+      navigate("/");
+      return;
+    }
+    loadDashboard();
+  }, []);
+
   const markAllRead = async () => {
     setNotifications(notifications.map(n => ({ ...n, unread: false })));
-    try { await adminFetch('/notifications/read-all', { method: 'PUT' }); } catch { /* silent */ }
+    try {
+      await adminFetch('/notifications/read-all', { method: 'PUT' });
+    } catch (err) {
+      console.log('Mark all read failed:', err.message);
+    }
   };
 
   const markSingleRead = (id) => {
@@ -202,7 +206,6 @@ export default function AdminDashboard() {
         @media(min-width:901px){.mob-overlay{display:none!important} .hamburger{display:none!important}}
       `}</style>
 
-      {/* SIDEBAR */}
       <aside className="sidebar-desk" style={{
         width:236, background:"#fff", borderRight:"1px solid #e8d0d0",
         position:"fixed", top:0, left:0, bottom:0, zIndex:50,
@@ -241,7 +244,6 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* MOBILE OVERLAY */}
       {sideOpen && (
         <div className="mob-overlay" style={{ position:"fixed", inset:0, zIndex:200 }}>
           <div onClick={() => setSideOpen(false)} style={{ position:"absolute", inset:0, background:"rgba(46,26,26,0.45)", backdropFilter:"blur(3px)" }} />
@@ -263,10 +265,8 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* MAIN CONTENT AREA */}
       <div className="main-wrap" style={{ marginLeft:236, flex:1, display:"flex", flexDirection:"column", minHeight:"100vh" }}>
 
-        {/* TOPBAR */}
         <header style={{ height:66, background:"rgba(255,255,255,0.95)", backdropFilter:"blur(10px)", borderBottom:"1px solid #e8d0d0", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 28px", position:"sticky", top:0, zIndex:40, boxShadow:"0 2px 10px rgba(74,0,16,0.05)" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
             <button className="hamburger icon-btn" onClick={() => setSideOpen(true)}><IcoMenu /></button>
@@ -281,8 +281,6 @@ export default function AdminDashboard() {
             <input className="al-search" placeholder="Quick search..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            
-            {/* NOTIFICATION DROP-DOWN BUTTON */}
             <div style={{ position:"relative" }}>
               <button className="icon-btn" onClick={() => setNotifOpen(!notifOpen)}>
                 <IcoBell />
@@ -299,18 +297,18 @@ export default function AdminDashboard() {
                   <div style={{ maxHeight:280, overflowY:"auto" }}>
                     {notifications.length > 0 ? (
                       notifications.map((n) => (
-                        <div 
-                          key={n.id} 
+                        <div
+                          key={n.id}
                           onClick={() => markSingleRead(n.id)}
-                          style={{ 
-                            padding:"11px 16px", 
-                            borderBottom:"1px solid #fdf0f0", 
-                            display:"flex", 
-                            gap:10, 
-                            alignItems:"flex-start", 
+                          style={{
+                            padding:"11px 16px",
+                            borderBottom:"1px solid #fdf0f0",
+                            display:"flex",
+                            gap:10,
+                            alignItems:"flex-start",
                             cursor:"pointer",
                             background: n.unread ? "#fff" : "#faf6f6",
-                            opacity: n.unread ? 1 : 0.7 
+                            opacity: n.unread ? 1 : 0.7
                           }}
                         >
                           <div style={{ width:7, height:7, borderRadius:"50%", background:n.dot, marginTop:5, flexShrink:0 }} />
@@ -327,17 +325,9 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
-
-            <div style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 12px 6px 6px", background:"#fdf6f7", border:"1px solid #e8d0d0", borderRadius:12, cursor:"pointer" }}>
-              <div style={{ width:30, height:30, borderRadius:8, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:700, fontSize:12 }}>{(admin?.name || 'A').slice(0,1).toUpperCase()}</div>
-              <div>
-                <p style={{ fontSize:12, fontWeight:700, color:"#2e1a1a", margin:0, lineHeight:1.2 }}>{admin?.name || 'Admin'}</p>
-              </div>
-            </div>
           </div>
         </header>
 
-        {/* PAGE CONTENT ROUTER */}
         <main style={{ flex:1, padding:"28px", overflowY:"auto" }}>
           {active === "dashboard" && (
             <>
@@ -352,7 +342,6 @@ export default function AdminDashboard() {
                 <div style={{ background:"#fee2e2", color:"#b91c1c", fontSize:13, fontWeight:600, padding:"12px 16px", borderRadius:14, marginBottom:20 }}>{loadError}</div>
               )}
 
-              {/* STATS & CHARTS */}
               <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:18, marginBottom:24 }}>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:18 }}>
                   <div style={{ borderRadius:20, padding:"22px", background:"linear-gradient(135deg,#800020,#4a0010)", color:"#fde8ec", boxShadow:"0 6px 20px rgba(128,0,32,0.35)" }}>
@@ -390,7 +379,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Pending approval queue */}
               {pendingApprovals.length > 0 && (
                 <div style={{ background:"#fffbeb", border:"1px solid #fde68a", borderRadius:20, padding:"18px 24px", marginBottom:24 }}>
                   <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:16, fontWeight:700, color:"#92400e", margin:"0 0 10px" }}>
@@ -416,7 +404,6 @@ export default function AdminDashboard() {
             </>
           )}
 
-          {/* TABLE FOR ITEMS */}
           {(active === "dashboard" || active === "items" || active === "found") && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, overflow:"hidden", boxShadow:"0 2px 12px rgba(74,0,16,0.05)" }}>
               <div style={{ padding:"18px 24px", borderBottom:"1px solid #f0e0e0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -468,24 +455,18 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* CLAIMS PAGE INTEGRATION */}
           {active === "claims" && <ClaimsPage />}
 
-          {/* USERS PAGE INTEGRATION */}
           {active === "users" && <UsersPage />}
 
-          {/* MESSAGES PAGE INTEGRATION */}
           {active === "messages" && <MessagesPage />}
 
-          {/* NOTIFICATIONS PAGE INTEGRATION */}
           {active === "notif" && (
             <NotificationsPage notifications={notifications} setNotifications={setNotifications} />
           )}
 
-          {/* SETTINGS PAGE INTEGRATION */}
           {active === "settings" && <SettingsPage />}
 
-          {/* OTHER PAGES PLACEHOLDER */}
           {!["dashboard", "items", "found", "claims", "users", "messages", "notif", "settings"].includes(active) && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, padding:40, textAlign:"center" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", color:"#800020", textTransform:"capitalize" }}>{active} Page</h2>
@@ -495,7 +476,6 @@ export default function AdminDashboard() {
         </main>
       </div>
 
-      {/* VIEW ITEM DETAILS MODAL */}
       {selectedItem && (
         <div style={{ position:"fixed", inset:0, background:"rgba(46,26,26,0.5)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:300, padding:20 }}>
           <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, width:"100%", maxWidth:480, overflow:"hidden", boxShadow:"0 20px 50px rgba(74,0,16,0.2)" }}>
