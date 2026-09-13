@@ -76,7 +76,7 @@ const foundItemSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'claimed', 'returned'],
+    enum: ['active', 'claimed', 'returned', 'handed_to_admin'],
     default: 'active'
   },
   isApproved: {

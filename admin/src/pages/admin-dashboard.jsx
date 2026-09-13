@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ClaimsPage from "./claims-page";
+import RequestsPage from "./requests-page";
+import SupportPage from "./support-page";
 import UsersPage from "./user-page";
 import MessagesPage from "./messages-page";
 import NotificationsPage from "./Notification-page";
@@ -26,6 +28,8 @@ const IcoSet     = () => <Ico d={["M12 15a3 3 0 100-6 3 3 0 000 6z","M19.4 15a1.
 const IcoBox     = () => <Ico d={["M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"]} />;
 const IcoChev    = () => <Ico d="M9 18l6-6-6-6" size={14} />;
 const IcoNotif   = () => <Ico d={["M22 17H2a3 3 0 000-6h.09A6.01 6.01 0 0112 3a6 6 0 015.91 8H18a3 3 0 010 6z","M13.73 21a2 2 0 01-3.46 0"]} />;
+const IcoReqst   = () => <Ico d={["M9 12h6","M9 16h6","M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z","M13 2v6h6"]} />;
+const IcoSupport = () => <Ico d={["M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"]} />;
 
 const statusCfg = {
   Lost:     { bg:"#fef2f2", color:"#dc2626" },
@@ -74,6 +78,8 @@ export default function AdminDashboard() {
   const [itemsList, setItemsList] = useState([]);
   const [pendingApprovals, setPendingApprovals] = useState([]);
   const [itemStats, setItemStats] = useState({ totalLost: 0, totalFound: 0, pendingClaims: 0, totalResolved: 0 });
+  const [pendingRequests, setPendingRequests] = useState(0);
+  const [openSupportChats, setOpenSupportChats] = useState(0);
   const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -87,14 +93,18 @@ export default function AdminDashboard() {
     setLoading(true);
     setLoadError("");
     try {
-      const [stats, lost, found, pending, notifs] = await Promise.all([
+      const [stats, lost, found, pending, notifs, requests] = await Promise.all([
         adminFetch('/admin/item-stats'),
         adminFetch('/lost-items/all'),
         adminFetch('/found-items/all'),
         adminFetch('/found-items/pending'),
         adminFetch('/notifications').catch(() => []),
+        adminFetch('/requests/all').catch(() => []),
       ]);
       setItemStats(stats);
+      const requestsList = Array.isArray(requests) ? requests : [];
+      setPendingRequests(requestsList.filter(r => r.status === 'pending' && r.type !== 'general_issue').length);
+      setOpenSupportChats(requestsList.filter(r => r.type === 'general_issue' && r.status !== 'closed').length);
       const combined = [
         ...(Array.isArray(lost) ? lost : []).map(i => ({ ...i, kind: 'Lost' })),
         ...(Array.isArray(found) ? found : []).map(i => ({ ...i, kind: 'Found' })),
@@ -135,6 +145,8 @@ export default function AdminDashboard() {
     { id:"items",     label:"Lost Items",    icon: IcoBox,   badge: itemStats.totalLost || null },
     { id:"found",     label:"Found Items",   icon: IcoItems, badge: itemStats.totalFound || null },
     { id:"claims",    label:"Claims",        icon: IcoClaim, badge: itemStats.pendingClaims || null },
+    { id:"requests",  label:"Requests",      icon: IcoReqst, badge: pendingRequests || null },
+    { id:"support",   label:"Support",       icon: IcoSupport, badge: openSupportChats || null },
     { id:"users",     label:"Users",         icon: IcoUsers, badge:null },
     { id:"messages",  label:"Messages",      icon: IcoMsg,   badge:null },
     { id:"notif",     label:"Notifications", icon: IcoNotif, badge: unreadCount > 0 ? `${unreadCount}` : null },
@@ -457,6 +469,10 @@ export default function AdminDashboard() {
 
           {active === "claims" && <ClaimsPage />}
 
+          {active === "requests" && <RequestsPage />}
+
+          {active === "support" && <SupportPage />}
+
           {active === "users" && <UsersPage />}
 
           {active === "messages" && <MessagesPage />}
@@ -467,7 +483,7 @@ export default function AdminDashboard() {
 
           {active === "settings" && <SettingsPage />}
 
-          {!["dashboard", "items", "found", "claims", "users", "messages", "notif", "settings"].includes(active) && (
+          {!["dashboard", "items", "found", "claims", "requests", "support", "users", "messages", "notif", "settings"].includes(active) && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, padding:40, textAlign:"center" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", color:"#800020", textTransform:"capitalize" }}>{active} Page</h2>
               <p style={{ color:"#c07080", marginTop:8 }}>This section is active now.</p>

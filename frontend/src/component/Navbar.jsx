@@ -10,7 +10,7 @@ const getInitials = (name) => {
   return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase();
 };
 
-const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, onLogout, onGoToProfile, onGoToMyReports, onGoToMessages, onOpenMatchedItem, onOpenLostItem }) => {
+const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, onLogout, onGoToProfile, onGoToMyReports, onGoToMessages, onGoToSupport, onOpenMatchedItem, onOpenLostItem }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -90,6 +90,8 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
       onNavigate('lost-items');
     } else if (n.type === 'new_found_item' && onNavigate) {
       onNavigate('found-items');
+    } else if (n.type === 'report_reply' && onGoToSupport) {
+      onGoToSupport();
     } else if (['claim_submitted', 'claim_approved', 'claim_rejected', 'message'].includes(n.type) && onGoToMyReports) {
       onGoToMyReports();
     }
@@ -114,7 +116,7 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
           <span onClick={() => onNavigate('my-reports')} className="cursor-pointer hover:text-[#800020] transition-colors">My Reports</span>
         )}
         {isLoggedIn && (
-          <span onClick={() => onGoToMessages && onGoToMessages()} className="cursor-pointer hover:text-[#800020] transition-colors">Messages</span>
+          <span onClick={() => onGoToSupport && onGoToSupport()} className="cursor-pointer hover:text-[#800020] transition-colors">Help &amp; Support</span>
         )}
       </div>
 
@@ -163,7 +165,7 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-[#e8d0d0] rounded-2xl shadow-xl py-2 z-50">
                   <button onClick={() => { setShowDropdown(false); onGoToProfile(); }} className="w-full text-left px-4 py-2 text-sm text-[#2e1a1a] hover:bg-[#fff8f8] font-medium">Profile</button>
                   <button onClick={() => { setShowDropdown(false); onGoToMyReports(); }} className="w-full text-left px-4 py-2 text-sm text-[#2e1a1a] hover:bg-[#fff8f8] font-medium">My Reports</button>
-                  <button onClick={() => { setShowDropdown(false); onGoToMessages && onGoToMessages(); }} className="w-full text-left px-4 py-2 text-sm text-[#2e1a1a] hover:bg-[#fff8f8] font-medium">Messages</button>
+                  <button onClick={() => { setShowDropdown(false); onGoToSupport && onGoToSupport(); }} className="w-full text-left px-4 py-2 text-sm text-[#2e1a1a] hover:bg-[#fff8f8] font-medium">Help &amp; Support</button>
                   <div className="border-t border-[#e8d0d0] my-1"></div>
                   <button onClick={() => { setShowDropdown(false); onLogout(); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-medium">Logout</button>
                 </div>
