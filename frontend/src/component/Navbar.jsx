@@ -15,6 +15,8 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
   const [showNotifs, setShowNotifs] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const socketRef = useRef(null);
+  const notifRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   const user = (() => {
     try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; }
@@ -45,6 +47,24 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
     return () => socket.disconnect();
   }, [isLoggedIn]);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifs(false);
+      }
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setShowNotifs(false);
+    setShowDropdown(false);
+  }, [activeTab]);
+
   const toggleNotifs = async () => {
     const opening = !showNotifs;
     setShowNotifs(opening);
@@ -55,6 +75,19 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
         await fetch(`${API_BASE}/notifications/read-all`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } });
         setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       } catch { }
+    }
+  };
+
+  const handleNotifClick = (n) => {
+    setShowNotifs(false);
+    if (n.type === 'item_matched' && n.relatedItem && onOpenMatchedItem) {
+      onOpenMatchedItem(n.relatedItem);
+    } else if (n.type === 'new_lost_item' && onNavigate) {
+      onNavigate('lost-items');
+    } else if (n.type === 'new_found_item' && onNavigate) {
+      onNavigate('found-items');
+    } else if (['claim_submitted', 'claim_approved', 'claim_rejected', 'message'].includes(n.type) && onGoToMyReports) {
+      onGoToMyReports();
     }
   };
 
@@ -84,7 +117,7 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
       <div className="flex items-center gap-3 relative">
         {isLoggedIn ? (
           <>
-            <div className="relative">
+            <div className="relative" ref={notifRef}>
               <button onClick={toggleNotifs} className="relative w-10 h-10 rounded-full flex items-center justify-center text-[#800020] hover:bg-[#fff8f8] cursor-pointer">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -104,15 +137,7 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
                     notifications.map((n) => (
                       <div
                         key={n._id}
-                        onClick={() => {
-                          if (n.type === 'item_matched' && n.relatedItem && onOpenMatchedItem) {
-                            setShowNotifs(false);
-                            onOpenMatchedItem(n.relatedItem);
-                          } else if (['claim_submitted', 'claim_approved', 'claim_rejected', 'message'].includes(n.type) && onGoToMyReports) {
-                            setShowNotifs(false);
-                            onGoToMyReports();
-                          }
-                        }}
+                        onClick={() => handleNotifClick(n)}
                         className={`px-4 py-2.5 text-sm border-b border-[#f5f0f0] last:border-0 cursor-pointer hover:bg-[#fff8f8] ${n.isRead ? 'text-[#5a3a3a]' : 'text-[#2e1a1a] font-semibold bg-[#fff8f8]'}`}>
                         {n.message}
                         <div className="text-[10px] text-[#c5a3a3] mt-0.5">{new Date(n.createdAt).toLocaleString()}</div>
@@ -123,7 +148,7 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
               )}
             </div>
 
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <div
                 onClick={() => { setShowDropdown(!showDropdown); setShowNotifs(false); }}
                 className="w-10 h-10 rounded-full bg-[#800020] text-white flex items-center justify-center font-bold text-sm cursor-pointer shadow hover:opacity-90">
