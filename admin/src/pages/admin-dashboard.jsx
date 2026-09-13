@@ -30,6 +30,7 @@ const IcoNotif   = () => <Ico d={["M22 17H2a3 3 0 000-6h.09A6.01 6.01 0 0112 3a6
 const IcoMail    = () => <Ico d={["M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z", "M22 6l-10 7L2 6"]} />;
 const IcoReqst   = () => <Ico d={["M9 12h6","M9 16h6","M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z","M13 2v6h6"]} />;
 const IcoSupport = () => <Ico d={["M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"]} />;
+const IcoCamera  = () => <Ico d={["M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z", "M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"]} />;
 
 const statusCfg = {
   Lost:     { bg:"#fef2f2", color:"#dc2626" },
@@ -86,12 +87,13 @@ export default function AdminDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [instituteName, setInstituteName] = useState("Govt. Graduate College Mandi Bahauddin");
 
-  // Ref definition for notification outside click
-  const notifRef = useRef(null);
+  // Admin avatar image state
+  const [profileImage, setProfileImage] = useState(() => localStorage.getItem("adminProfileImage") || null);
+  const fileInputRef = useRef(null);
 
+  const notifRef = useRef(null);
   const unreadCount = notifications.filter(n => n.unread).length;
 
-  // Outside click handler for notifications
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (notifRef.current && !notifRef.current.contains(event.target)) {
@@ -150,6 +152,19 @@ export default function AdminDashboard() {
     loadDashboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Image = reader.result;
+        setProfileImage(base64Image);
+        localStorage.setItem("adminProfileImage", base64Image);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const markAllRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
@@ -249,6 +264,8 @@ export default function AdminDashboard() {
         .add-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(128,0,32,0.4);}
         .profile-trigger{cursor:pointer;transition:all .2s;border-radius:14px;padding:12px;background:linear-gradient(135deg,rgba(128,0,32,0.06),rgba(74,0,16,0.04));border:1px solid #e8d0d0;}
         .profile-trigger:hover{background:rgba(128,0,32,0.12);border-color:#800020;}
+        .avatar-hover-overlay{position:absolute;inset:0;background:rgba(46,26,26,0.5);border-radius:24px;display:flex;align-items:center;justify-content:center;color:#fff;opacity:0;transition:opacity 0.2s;}
+        .avatar-container:hover .avatar-hover-overlay{opacity:1;}
         @media(max-width:900px){
           .sidebar-desk{display:none!important} .main-wrap{margin-left:0!important}
           .search-area{display:none!important}
@@ -285,8 +302,12 @@ export default function AdminDashboard() {
         </nav>
         <div className="profile-trigger" style={{ marginTop:16 }} onClick={() => setProfileModalOpen(true)}>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0 }}>
-              {(admin?.name || 'A').slice(0,1).toUpperCase()}
+            <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0, overflow:"hidden" }}>
+              {profileImage ? (
+                <img src={profileImage} alt="Profile" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+              ) : (
+                (admin?.name || 'A').slice(0,1).toUpperCase()
+              )}
             </div>
             <div style={{ flex:1, overflow:"hidden" }}>
               <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a", margin:0, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
@@ -317,8 +338,12 @@ export default function AdminDashboard() {
             
             <div className="profile-trigger" style={{ marginTop:"auto" }} onClick={() => { setProfileModalOpen(true); setSideOpen(false); }}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0 }}>
-                  {(admin?.name || 'A').slice(0,1).toUpperCase()}
+                <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0, overflow:"hidden" }}>
+                  {profileImage ? (
+                    <img src={profileImage} alt="Profile" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                  ) : (
+                    (admin?.name || 'A').slice(0,1).toUpperCase()
+                  )}
                 </div>
                 <div style={{ flex:1, overflow:"hidden" }}>
                   <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a", margin:0, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
@@ -345,7 +370,6 @@ export default function AdminDashboard() {
             <input className="al-search" placeholder="Quick search..." value={search} onChange={handleSearchChange} />
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            {/* Added ref={notifRef} to container */}
             <div ref={notifRef} style={{ position:"relative" }}>
               <button className="icon-btn" onClick={() => setNotifOpen(!notifOpen)}>
                 <IcoBell />
@@ -532,6 +556,16 @@ export default function AdminDashboard() {
           {active === "settings" && <SettingsPage />}
         </main>
       </div>
+
+      {/* Hidden File Input for Image Selection */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        accept="image/*" 
+        style={{ display: "none" }} 
+        onChange={handleImageUpload} 
+      />
+
       {profileModalOpen && (
         <div style={{ position:"fixed", inset:0, background:"rgba(46,26,26,0.5)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:350, padding:20 }}>
           <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:24, width:"100%", maxWidth:400, overflow:"hidden", boxShadow:"0 20px 60px rgba(74,0,16,0.2)" }}>
@@ -540,9 +574,37 @@ export default function AdminDashboard() {
               <button onClick={() => setProfileModalOpen(false)} style={{ background:"none", border:"none", fontSize:18, color:"#c07080", cursor:"pointer", padding:4 }}>✕</button>
             </div>
             <div style={{ padding:"24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 }}>
-              <div style={{ width:72, height:72, borderRadius:20, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:30, boxShadow:"0 6px 16px rgba(128,0,32,0.35)" }}>
-                {(admin?.name || 'A').slice(0,1).toUpperCase()}
+              {/* Clickable Profile Image Container */}
+              <div 
+                className="avatar-container"
+                onClick={() => fileInputRef.current?.click()}
+                style={{ 
+                  width:84, 
+                  height:84, 
+                  borderRadius:24, 
+                  background:"linear-gradient(135deg,#800020,#4a0010)", 
+                  display:"flex", 
+                  alignItems:"center", 
+                  justifyContent:"center", 
+                  color:"#fde8ec", 
+                  fontWeight:800, 
+                  fontSize:32, 
+                  boxShadow:"0 6px 16px rgba(128,0,32,0.35)",
+                  position:"relative",
+                  cursor:"pointer",
+                  overflow:"hidden"
+                }}
+              >
+                {profileImage ? (
+                  <img src={profileImage} alt="Admin Avatar" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                ) : (
+                  (admin?.name || 'A').slice(0,1).toUpperCase()
+                )}
+                <div className="avatar-hover-overlay">
+                  <IcoCamera />
+                </div>
               </div>
+              <p style={{ fontSize:11, color:"#c07080", margin:0, marginTop:-8, fontWeight:500 }}>Click image to change photo</p>
               <div style={{ textAlign:"center" }}>
                 <h4 style={{ fontFamily:"'Fraunces',serif", fontSize:20, fontWeight:700, color:"#2e1a1a", margin:0 }}>{admin?.name || 'Admin'}</h4>
                 <span style={{ display:"inline-block", margin:"6px 0", padding:"3px 10px", borderRadius:100, fontSize:11, fontWeight:700, background:"#fde8ec", color:"#800020" }}>
