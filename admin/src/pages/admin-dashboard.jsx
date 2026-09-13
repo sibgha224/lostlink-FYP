@@ -12,7 +12,6 @@ const Ico = ({ d, size = 18, sw = 1.8 }) => (
     {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
   </svg>
 );
-
 const IcoDash    = () => <Ico d={["M3 3h7v7H3z","M14 3h7v7h-7z","M14 14h7v7h-7z","M3 14h7v7H3z"]} />;
 const IcoItems   = () => <Ico d={["M21 10H3","M21 6H3","M21 14H3","M21 18H3"]} />;
 const IcoClaim   = () => <Ico d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />;
@@ -26,6 +25,7 @@ const IcoSet     = () => <Ico d={["M12 15a3 3 0 100-6 3 3 0 000 6z","M19.4 15a1.
 const IcoBox     = () => <Ico d={["M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"]} />;
 const IcoChev    = () => <Ico d="M9 18l6-6-6-6" size={14} />;
 const IcoNotif   = () => <Ico d={["M22 17H2a3 3 0 000-6h.09A6.01 6.01 0 0112 3a6 6 0 015.91 8H18a3 3 0 010 6z","M13.73 21a2 2 0 01-3.46 0"]} />;
+const IcoMail    = () => <Ico d={["M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z", "M22 6l-10 7L2 6"]} />;
 
 const statusCfg = {
   Lost:     { bg:"#fef2f2", color:"#dc2626" },
@@ -34,9 +34,7 @@ const statusCfg = {
   Resolved: { bg:"#fdf4ff", color:"#7c3aed" },
   Pending:  { bg:"#fffbeb", color:"#b45309" },
 };
-
 const shortId = (mongoId) => `#${(mongoId || '').slice(-6).toUpperCase()}`;
-
 const NOTIF_TITLES = {
   claim_submitted: 'New Claim Submitted',
   claim_approved: 'Claim Approved',
@@ -66,10 +64,10 @@ const buildMonthlyChart = (items) => {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const admin = getAdminUser();
-
   const [active, setActive]       = useState("dashboard");
   const [sideOpen, setSideOpen]   = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [search, setSearch]       = useState("");
   const [itemsList, setItemsList] = useState([]);
   const [pendingApprovals, setPendingApprovals] = useState([]);
@@ -78,9 +76,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [busyId, setBusyId] = useState(null);
-
   const [notifications, setNotifications] = useState([]);
-
   const unreadCount = notifications.filter(n => n.unread).length;
 
   const loadDashboard = async () => {
@@ -171,7 +167,6 @@ export default function AdminDashboard() {
 
   const barData = buildMonthlyChart(itemsList);
   const maxBar = Math.max(1, ...barData.flatMap(b => [b.lost, b.found]));
-
   const filtered = itemsList.filter(i => {
     const matchesSearch = i.itemName.toLowerCase().includes(search.toLowerCase()) ||
                           shortId(i._id).toLowerCase().includes(search.toLowerCase());
@@ -199,13 +194,15 @@ export default function AdminDashboard() {
         .notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:290px;background:#fff;border:1px solid #e8d0d0;border-radius:16px;box-shadow:0 20px 50px rgba(74,0,16,0.12);z-index:100;overflow:hidden;}
         .add-btn{padding:8px 18px;background:linear-gradient(135deg,#800020,#4a0010);border:none;border-radius:10px;color:#fde8ec;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 3px 10px rgba(128,0,32,0.3);transition:all .2s;}
         .add-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(128,0,32,0.4);}
+        .profile-trigger{cursor:pointer;transition:all .2s;border-radius:14px;padding:12px;background:linear-gradient(135deg,rgba(128,0,32,0.06),rgba(74,0,16,0.04));border:1px solid #e8d0d0;}
+        .profile-trigger:hover{background:rgba(128,0,32,0.12);border-color:#800020;}
         @media(max-width:900px){
           .sidebar-desk{display:none!important} .main-wrap{margin-left:0!important}
           .search-area{display:none!important}
         }
         @media(min-width:901px){.mob-overlay{display:none!important} .hamburger{display:none!important}}
       `}</style>
-
+      
       <aside className="sidebar-desk" style={{
         width:236, background:"#fff", borderRight:"1px solid #e8d0d0",
         position:"fixed", top:0, left:0, bottom:0, zIndex:50,
@@ -233,13 +230,19 @@ export default function AdminDashboard() {
             );
           })}
         </nav>
-        <div style={{ marginTop:16, padding:"12px", background:"linear-gradient(135deg,rgba(128,0,32,0.06),rgba(74,0,16,0.04))", border:"1px solid #e8d0d0", borderRadius:14 }}>
+
+        {/* User Card Trigger */}
+        <div className="profile-trigger" style={{ marginTop:16 }} onClick={() => setProfileModalOpen(true)}>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0 }}>{(admin?.name || 'A').slice(0,1).toUpperCase()}</div>
-            <div style={{ flex:1, overflow:"hidden" }}>
-              <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a", margin:0, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{admin?.name || 'Admin'}</p>
+            <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0 }}>
+              {(admin?.name || 'A').slice(0,1).toUpperCase()}
             </div>
-            <button onClick={adminLogout} style={{ background:"none", border:"none", cursor:"pointer", color:"#c07080", display:"flex", padding:2 }}><IcoLogout /></button>
+            <div style={{ flex:1, overflow:"hidden" }}>
+              <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a", margin:0, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                {admin?.name || 'Admin'}
+              </p>
+              <p style={{ fontSize:10, color:"#800020", margin:0, fontWeight:600 }}>System Admin</p>
+            </div>
           </div>
         </div>
       </aside>
@@ -261,12 +264,24 @@ export default function AdminDashboard() {
                 </div>
               );
             })}
+            
+            <div className="profile-trigger" style={{ marginTop:"auto" }} onClick={() => { setProfileModalOpen(true); setSideOpen(false); }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0 }}>
+                  {(admin?.name || 'A').slice(0,1).toUpperCase()}
+                </div>
+                <div style={{ flex:1, overflow:"hidden" }}>
+                  <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a", margin:0, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                    {admin?.name || 'Admin'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </aside>
         </div>
       )}
 
       <div className="main-wrap" style={{ marginLeft:236, flex:1, display:"flex", flexDirection:"column", minHeight:"100vh" }}>
-
         <header style={{ height:66, background:"rgba(255,255,255,0.95)", backdropFilter:"blur(10px)", borderBottom:"1px solid #e8d0d0", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 28px", position:"sticky", top:0, zIndex:40, boxShadow:"0 2px 10px rgba(74,0,16,0.05)" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
             <button className="hamburger icon-btn" onClick={() => setSideOpen(true)}><IcoMenu /></button>
@@ -327,7 +342,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </header>
-
         <main style={{ flex:1, padding:"28px", overflowY:"auto" }}>
           {active === "dashboard" && (
             <>
@@ -337,11 +351,9 @@ export default function AdminDashboard() {
                   <p style={{ color:"#c07080", fontSize:13, marginTop:4 }}>Govt. Graduate College Mandi Bahauddin</p>
                 </div>
               </div>
-
               {loadError && (
                 <div style={{ background:"#fee2e2", color:"#b91c1c", fontSize:13, fontWeight:600, padding:"12px 16px", borderRadius:14, marginBottom:20 }}>{loadError}</div>
               )}
-
               <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:18, marginBottom:24 }}>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:18 }}>
                   <div style={{ borderRadius:20, padding:"22px", background:"linear-gradient(135deg,#800020,#4a0010)", color:"#fde8ec", boxShadow:"0 6px 20px rgba(128,0,32,0.35)" }}>
@@ -361,7 +373,6 @@ export default function AdminDashboard() {
                     <p style={{ fontSize:40, fontWeight:800, fontFamily:"'Fraunces',serif", margin:"10px 0", lineHeight:1 }}>{loading ? '—' : itemStats.totalResolved}</p>
                   </div>
                 </div>
-
                 <div style={{ background:"linear-gradient(160deg,#800020,#4a0010)", borderRadius:20, padding:"24px", color:"#fde8ec", boxShadow:"0 8px 28px rgba(128,0,32,0.35)", display:"flex", flexDirection:"column" }}>
                   <p style={{ fontSize:13, opacity:0.75, margin:"0 0 4px" }}>Monthly Overview</p>
                   <p style={{ fontFamily:"'Fraunces',serif", fontSize:22, fontWeight:800, margin:0 }}>Lost & Found</p>
@@ -378,7 +389,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
-
               {pendingApprovals.length > 0 && (
                 <div style={{ background:"#fffbeb", border:"1px solid #fde68a", borderRadius:20, padding:"18px 24px", marginBottom:24 }}>
                   <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:16, fontWeight:700, color:"#92400e", margin:"0 0 10px" }}>
@@ -403,7 +413,6 @@ export default function AdminDashboard() {
               )}
             </>
           )}
-
           {(active === "dashboard" || active === "items" || active === "found") && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, overflow:"hidden", boxShadow:"0 2px 12px rgba(74,0,16,0.05)" }}>
               <div style={{ padding:"18px 24px", borderBottom:"1px solid #f0e0e0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -454,19 +463,13 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
-
           {active === "claims" && <ClaimsPage />}
-
           {active === "users" && <UsersPage />}
-
           {active === "messages" && <MessagesPage />}
-
           {active === "notif" && (
             <NotificationsPage notifications={notifications} setNotifications={setNotifications} />
           )}
-
           {active === "settings" && <SettingsPage />}
-
           {!["dashboard", "items", "found", "claims", "users", "messages", "notif", "settings"].includes(active) && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, padding:40, textAlign:"center" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", color:"#800020", textTransform:"capitalize" }}>{active} Page</h2>
@@ -475,6 +478,47 @@ export default function AdminDashboard() {
           )}
         </main>
       </div>
+
+      {/* Admin Profile Modal */}
+      {profileModalOpen && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(46,26,26,0.5)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:350, padding:20 }}>
+          <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:24, width:"100%", maxWidth:400, overflow:"hidden", boxShadow:"0 20px 60px rgba(74,0,16,0.2)" }}>
+            <div style={{ padding:"20px 24px", borderBottom:"1px solid #f0e0e0", display:"flex", justifyContent:"space-between", alignItems:"center", background:"#fdf6f7" }}>
+              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:18, fontWeight:800, color:"#2e1a1a", margin:0 }}>Admin Profile</h3>
+              <button onClick={() => setProfileModalOpen(false)} style={{ background:"none", border:"none", fontSize:18, color:"#c07080", cursor:"pointer", padding:4 }}>✕</button>
+            </div>
+
+            <div style={{ padding:"24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 }}>
+              <div style={{ width:72, height:72, borderRadius:20, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:30, boxShadow:"0 6px 16px rgba(128,0,32,0.35)" }}>
+                {(admin?.name || 'A').slice(0,1).toUpperCase()}
+              </div>
+              <div style={{ textAlign:"center" }}>
+                <h4 style={{ fontFamily:"'Fraunces',serif", fontSize:20, fontWeight:700, color:"#2e1a1a", margin:0 }}>{admin?.name || 'Admin'}</h4>
+                <span style={{ display:"inline-block", margin:"6px 0", padding:"3px 10px", borderRadius:100, fontSize:11, fontWeight:700, background:"#fde8ec", color:"#800020" }}>
+                  System Administrator
+                </span>
+              </div>
+
+              <div style={{ width:"100%", background:"#f9f4f4", borderRadius:14, padding:"14px", display:"flex", flexDirection:"column", gap:10, border:"1px solid #f0e0e0" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <div style={{ color:"#800020", display:"flex" }}><IcoMail /></div>
+                  <div>
+                    <p style={{ fontSize:10, color:"#c07080", margin:0, textTransform:"uppercase", fontWeight:700 }}>Email Address</p>
+                    <p style={{ fontSize:13, color:"#2e1a1a", fontWeight:600, margin:0 }}>{admin?.email || 'admin@lostlink.com'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding:"16px 24px", background:"#fdf6f7", borderTop:"1px solid #f0e0e0", display:"flex", gap:10 }}>
+              <button onClick={() => setProfileModalOpen(false)} style={{ flex:1, padding:"10px", borderRadius:10, border:"1px solid #e8d0d0", background:"#fff", color:"#6b4848", fontSize:13, fontWeight:600, cursor:"pointer" }}>Close</button>
+              <button onClick={adminLogout} style={{ flex:1, padding:"10px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#dc2626,#991b1b)", color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6, boxShadow:"0 3px 10px rgba(220,38,38,0.25)" }}>
+                <IcoLogout /> Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedItem && (
         <div style={{ position:"fixed", inset:0, background:"rgba(46,26,26,0.5)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:300, padding:20 }}>
@@ -510,7 +554,6 @@ export default function AdminDashboard() {
                   <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a", margin:"2px 0 0" }}>{selectedItem.location?.buildingName || selectedItem.location || '—'}</p>
                 </div>
               </div>
-
               <div>
                 <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Description</p>
                 <p style={{ fontSize:13, color:"#2e1a1a", margin:"4px 0 0", lineHeight:1.5, background:"#f9f4f4", padding:12, borderRadius:10 }}>
@@ -518,7 +561,6 @@ export default function AdminDashboard() {
                 </p>
               </div>
             </div>
-
             <div style={{ padding:"16px 24px", background:"#fdf6f7", borderTop:"1px solid #f0e0e0", display:"flex", justifyContent:"flex-end", gap:10 }}>
               <button onClick={() => setSelectedItem(null)} style={{ padding:"8px 16px", borderRadius:10, border:"1px solid #e8d0d0", background:"#fff", color:"#6b4848", fontSize:12, fontWeight:600, cursor:"pointer" }}>Close</button>
               <button disabled={busyId === selectedItem._id} onClick={() => handleDelete(selectedItem)} style={{ padding:"8px 16px", borderRadius:10, border:"none", background:"#dc2626", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer" }}>Delete Item</button>
@@ -529,5 +571,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
-
