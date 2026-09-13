@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ClaimsPage from "./claims-page";
 import RequestsPage from "./requests-page";
@@ -38,6 +38,7 @@ const statusCfg = {
   Resolved: { bg:"#fdf4ff", color:"#7c3aed" },
   Pending:  { bg:"#fffbeb", color:"#b45309" },
 };
+
 const shortId = (mongoId) => `#${(mongoId || '').slice(-6).toUpperCase()}`;
 const NOTIF_TITLES = {
   claim_submitted: 'New Claim Submitted',
@@ -84,7 +85,28 @@ export default function AdminDashboard() {
   const [busyId, setBusyId] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [instituteName, setInstituteName] = useState("Govt. Graduate College Mandi Bahauddin");
+
+  // Ref definition for notification outside click
+  const notifRef = useRef(null);
+
   const unreadCount = notifications.filter(n => n.unread).length;
+
+  // Outside click handler for notifications
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setNotifOpen(false);
+      }
+    };
+
+    if (notifOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [notifOpen]);
 
   const loadDashboard = async () => {
     setLoading(true);
@@ -193,6 +215,7 @@ export default function AdminDashboard() {
 
   const barData = buildMonthlyChart(itemsList);
   const maxBar = Math.max(1, ...barData.flatMap(b => [b.lost, b.found]));
+
   const filtered = itemsList.filter(i => {
     const query = search.toLowerCase().trim();
     const itemNameMatches = (i.itemName || '').toLowerCase().includes(query);
@@ -322,7 +345,8 @@ export default function AdminDashboard() {
             <input className="al-search" placeholder="Quick search..." value={search} onChange={handleSearchChange} />
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ position:"relative" }}>
+            {/* Added ref={notifRef} to container */}
+            <div ref={notifRef} style={{ position:"relative" }}>
               <button className="icon-btn" onClick={() => setNotifOpen(!notifOpen)}>
                 <IcoBell />
                 {unreadCount > 0 && (
