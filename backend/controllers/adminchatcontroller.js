@@ -1,6 +1,8 @@
 const Claim = require('../models/claim');
 const FoundItem = require('../models/founditem');
+const LostItem = require('../models/lostitem');
 const { createNotification } = require('./notificationcontroller');
+const { calculateMatchScore, MATCH_THRESHOLD } = require('./matchingcontroller');
 
 const markItemReturned = async (req, res) => {
   try {
@@ -26,6 +28,21 @@ const markItemReturned = async (req, res) => {
 
     item.status = 'returned';
     await item.save();
+
+    try {
+      const claimerLostItems = await LostItem.find({
+        userId: claim.claimedBy._id,
+        status: { $in: ['active', 'claimed'] }
+      });
+      for (const lostItem of claimerLostItems) {
+        const score = calculateMatchScore(lostItem, item);
+        if (score >= MATCH_THRESHOLD) {
+          await LostItem.findByIdAndUpdate(lostItem._id, { status: 'returned' });
+        }
+      }
+    } catch (linkError) {
+      console.log('Lost item status link error:', linkError.message);
+    }
 
     const io = req.app.get('socketio');
     const onlineUsers = req.app.get('onlineUsers');

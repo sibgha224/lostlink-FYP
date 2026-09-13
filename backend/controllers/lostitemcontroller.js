@@ -87,7 +87,7 @@ const reportLostItem = async (req, res) => {
 
 const getAllLostItems = async (req, res) => {
   try {
-    const lostItems = await LostItem.find({ status: 'active' })
+    const lostItems = await LostItem.find({})
       .populate('userId', 'name email')
       .sort({ createdAt: -1 });
 
@@ -182,7 +182,7 @@ const searchLostItems = async (req, res) => {
   try {
     const { keyword, category } = req.query;
 
-    let query = { status: 'active' };
+    let query = {};
 
     if (keyword) {
       query.$or = [

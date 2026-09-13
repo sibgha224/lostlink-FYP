@@ -7,6 +7,14 @@ const CATEGORIES = [
   'Wallet / Purse', 'ID Card', 'Jewelry', 'Bag / Backpack', 'Other'
 ];
 
+const statusBadge = (status) => {
+  const map = {
+    claimed: { label: 'Claimed', cls: 'text-blue-700 bg-blue-50 border-blue-200' },
+    returned: { label: 'Returned', cls: 'text-green-700 bg-green-50 border-green-200' }
+  };
+  return map[status] || null;
+};
+
 const timeAgo = (dateStr) => {
   if (!dateStr) return '';
   const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -113,8 +121,10 @@ const LostItems = (props) => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredItems.length > 0 ? (
-                  filteredItems.map((item) => (
-                    <div key={item._id} className="card-hover bg-white rounded-[18px] p-[22px] flex flex-col shadow-sm">
+                  filteredItems.map((item) => {
+                  const badge = statusBadge(item.status);
+                  return (
+                    <div key={item._id} className={`card-hover bg-white rounded-[18px] p-[22px] flex flex-col shadow-sm ${badge ? 'opacity-75' : ''}`}>
                       <div className="w-full h-[140px] rounded-xl mb-4 overflow-hidden flex items-center justify-center relative bg-[#fff8f8]">
                         {item.imageURL ? (
                           <img src={item.imageURL} alt={item.itemName} className="w-full h-full object-cover rounded-xl"
@@ -123,9 +133,17 @@ const LostItems = (props) => {
                           <span style={{ fontSize: '3.5rem' }}>📦</span>
                         )}
                       </div>
-                      <span className="inline-block text-[0.72rem] font-bold uppercase tracking-wide rounded-md px-2 py-0.5 mb-2.5 self-start text-[#a0002a] bg-[#fff8f8] border border-[#e8d0d0]">
-                        LOST
-                      </span>
+                      <div className="flex items-center gap-1.5 mb-2.5">
+                        {badge ? (
+                          <span className={`inline-block text-[0.72rem] font-bold uppercase tracking-wide rounded-md px-2 py-0.5 self-start border ${badge.cls}`}>
+                            {badge.label}
+                          </span>
+                        ) : (
+                          <span className="inline-block text-[0.72rem] font-bold uppercase tracking-wide rounded-md px-2 py-0.5 self-start text-[#a0002a] bg-[#fff8f8] border border-[#e8d0d0]">
+                            LOST
+                          </span>
+                        )}
+                      </div>
                       <h4 className="m-0 mb-1.5 text-[1.05rem] font-bold text-[#2e1a1a]">{item.itemName}</h4>
                       <p className="text-[0.85rem] text-[#c07080] m-0 mb-4 flex-1 font-medium">📍 {item.location?.buildingName || 'Unknown location'}</p>
                       <div className="flex justify-between items-center text-[0.78rem] text-[#c07080] pt-3 border-t border-[#fff8f8]">
@@ -137,7 +155,8 @@ const LostItems = (props) => {
                         </button>
                       </div>
                     </div>
-                  ))
+                  );
+                  })
                 ) : (
                   <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-[#e8d0d0]">
                     <p className="text-[#c07080] font-medium">No lost items match your filter.</p>

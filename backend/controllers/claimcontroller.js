@@ -1,7 +1,9 @@
 const Claim = require('../models/claim');
 const FoundItem = require('../models/founditem');
+const LostItem = require('../models/lostitem');
 const sendEmail = require('../utils/sendemail');
 const { createNotification, notifyAdmins } = require('./notificationcontroller');
+const { calculateMatchScore, MATCH_THRESHOLD } = require('./matchingcontroller');
 
 const submitClaim = async (req, res) => {
   try {
@@ -155,6 +157,20 @@ const updateClaimStatus = async (req, res) => {
           founderRemarks: 'Another claim has been approved.'
         }
       );
+
+      if (claim.claimedBy) {
+        try {
+          const claimerLostItems = await LostItem.find({ userId: claim.claimedBy._id, status: 'active' });
+          for (const lostItem of claimerLostItems) {
+            const score = calculateMatchScore(lostItem, item);
+            if (score >= MATCH_THRESHOLD) {
+              await LostItem.findByIdAndUpdate(lostItem._id, { status: 'claimed' });
+            }
+          }
+        } catch (linkError) {
+          console.log('Lost item status link error:', linkError.message);
+        }
+      }
     }
 
     if (claim.claimedBy) {

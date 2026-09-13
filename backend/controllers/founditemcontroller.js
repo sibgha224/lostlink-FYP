@@ -70,7 +70,6 @@ const reportFoundItem = async (req, res) => {
 const getAllFoundItems = async (req, res) => {
   try {
     const foundItems = await FoundItem.find({
-      status: 'active',
       isApproved: true
     })
       .populate('userId', 'name email')
@@ -164,7 +163,7 @@ const searchFoundItems = async (req, res) => {
   try {
     const { keyword, category } = req.query;
 
-    let query = { status: 'active', isApproved: true };
+    let query = { isApproved: true };
 
     if (keyword) {
       query.$or = [
