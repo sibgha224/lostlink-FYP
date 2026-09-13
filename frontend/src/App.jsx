@@ -48,6 +48,23 @@ function App() {
     }
   };
 
+  const openLostItemDetail = async (lostItemId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/lost-items/${lostItemId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSelectedItem({ ...data, __type: 'LOST' });
+        setDetailsBackScreen('home');
+        setScreen('item-details');
+      }
+    } catch (err) {
+      console.log('Failed to open lost item:', err.message);
+    }
+  };
+
   React.useEffect(() => {
     if (localStorage.getItem('token')) {
       setIsLoggedIn(true);
@@ -57,24 +74,24 @@ function App() {
 
   const isAuthPage = screen === 'login' || screen === 'signup' || screen === 'forget';
 
-  const isReportPage = 
-    screen === 'Report Lost & Found Items' || 
-    screen === 'report-lost-found' || 
+  const isReportPage =
+    screen === 'Report Lost & Found Items' ||
+    screen === 'report-lost-found' ||
     screen === 'report lost & found' ||
     screen === 'report lost & found item';
 
-  const isFoundPage = 
-    screen === 'Found Items' || 
-    screen === 'found-items' || 
+  const isFoundPage =
+    screen === 'Found Items' ||
+    screen === 'found-items' ||
     screen === 'found items';
 
-  const isLostPage = 
-    screen === 'Lost Items' || 
-    screen === 'lost-items' || 
+  const isLostPage =
+    screen === 'Lost Items' ||
+    screen === 'lost-items' ||
     screen === 'lost items';
 
-  const isAllPage = 
-    screen === 'all-items' || 
+  const isAllPage =
+    screen === 'all-items' ||
     screen === 'all items';
 
   const isGuidePage = screen === 'guide';
@@ -98,7 +115,7 @@ function App() {
   }
 
   return (
-    <div 
+    <div
       className={`relative min-h-screen flex flex-col w-full ${isAuthPage ? "bg-cover bg-center bg-no-repeat" : "bg-white"}`}
       style={isAuthPage ? { backgroundImage: "url('/college_bg.jpeg')" } : {}}
     >
@@ -119,6 +136,7 @@ function App() {
           onGoToMyReports={() => setScreen('my-reports')}
           onGoToMessages={() => setScreen('messages')}
           onOpenMatchedItem={openMatchedItem}
+          onOpenLostItem={openLostItemDetail}
         />
       )}
 
@@ -191,7 +209,7 @@ function App() {
           />
         )}
         {isProfilePage && (
-          <ProfileModal 
+          <ProfileModal
             onGoToHome={() => setScreen('home')}
             onGoToMyReports={() => setScreen('my-reports')}
             onLogout={() => {
@@ -281,8 +299,8 @@ function App() {
           />
         )}
         {isReportPage && (
-          <ReportLostFound 
-            onNavigate={(s) => setScreen(s)} 
+          <ReportLostFound
+            onNavigate={(s) => setScreen(s)}
             onGoToHome={() => setScreen('home')}
             onGoToReportItem={() => setScreen('report-lost-found')}
             onGoToFoundItems={() => setScreen('found-items')}
@@ -294,23 +312,23 @@ function App() {
           />
         )}
         {screen === 'signup' && (
-          <Signup 
+          <Signup
             onSignupSuccess={() => {
               setIsLoggedIn(true);
               setScreen('home');
             }}
-            onGoToLogin={() => setScreen('login')} 
+            onGoToLogin={() => setScreen('login')}
           />
         )}
 
         {screen === 'login' && (
-          <Login 
+          <Login
             onLoginSuccess={() => {
               setIsLoggedIn(true);
               setScreen('home');
             }}
-            onGoToSignup={() => setScreen('signup')} 
-            onGoToForget={() => setScreen('forget')} 
+            onGoToSignup={() => setScreen('signup')}
+            onGoToForget={() => setScreen('forget')}
           />
         )}
 
