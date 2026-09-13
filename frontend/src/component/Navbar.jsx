@@ -86,6 +86,10 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
       onOpenMatchedItem(n.relatedItem);
     } else if (n.type === 'new_lost_item' && n.relatedItem && onOpenLostItem) {
       onOpenLostItem(n.relatedItem);
+    } else if (n.type === 'new_lost_item' && onNavigate) {
+      onNavigate('lost-items');
+    } else if (n.type === 'new_found_item' && onNavigate) {
+      onNavigate('found-items');
     } else if (['claim_submitted', 'claim_approved', 'claim_rejected', 'message'].includes(n.type) && onGoToMyReports) {
       onGoToMyReports();
     }

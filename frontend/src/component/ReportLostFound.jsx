@@ -429,19 +429,7 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
               <div className="bg-white rounded-xl border p-8" style={{ borderColor: '#e8d0d0' }}>
                 <div className="mb-6">
                   <h3 className="text-xl font-semibold mb-2" style={{ color: '#2e1a1a', fontFamily: "'Fraunces', serif" }}>Where did you last see it?</h3>
-                  <p className="text-sm" style={{ color: '#c07080' }}>Use the search bar or select from the dropdown below.</p>
-                </div>
-                <div className="mb-6">
-                  <div className="relative">
-                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#c07080' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <input type="text" placeholder="Search for a building, library, or cafe..."
-                      className="w-full pl-10 pr-4 py-2.5 rounded-lg outline-none transition"
-                      style={{ border: '1px solid #e8d0d0', background: '#fff8f8', color: '#2e1a1a' }}
-                      onFocus={(e) => { e.target.style.borderColor = '#800020'; e.target.style.backgroundColor = '#ffffff'; }}
-                      onBlur={(e) => { e.target.style.borderColor = '#e8d0d0'; e.target.style.backgroundColor = '#fff8f8'; }} />
-                  </div>
+                  <p className="text-sm" style={{ color: '#c07080' }}>Select from the dropdown below.</p>
                 </div>
                 <div style={{ borderTop: '1px solid #e8d0d0' }} className="pt-5">
                   <div className="space-y-4">

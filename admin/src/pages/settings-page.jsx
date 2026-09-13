@@ -1,23 +1,22 @@
 import { useState } from "react";
-import { adminFetch, getAdminUser } from "../adminApi";
 
 const initialCategories = [
   { id: 1, name: "Electronics" },
-  { id: 2, name: "Books & Notes" },
-  { id: 3, name: "Clothing" },
-  { id: 4, name: "Keys" },
-  { id: 5, name: "Wallet / Purse" },
-  { id: 6, name: "ID Card" },
-  { id: 7, name: "Jewelry" },
-  { id: 8, name: "Bag / Backpack" },
-  { id: 9, name: "Other" },
+  { id: 2, name: "Accessories" },
+  { id: 3, name: "Documents" },
+  { id: 4, name: "Bags" },
+  { id: 5, name: "Keys" },
+];
+
+const initialItemsForExport = [
+  { id:"LL-001", title:"Black Wallet",  cat:"Accessories", date:"12 May 2026", status:"Lost",  reporter:"Ali Hassan" },
+  { id:"LL-002", title:"iPhone 14 Pro", cat:"Electronics", date:"11 May 2026", status:"Found", reporter:"Sara Malik" },
+  { id:"LL-003", title:"Student ID Card", cat:"Documents", date:"10 May 2026", status:"Claimed", reporter:"Umar Sheikh" },
 ];
 
 export default function SettingsPage() {
-  const admin = getAdminUser();
   const [saved, setSaved] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
-  const [exportError, setExportError] = useState("");
 
   const showSaved = (msg) => {
     setSavedMsg(msg);
@@ -25,98 +24,7 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2200);
   };
 
-  const downloadCSV = (filename, headers, rows) => {
-    const csvContent = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const exportItemsCSV = async () => {
-    setExportError("");
-    try {
-      const [lost, found] = await Promise.all([
-        adminFetch('/lost-items/all'),
-        adminFetch('/found-items/all'),
-      ]);
-      const rows = [
-        ...(Array.isArray(lost) ? lost : []).map(i => [i._id, i.itemName, i.category, new Date(i.createdAt).toLocaleDateString(), 'Lost', i.userId?.name || '']),
-        ...(Array.isArray(found) ? found : []).map(i => [i._id, i.itemName, i.category, new Date(i.createdAt).toLocaleDateString(), 'Found', i.userId?.name || '']),
-      ];
-      downloadCSV('lostlink_items_report.csv', ["ID", "Item", "Category", "Date", "Status", "Reporter"], rows);
-      showSaved("Items report exported");
-    } catch (err) {
-      setExportError(err.message);
-    }
-  };
-
-  const exportClaimsCSV = async () => {
-    setExportError("");
-    try {
-      const claims = await adminFetch('/claims/all');
-      const rows = (Array.isArray(claims) ? claims : []).map(c => [
-        c._id, c.foundItem?.itemName || '', c.claimedBy?.name || '', new Date(c.createdAt).toLocaleDateString(), c.status
-      ]);
-      downloadCSV('lostlink_claims_report.csv', ["Claim ID", "Item", "Claimant", "Date", "Status"], rows);
-      showSaved("Claims report exported");
-    } catch (err) {
-      setExportError(err.message);
-    }
-  };
-
-  /* ---------------- Password (reuses the same forgot/reset-password flow as login) ---------------- */
-  const [pwStep, setPwStep] = useState("idle"); // idle | otp
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [newPass, setNewPass] = useState("");
-  const [confirmPass, setConfirmPass] = useState("");
-  const [pwError, setPwError] = useState("");
-  const [pwBusy, setPwBusy] = useState(false);
-
-  const sendResetCode = async () => {
-    setPwError("");
-    setPwBusy(true);
-    try {
-      await fetch('http://localhost:5000/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: admin?.email }),
-      }).then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.message || 'Failed to send code'); });
-      setPwStep("otp");
-    } catch (err) {
-      setPwError(err.message);
-    } finally {
-      setPwBusy(false);
-    }
-  };
-
-  const submitNewPassword = async () => {
-    setPwError("");
-    const enteredOtp = otp.join("");
-    if (enteredOtp.length !== 6) { setPwError("Enter the full 6-digit code"); return; }
-    if (newPass !== confirmPass) { setPwError("Passwords do not match"); return; }
-    setPwBusy(true);
-    try {
-      await fetch('http://localhost:5000/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: admin?.email, otp: enteredOtp, newPassword: newPass }),
-      }).then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.message || 'Reset failed'); });
-      setPwStep("idle");
-      setOtp(["", "", "", "", "", ""]);
-      setNewPass(""); setConfirmPass("");
-      showSaved("Password updated — use it next time you sign in");
-    } catch (err) {
-      setPwError(err.message);
-    } finally {
-      setPwBusy(false);
-    }
-  };
+  /* ---------------- Password ---------------- */
 
   /* ---------------- Institute Info ---------------- */
   const [systemInfo, setSystemInfo] = useState({
@@ -149,6 +57,23 @@ export default function SettingsPage() {
     autoDeleteEnabled: false,
     deleteMonths: 6,
   });
+
+  /* ---------------- Export Data ---------------- */
+  const exportCSV = () => {
+    const headers = ["ID", "Item", "Category", "Date", "Status", "Reporter"];
+    const rows = initialItemsForExport.map((i) => [i.id, i.title, i.cat, i.date, i.status, i.reporter]);
+    const csvContent =
+      [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "lostlink_items_report.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showSaved("Report exported successfully");
+  };
 
   /* ---------------- Shared styles ---------------- */
   const cardStyle = {
@@ -229,74 +154,10 @@ export default function SettingsPage() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
 
-        {/* ============ PROFILE ============ */}
-        <div style={cardStyle}>
-          <h3 style={sectionTitle}>Admin Profile</h3>
-          <p style={sectionSub}>Your signed-in admin account</p>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <div>
-              <label style={labelStyle}>Full Name</label>
-              <input style={{ ...inputStyle, background: "#fdf6f7", color: "#2e1a1a" }} type="text" value={admin?.name || ''} disabled />
-            </div>
-            <div>
-              <label style={labelStyle}>Email Address</label>
-              <input style={{ ...inputStyle, background: "#fdf6f7", color: "#2e1a1a" }} type="email" value={admin?.email || ''} disabled />
-            </div>
-            <div>
-              <label style={labelStyle}>Role</label>
-              <input style={{ ...inputStyle, background: "#fdf6f7", color: "#800020", fontWeight: 600 }} type="text" value="Admin" disabled />
-            </div>
-          </div>
-        </div>
-
-        {/* ============ PASSWORD ============ */}
-        <div style={cardStyle}>
-          <h3 style={sectionTitle}>Change Password</h3>
-          <p style={sectionSub}>We'll email a verification code to {admin?.email} to confirm it's you</p>
-
-          {pwError && (
-            <div style={{ background: "#fee2e2", color: "#b91c1c", fontSize: 13, fontWeight: 600, padding: "10px 14px", borderRadius: 12, marginBottom: 14 }}>{pwError}</div>
-          )}
-
-          {pwStep === "idle" ? (
-            <button style={saveBtn} disabled={pwBusy} onClick={sendResetCode}>
-              {pwBusy ? "Sending..." : "Send Verification Code"}
-            </button>
-          ) : (
-            <>
-              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                {otp.map((val, idx) => (
-                  <input key={idx} maxLength={1} value={val}
-                    onChange={(e) => { if (!/^\d?$/.test(e.target.value)) return; const n = [...otp]; n[idx] = e.target.value; setOtp(n); }}
-                    style={{ width: 40, height: 46, textAlign: "center", fontSize: 18, fontWeight: 700, border: "1.5px solid #e8d0d0", borderRadius: 10, outline: "none" }} />
-                ))}
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <div>
-                  <label style={labelStyle}>New Password</label>
-                  <input className="settings-input" style={inputStyle} type="password" placeholder="••••••••" value={newPass} onChange={(e) => setNewPass(e.target.value)} />
-                </div>
-                <div>
-                  <label style={labelStyle}>Confirm Password</label>
-                  <input className="settings-input" style={inputStyle} type="password" placeholder="••••••••" value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} />
-                </div>
-              </div>
-              <div style={{ marginTop: 18, textAlign: "right", display: "flex", justifyContent: "flex-end", gap: 10 }}>
-                <button style={{ ...saveBtn, background: "#fdf6f7", color: "#800020", border: "1px solid #e8d0d0" }} onClick={() => setPwStep("idle")}>Cancel</button>
-                <button style={saveBtn} disabled={pwBusy} onClick={submitNewPassword}>{pwBusy ? "Saving..." : "Update Password"}</button>
-              </div>
-            </>
-          )}
-        </div>
-
         {/* ============ CATEGORY MANAGEMENT ============ */}
         <div style={cardStyle}>
           <h3 style={sectionTitle}>Category Management</h3>
-          <p style={sectionSub}>
-            Categories currently used across Lost &amp; Found listings.{" "}
-            <span style={{ color: "#c2410c", fontWeight: 600 }}>Preview only — adding/removing here doesn't change the report form yet (categories are fixed in the database schema).</span>
-          </p>
+          <p style={sectionSub}>Add or remove item categories used across Lost & Found listings</p>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
             {categories.map((cat) => (
@@ -327,10 +188,7 @@ export default function SettingsPage() {
         {/* ============ AUTO-RESOLVE RULE ============ */}
         <div style={cardStyle}>
           <h3 style={sectionTitle}>Automation Rules</h3>
-          <p style={sectionSub}>
-            Let the system manage stale listings automatically.{" "}
-            <span style={{ color: "#c2410c", fontWeight: 600 }}>Preview only — no scheduled job runs these rules yet.</span>
-          </p>
+          <p style={sectionSub}>Let the system manage stale listings automatically</p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             {/* Auto resolve */}
@@ -400,10 +258,7 @@ export default function SettingsPage() {
         {/* ============ INSTITUTE INFO ============ */}
         <div style={cardStyle}>
           <h3 style={sectionTitle}>Institute Information</h3>
-          <p style={sectionSub}>
-            Shown across the portal, login page, and reports.{" "}
-            <span style={{ color: "#c2410c", fontWeight: 600 }}>Preview only — not yet wired to a settings collection in the database.</span>
-          </p>
+          <p style={sectionSub}>Shown across the portal, login page, and reports</p>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div>
@@ -432,15 +287,11 @@ export default function SettingsPage() {
         {/* ============ EXPORT DATA ============ */}
         <div style={cardStyle}>
           <h3 style={sectionTitle}>Export Data</h3>
-          <p style={sectionSub}>Download live records for record-keeping or audit purposes</p>
-
-          {exportError && (
-            <div style={{ background: "#fee2e2", color: "#b91c1c", fontSize: 13, fontWeight: 600, padding: "10px 14px", borderRadius: 12, marginBottom: 14 }}>{exportError}</div>
-          )}
+          <p style={sectionSub}>Download records for record-keeping or audit purposes</p>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-            <button style={saveBtn} onClick={exportItemsCSV}>⬇ Export Items Report (CSV)</button>
-            <button style={{ ...saveBtn, background: "#fdf6f7", color: "#800020", border: "1px solid #e8d0d0" }} onClick={exportClaimsCSV}>
+            <button style={saveBtn} onClick={exportCSV}>⬇ Export Items Report (CSV)</button>
+            <button style={{ ...saveBtn, background: "#fdf6f7", color: "#800020", border: "1px solid #e8d0d0" }} onClick={() => showSaved("Claims report exported")}>
               ⬇ Export Claims Report (CSV)
             </button>
           </div>

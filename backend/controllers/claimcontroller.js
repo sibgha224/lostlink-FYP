@@ -51,15 +51,11 @@ const submitClaim = async (req, res) => {
       });
     }
 
-    try {
-      await notifyAdmins(req, {
-        type: 'claim_submitted',
-        message: `${req.user.name || 'A user'} submitted a claim on "${item.itemName || 'Found Item'}".`,
-        relatedItem: item._id
-      });
-    } catch (adminNotifyError) {
-      console.log('Admin claim notification error:', adminNotifyError.message);
-    }
+    await notifyAdmins(req, {
+      type: 'claim_submitted',
+      message: `${req.user.name || 'A user'} submitted a claim on "${item.itemName || 'Found Item'}".`,
+      relatedItem: item._id
+    });
 
     res.status(201).json({
       message: 'Claim submitted successfully!',
@@ -170,15 +166,11 @@ const updateClaimStatus = async (req, res) => {
       });
     }
 
-    try {
-      await notifyAdmins(req, {
-        type: status === 'approved' ? 'claim_approved' : 'claim_rejected',
-        message: `Claim on "${item.itemName || 'Item'}" was ${status} by the finder.`,
-        relatedItem: item._id
-      });
-    } catch (adminNotifyError) {
-      console.log('Admin claim-status notification error:', adminNotifyError.message);
-    }
+    await notifyAdmins(req, {
+      type: status === 'approved' ? 'claim_approved' : 'claim_rejected',
+      message: `A claim on "${item.itemName || 'Item'}" was ${status} by the finder.`,
+      relatedItem: item._id
+    });
 
     if (claim.claimedBy && claim.claimedBy.email) {
       try {
