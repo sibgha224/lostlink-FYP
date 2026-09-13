@@ -14,7 +14,6 @@ const Ico = ({ d, size = 18, sw = 1.8 }) => (
     {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
   </svg>
 );
-
 const IcoDash    = () => <Ico d={["M3 3h7v7H3z","M14 3h7v7h-7z","M14 14h7v7h-7z","M3 14h7v7H3z"]} />;
 const IcoItems   = () => <Ico d={["M21 10H3","M21 6H3","M21 14H3","M21 18H3"]} />;
 const IcoClaim   = () => <Ico d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />;
@@ -39,9 +38,7 @@ const statusCfg = {
   Resolved: { bg:"#fdf4ff", color:"#7c3aed" },
   Pending:  { bg:"#fffbeb", color:"#b45309" },
 };
-
 const shortId = (mongoId) => `#${(mongoId || '').slice(-6).toUpperCase()}`;
-
 const NOTIF_TITLES = {
   claim_submitted: 'New Claim Submitted',
   claim_approved: 'Claim Approved',
@@ -86,21 +83,25 @@ export default function AdminDashboard() {
   const [loadError, setLoadError] = useState("");
   const [busyId, setBusyId] = useState(null);
   const [notifications, setNotifications] = useState([]);
-
+  const [instituteName, setInstituteName] = useState("Govt. Graduate College Mandi Bahauddin");
   const unreadCount = notifications.filter(n => n.unread).length;
 
   const loadDashboard = async () => {
     setLoading(true);
     setLoadError("");
     try {
-      const [stats, lost, found, pending, notifs, requests] = await Promise.all([
+      const [stats, lost, found, pending, notifs, requests, settings] = await Promise.all([
         adminFetch('/admin/item-stats'),
         adminFetch('/lost-items/all'),
         adminFetch('/found-items/all'),
         adminFetch('/found-items/pending'),
         adminFetch('/notifications').catch(() => []),
         adminFetch('/requests/all').catch(() => []),
+        adminFetch('/admin/settings').catch(() => null),
       ]);
+      if (settings) {
+        setInstituteName(settings.instituteName || settings.collegeName || "Govt. Graduate College Mandi Bahauddin");
+      }
       setItemStats(stats || { totalLost: 0, totalFound: 0, pendingClaims: 0, totalResolved: 0 });
       const requestsList = Array.isArray(requests) ? requests : [];
       setPendingRequests(requestsList.filter(r => r.status === 'pending' && r.type !== 'general_issue').length);
@@ -192,7 +193,6 @@ export default function AdminDashboard() {
 
   const barData = buildMonthlyChart(itemsList);
   const maxBar = Math.max(1, ...barData.flatMap(b => [b.lost, b.found]));
-
   const filtered = itemsList.filter(i => {
     const query = search.toLowerCase().trim();
     const itemNameMatches = (i.itemName || '').toLowerCase().includes(query);
@@ -200,7 +200,6 @@ export default function AdminDashboard() {
     const categoryMatches = (i.category || '').toLowerCase().includes(query);
     const reporterMatches = (i.userId?.name || i.contactName || '').toLowerCase().includes(query);
     const matchesSearch = itemNameMatches || idMatches || categoryMatches || reporterMatches;
-
     if (active === "items") return matchesSearch && i.kind === "Lost";
     if (active === "found") return matchesSearch && i.kind === "Found";
     return matchesSearch;
@@ -223,10 +222,13 @@ export default function AdminDashboard() {
         .al-search:focus{border-color:#800020;box-shadow:0 0 0 3px rgba(128,0,32,0.08);width:260px}
         .trow:hover td{background:#fdf6f7!important;}
         .notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:290px;background:#fff;border:1px solid #e8d0d0;border-radius:16px;box-shadow:0 20px 50px rgba(74,0,16,0.12);z-index:100;overflow:hidden;}
+        .add-btn{padding:8px 18px;background:linear-gradient(135deg,#800020,#4a0010);border:none;border-radius:10px;color:#fde8ec;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 3px 10px rgba(128,0,32,0.3);transition:all .2s;}
+        .add-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(128,0,32,0.4);}
         .profile-trigger{cursor:pointer;transition:all .2s;border-radius:14px;padding:12px;background:linear-gradient(135deg,rgba(128,0,32,0.06),rgba(74,0,16,0.04));border:1px solid #e8d0d0;}
         .profile-trigger:hover{background:rgba(128,0,32,0.12);border-color:#800020;}
         @media(max-width:900px){
           .sidebar-desk{display:none!important} .main-wrap{margin-left:0!important}
+          .search-area{display:none!important}
         }
         @media(min-width:901px){.mob-overlay{display:none!important} .hamburger{display:none!important}}
       `}</style>
@@ -272,7 +274,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </aside>
-
       {sideOpen && (
         <div className="mob-overlay" style={{ position:"fixed", inset:0, zIndex:200 }}>
           <div onClick={() => setSideOpen(false)} style={{ position:"absolute", inset:0, background:"rgba(46,26,26,0.45)", backdropFilter:"blur(3px)" }} />
@@ -306,7 +307,6 @@ export default function AdminDashboard() {
           </aside>
         </div>
       )}
-
       <div className="main-wrap" style={{ marginLeft:236, flex:1, display:"flex", flexDirection:"column", minHeight:"100vh" }}>
         <header style={{ height:66, background:"rgba(255,255,255,0.95)", backdropFilter:"blur(10px)", borderBottom:"1px solid #e8d0d0", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 28px", position:"sticky", top:0, zIndex:40, boxShadow:"0 2px 10px rgba(74,0,16,0.05)" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
@@ -368,14 +368,13 @@ export default function AdminDashboard() {
             </div>
           </div>
         </header>
-
         <main style={{ flex:1, padding:"28px", overflowY:"auto" }}>
           {active === "dashboard" && (
             <>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24 }}>
                 <div>
                   <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:26, fontWeight:800, color:"#2e1a1a", margin:0 }}>Dashboard</h1>
-                  <p style={{ color:"#c07080", fontSize:13, marginTop:4 }}>Govt. Graduate College Mandi Bahauddin</p>
+                  <p style={{ color:"#c07080", fontSize:13, marginTop:4 }}>{instituteName}</p>
                 </div>
               </div>
               {loadError && (
@@ -509,7 +508,6 @@ export default function AdminDashboard() {
           {active === "settings" && <SettingsPage />}
         </main>
       </div>
-
       {profileModalOpen && (
         <div style={{ position:"fixed", inset:0, background:"rgba(46,26,26,0.5)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:350, padding:20 }}>
           <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:24, width:"100%", maxWidth:400, overflow:"hidden", boxShadow:"0 20px 60px rgba(74,0,16,0.2)" }}>
@@ -546,7 +544,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
       {selectedItem && (
         <div style={{ position:"fixed", inset:0, background:"rgba(46,26,26,0.5)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:300, padding:20 }}>
           <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:24, width:"100%", maxWidth:480, overflow:"hidden", boxShadow:"0 20px 60px rgba(74,0,16,0.2)" }}>

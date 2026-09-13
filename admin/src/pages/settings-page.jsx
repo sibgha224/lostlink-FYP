@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { adminFetch } from "../adminApi"; // Apne admin API fetch helper ka path verify kar lein
 
 const initialCategories = [
   { id: 1, name: "Electronics" },
@@ -9,14 +10,15 @@ const initialCategories = [
 ];
 
 const initialItemsForExport = [
-  { id:"LL-001", title:"Black Wallet",  cat:"Accessories", date:"12 May 2026", status:"Lost",  reporter:"Ali Hassan" },
-  { id:"LL-002", title:"iPhone 14 Pro", cat:"Electronics", date:"11 May 2026", status:"Found", reporter:"Sara Malik" },
+  { id:"LL-001", title:"Black Wallet",   cat:"Accessories", date:"12 May 2026", status:"Lost",    reporter:"Ali Hassan" },
+  { id:"LL-002", title:"iPhone 14 Pro", cat:"Electronics", date:"11 May 2026", status:"Found",   reporter:"Sara Malik" },
   { id:"LL-003", title:"Student ID Card", cat:"Documents", date:"10 May 2026", status:"Claimed", reporter:"Umar Sheikh" },
 ];
 
-export default function SettingsPage() {
+export default function SettingsPage({ onInstituteSaved }) {
   const [saved, setSaved] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
+  const [savingInstitute, setSavingInstitute] = useState(false);
 
   const showSaved = (msg) => {
     setSavedMsg(msg);
@@ -24,17 +26,63 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2200);
   };
 
-  /* ---------------- Password ---------------- */
-
-  /* ---------------- Institute Info ---------------- */
+  /* ---------------- Institute Info Backend State ---------------- */
   const [systemInfo, setSystemInfo] = useState({
     collegeName: "Govt. Graduate College Mandi Bahauddin",
     address: "Mandi Bahauddin, Punjab, Pakistan",
     supportEmail: "support@lostlink.com",
     contactNumber: "0546-123456",
   });
+
+  // Load Existing Institute Settings from Backend Database
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await adminFetch("/admin/settings");
+        if (res) {
+          setSystemInfo({
+            collegeName: res.instituteName || res.collegeName || "Govt. Graduate College Mandi Bahauddin",
+            address: res.address || "Mandi Bahauddin, Punjab, Pakistan",
+            supportEmail: res.supportEmail || "support@lostlink.com",
+            contactNumber: res.contactNumber || "0546-123456",
+          });
+        }
+      } catch (err) {
+        console.error("Error loading institute settings:", err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
   const handleSystemChange = (e) =>
     setSystemInfo({ ...systemInfo, [e.target.name]: e.target.value });
+
+  // Save Institute Info to MongoDB API
+  const handleSaveInstitute = async () => {
+    try {
+      setSavingInstitute(true);
+      const res = await adminFetch("/admin/settings/institute", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instituteName: systemInfo.collegeName,
+          address: systemInfo.address,
+          supportEmail: systemInfo.supportEmail,
+          contactNumber: systemInfo.contactNumber,
+        }),
+      });
+
+      if (res?.success) {
+        showSaved("Institute information saved successfully!");
+        if (onInstituteSaved) onInstituteSaved();
+      }
+    } catch (err) {
+      console.error("Institute Info save karne mein error aaya:", err);
+      alert("Failed to save institute information.");
+    } finally {
+      setSavingInstitute(false);
+    }
+  };
 
   /* ---------------- Category Management ---------------- */
   const [categories, setCategories] = useState(initialCategories);
@@ -280,7 +328,9 @@ export default function SettingsPage() {
           </div>
 
           <div style={{ marginTop: 18, textAlign: "right" }}>
-            <button style={saveBtn} onClick={() => showSaved("Institute information saved")}>Save Settings</button>
+            <button style={{ ...saveBtn, opacity: savingInstitute ? 0.7 : 1 }} onClick={handleSaveInstitute} disabled={savingInstitute}>
+              {savingInstitute ? "Saving..." : "Save Settings"}
+            </button>
           </div>
         </div>
 
