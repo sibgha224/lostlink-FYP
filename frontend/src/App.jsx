@@ -14,6 +14,7 @@ import SecurityOffice from "./component/SecurityOffice.jsx";
 import ChatScreen from "./component/ChatScreen.jsx";
 import MyReports from "./component/MyReports.jsx";
 import Messages from "./component/Messages.jsx";
+import Support from "./component/Support.jsx";
 import ProfileModal from "./component/ProfileModal.jsx";
 import AboutSystem from "./component/AboutSystem.jsx";
 import TermsOfService from "./component/TermsOfService.jsx";
@@ -99,6 +100,7 @@ function App() {
   const isChatPage = screen === 'chat';
   const isMyReportsPage = screen === 'my-reports';
   const isMessagesPage = screen === 'messages';
+  const isSupportPage = screen === 'support';
   const isProfilePage = screen === 'profile';
   const isAboutPage = screen === 'about-system';
   const isTermsPage = screen === 'terms-of-service';
@@ -107,7 +109,7 @@ function App() {
   const isItemDetailsPage = screen === 'item-details';
   const isReportSuccessPage = screen === 'report-success';
   const isClaimSuccessPage = screen === 'claim-success';
-  const isHomePage = screen === 'home' || (!isAuthPage && !isReportPage && !isFoundPage && !isLostPage && !isAllPage && !isGuidePage && !isSecurityPage && !isChatPage && !isMyReportsPage && !isMessagesPage && !isProfilePage && !isAboutPage && !isTermsPage && !isPrivacyPage && !isFaqPage && !isItemDetailsPage && !isReportSuccessPage && !isClaimSuccessPage);
+  const isHomePage = screen === 'home' || (!isAuthPage && !isReportPage && !isFoundPage && !isLostPage && !isAllPage && !isGuidePage && !isSecurityPage && !isChatPage && !isMyReportsPage && !isMessagesPage && !isSupportPage && !isProfilePage && !isAboutPage && !isTermsPage && !isPrivacyPage && !isFaqPage && !isItemDetailsPage && !isReportSuccessPage && !isClaimSuccessPage);
   if (!isLoggedIn && !isAuthPage) {
     if (screen !== 'login') {
       setTimeout(() => setScreen('login'), 0);
@@ -135,6 +137,7 @@ function App() {
           onGoToProfile={() => setScreen('profile')}
           onGoToMyReports={() => setScreen('my-reports')}
           onGoToMessages={() => setScreen('messages')}
+          onGoToSupport={() => setScreen('support')}
           onOpenMatchedItem={openMatchedItem}
           onOpenLostItem={openLostItemDetail}
         />
@@ -207,6 +210,9 @@ function App() {
               setScreen('chat');
             }}
           />
+        )}
+        {isSupportPage && (
+          <Support onGoToHome={() => setScreen('home')} />
         )}
         {isProfilePage && (
           <ProfileModal

@@ -23,22 +23,18 @@ const chatRoutes = require('./routes/chatroutes');
 const adminChatRoutes = require('./routes/adminchatroutes');
 const matchingRoutes = require('./routes/matchingroutes');
 const reviewRoutes = require('./routes/reviewroutes');
+const requestRoutes = require('./routes/requestroutes');
 
 const app = express();
 const server = http.createServer(app);
 
-// The student app (frontend/) and the admin app (admin/) are two separate
-// Vite dev servers running on different localhost ports at the same time
-// (Vite auto-picks 5173, 5174, ... if a port is taken), so a single fixed
-// CLIENT_URL is not enough — both must be allowed to call this API.
 const allowedOrigins = (process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(',').map(o => o.trim())
-  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000']
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:3000']
 );
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow non-browser requests (curl/Postman) which send no Origin header
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -165,6 +161,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/admin/chat', adminChatRoutes);
 app.use('/api/matching', matchingRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/requests', requestRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'LostLink API is Running!' });

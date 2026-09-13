@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 const API_BASE = 'http://localhost:5000/api/auth';
+const REQUEST_API_BASE = 'http://localhost:5000/api/requests';
 
 const Login = ({ onLoginSuccess, onGoToSignup, onGoToForget }) => {
   const [email, setEmail] = useState('');
@@ -8,9 +9,19 @@ const Login = ({ onLoginSuccess, onGoToSignup, onGoToForget }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const [showUnblockForm, setShowUnblockForm] = useState(false);
+  const [unblockMessage, setUnblockMessage] = useState('');
+  const [unblockSubmitting, setUnblockSubmitting] = useState(false);
+  const [unblockError, setUnblockError] = useState('');
+  const [unblockSuccess, setUnblockSuccess] = useState('');
+
+  const isBlockedError = error.toLowerCase().includes('blocked');
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setShowUnblockForm(false);
+    setUnblockSuccess('');
 
     try {
       setLoading(true);
@@ -33,6 +44,33 @@ const Login = ({ onLoginSuccess, onGoToSignup, onGoToForget }) => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const submitUnblockRequest = async () => {
+    if (!unblockMessage.trim()) {
+      setUnblockError('Please write a short message for the admin.');
+      return;
+    }
+    setUnblockSubmitting(true);
+    setUnblockError('');
+    try {
+      const response = await fetch(`${REQUEST_API_BASE}/unblock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, message: unblockMessage }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send request');
+      }
+      setUnblockSuccess('Your unblock request has been sent to the admin.');
+      setShowUnblockForm(false);
+      setUnblockMessage('');
+    } catch (err) {
+      setUnblockError(err.message);
+    } finally {
+      setUnblockSubmitting(false);
     }
   };
 
@@ -73,6 +111,60 @@ const Login = ({ onLoginSuccess, onGoToSignup, onGoToForget }) => {
                 {error}
               </div>
             )}
+
+            {isBlockedError && !unblockSuccess && (
+              <div className="mb-4">
+                {!showUnblockForm ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowUnblockForm(true)}
+                    className="text-xs font-bold text-[#800020] underline cursor-pointer"
+                  >
+                    Request Unblock
+                  </button>
+                ) : (
+                  <div className="p-3 bg-[#fff8f8] border border-[#e8d0d0] rounded-xl">
+                    <p className="text-xs font-semibold text-[#2e1a1a] mb-2">
+                      Tell the admin why your account should be unblocked:
+                    </p>
+                    <textarea
+                      value={unblockMessage}
+                      onChange={(e) => setUnblockMessage(e.target.value)}
+                      rows={3}
+                      placeholder="Write your message..."
+                      className="w-full p-2.5 rounded-lg border border-[#e8d0d0] bg-white text-xs text-[#2e1a1a] outline-none focus:border-[#800020] mb-2"
+                    />
+                    {unblockError && (
+                      <p className="text-xs text-red-600 mb-2">{unblockError}</p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowUnblockForm(false)}
+                        className="flex-1 py-2 rounded-lg border border-[#e8d0d0] text-[#5a3a3a] text-xs font-bold cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={unblockSubmitting}
+                        onClick={submitUnblockRequest}
+                        className="flex-1 py-2 rounded-lg bg-[#800020] text-white text-xs font-bold cursor-pointer disabled:opacity-50"
+                      >
+                        {unblockSubmitting ? 'Sending...' : 'Send Request'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {unblockSuccess && (
+              <div className="mb-4 p-3 bg-green-50 text-green-700 text-xs rounded-xl font-medium">
+                {unblockSuccess}
+              </div>
+            )}
+
             <form onSubmit={handleLogin} className="flex flex-col gap-5">
 
               {/* Email */}

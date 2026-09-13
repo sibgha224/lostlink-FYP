@@ -2,15 +2,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import AdminLogin from "./pages/adminlogin";
 import AdminDashboard from "./pages/admin-dashboard";
 import Claims from "./pages/claims-page";
+import RequestsPage from "./pages/requests-page";
+import SupportPage from "./pages/support-page";
 import UsersPage from "./pages/user-page";
 import MessagesPage from "./pages/messages-page";
 import NotificationsPage from "./pages/Notification-page";
 import SettingsPage from "./pages/settings-page";
 import { getAdminUser } from "./adminApi";
 
-// Route guard: every admin-only screen requires a stored admin session.
-// AdminDashboard itself re-checks this too (covers a token that expired
-// mid-session), this just stops a direct URL visit before anything renders.
 const RequireAdmin = ({ children }) => {
   const admin = getAdminUser();
   const token = localStorage.getItem("adminToken");
@@ -26,10 +25,9 @@ function App() {
       <Routes>
         <Route path="/" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
-        {/* Claims / Users / Messages / Notifications / Settings render inside
-            AdminDashboard's own tabbed layout via its sidebar nav; these
-            standalone routes exist so each page can also be linked to directly. */}
         <Route path="/admin/claims" element={<RequireAdmin><Claims /></RequireAdmin>} />
+        <Route path="/admin/requests" element={<RequireAdmin><RequestsPage /></RequireAdmin>} />
+        <Route path="/admin/support" element={<RequireAdmin><SupportPage /></RequireAdmin>} />
         <Route path="/admin/users" element={<RequireAdmin><UsersPage /></RequireAdmin>} />
         <Route path="/admin/messages" element={<RequireAdmin><MessagesPage /></RequireAdmin>} />
         <Route path="/admin/notifications" element={<RequireAdmin><NotificationsPage /></RequireAdmin>} />

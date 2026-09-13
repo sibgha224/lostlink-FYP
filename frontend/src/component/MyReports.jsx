@@ -17,12 +17,24 @@ const statusBadge = (status) => {
     active: { label: 'Active', cls: 'bg-yellow-50 text-yellow-700' },
     claimed: { label: 'Claimed', cls: 'bg-blue-50 text-blue-700' },
     returned: { label: 'Returned', cls: 'bg-green-50 text-green-700' },
+    handed_to_admin: { label: 'Handed to Admin', cls: 'bg-blue-50 text-blue-700' },
     pending: { label: 'Pending Review', cls: 'bg-yellow-50 text-yellow-700' },
     approved: { label: 'Claim Approved', cls: 'bg-green-50 text-green-700' },
     rejected: { label: 'Claim Rejected', cls: 'bg-red-50 text-[#800020]' },
   };
   return map[status] || { label: status, cls: 'bg-gray-50 text-gray-600' };
 };
+
+const daysSince = (date) => Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
+
+const LOST_FOLLOWUP_DAYS = 30;
+const FOUND_HANDOVER_DAYS = 15;
+
+const requestStatusBadge = (status) => ({
+  pending: { label: 'Request Pending', cls: 'bg-yellow-50 text-yellow-700' },
+  approved: { label: 'Request Approved', cls: 'bg-green-50 text-green-700' },
+  rejected: { label: 'Request Rejected', cls: 'bg-red-50 text-[#800020]' },
+}[status] || { label: status, cls: 'bg-gray-50 text-gray-600' });
 
 const StarRow = ({ value, onChange, size = 22 }) => (
   <div className="flex gap-1">
@@ -58,23 +70,31 @@ const MyReports = (props) => {
   const [rateSubmitting, setRateSubmitting] = useState(false);
   const [rateError, setRateError] = useState('');
 
+  const [myRequests, setMyRequests] = useState([]);
+  const [requestModal, setRequestModal] = useState(null);
+  const [requestMessage, setRequestMessage] = useState('');
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [requestError, setRequestError] = useState('');
+
   const loadAll = async () => {
     setLoading(true);
     setError('');
     try {
       const headers = authHeaders();
-      const [lostRes, foundRes, claimsRes, reviewsRes, matchesRes] = await Promise.all([
+      const [lostRes, foundRes, claimsRes, reviewsRes, matchesRes, requestsRes] = await Promise.all([
         fetch(`${API_BASE}/lost-items/my-items`, { headers }),
         fetch(`${API_BASE}/found-items/my-items`, { headers }),
         fetch(`${API_BASE}/claims/my-claims`, { headers }),
         fetch(`${API_BASE}/reviews/my-reviews`, { headers }),
         fetch(`${API_BASE}/matching/my-matches`, { headers }),
+        fetch(`${API_BASE}/requests/my-requests`, { headers }),
       ]);
       const lostData = await lostRes.json();
       const foundData = await foundRes.json();
       const claimsData = await claimsRes.json();
       const reviewsData = await reviewsRes.json().catch(() => []);
       const matchesData = await matchesRes.json().catch(() => ({ matches: [] }));
+      const requestsData = await requestsRes.json().catch(() => []);
       if (!lostRes.ok) throw new Error(lostData.message || 'Failed to load lost reports');
       if (!foundRes.ok) throw new Error(foundData.message || 'Failed to load found reports');
       if (!claimsRes.ok) throw new Error(claimsData.message || 'Failed to load claims');
@@ -84,6 +104,7 @@ const MyReports = (props) => {
       setMyClaims(Array.isArray(claimsData) ? claimsData : []);
       setMyReviews(Array.isArray(reviewsData) ? reviewsData : []);
       setMatches(Array.isArray(matchesData.matches) ? matchesData.matches : []);
+      setMyRequests(Array.isArray(requestsData) ? requestsData : []);
 
       const foundList = Array.isArray(foundData) ? foundData : [];
       const claimEntries = await Promise.all(
@@ -154,6 +175,40 @@ const MyReports = (props) => {
       setActionError(err.message);
     } finally {
       setBusyClaimId(null);
+    }
+  };
+
+  const requestFor = (itemId, type) => myRequests.find((r) => r.relatedItem === itemId && r.type === type);
+
+  const openRequestModal = (type, item) => {
+    setRequestModal({ type, itemId: item._id, itemName: item.itemName });
+    setRequestMessage('');
+    setRequestError('');
+  };
+
+  const submitItemRequest = async () => {
+    if (!requestModal) return;
+    if (!requestMessage.trim()) {
+      setRequestError('Please write a short message for the admin.');
+      return;
+    }
+    setRequestSubmitting(true);
+    setRequestError('');
+    try {
+      const path = requestModal.type === 'lost_followup' ? '/requests/lost-followup' : '/requests/found-handover';
+      const response = await fetch(`${API_BASE}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ itemId: requestModal.itemId, message: requestMessage }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to send request');
+      setRequestModal(null);
+      await loadAll();
+    } catch (err) {
+      setRequestError(err.message);
+    } finally {
+      setRequestSubmitting(false);
     }
   };
 
@@ -230,6 +285,48 @@ const MyReports = (props) => {
                           </span>
                         )}
                       </div>
+
+                      {item.__kind === 'Lost' && item.status === 'active' && daysSince(item.createdAt) >= LOST_FOLLOWUP_DAYS && (
+                        <div className="mt-4 pt-4 border-t border-[#f5f0f0]">
+                          {(() => {
+                            const req = requestFor(item._id, 'lost_followup');
+                            if (req) {
+                              const rb = requestStatusBadge(req.status);
+                              return (
+                                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${rb.cls}`}>{rb.label}</span>
+                              );
+                            }
+                            return (
+                              <button
+                                onClick={() => openRequestModal('lost_followup', item)}
+                                className="text-xs font-bold text-[#800020] bg-white border border-[#e8d0d0] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#fff0f0]">
+                                This item has been lost for over 30 days — Request Follow-up
+                              </button>
+                            );
+                          })()}
+                        </div>
+                      )}
+
+                      {item.__kind === 'Found' && item.status === 'active' && daysSince(item.createdAt) >= FOUND_HANDOVER_DAYS && (
+                        <div className="mt-4 pt-4 border-t border-[#f5f0f0]">
+                          {(() => {
+                            const req = requestFor(item._id, 'found_handover');
+                            if (req) {
+                              const rb = requestStatusBadge(req.status);
+                              return (
+                                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${rb.cls}`}>{rb.label}</span>
+                              );
+                            }
+                            return (
+                              <button
+                                onClick={() => openRequestModal('found_handover', item)}
+                                className="text-xs font-bold text-[#800020] bg-white border border-[#e8d0d0] px-3 py-1.5 rounded-lg cursor-pointer hover:bg-[#fff0f0]">
+                                Deposit at Principal Office — Notify Admin
+                              </button>
+                            );
+                          })()}
+                        </div>
+                      )}
 
                       {item.__kind === 'Found' && pendingClaims.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-[#f5f0f0] space-y-3">
@@ -405,6 +502,45 @@ const MyReports = (props) => {
                 disabled={rateSubmitting}
                 className="flex-1 py-2.5 rounded-xl bg-[#800020] text-white font-bold text-sm cursor-pointer disabled:opacity-50">
                 {rateSubmitting ? 'Submitting...' : 'Submit Rating'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {requestModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="font-headings text-xl font-bold text-[#2e1a1a] mb-1">
+              {requestModal.type === 'lost_followup' ? 'Request Follow-up' : 'Deposit at Principal Office'}
+            </h3>
+            <p className="text-sm text-[#c07080] mb-4">
+              {requestModal.type === 'lost_followup'
+                ? `Let the admin know about "${requestModal.itemName}".`
+                : `Tell the admin you're depositing "${requestModal.itemName}" at the Principal Office.`}
+            </p>
+
+            <textarea
+              value={requestMessage}
+              onChange={(e) => setRequestMessage(e.target.value)}
+              placeholder="Write your message..."
+              rows={4}
+              className="w-full p-3 rounded-xl border border-[#e8d0d0] text-sm outline-none focus:border-[#800020] mb-3"
+            />
+
+            {requestError && <p className="text-sm text-red-600 mb-3">{requestError}</p>}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setRequestModal(null)}
+                className="flex-1 py-2.5 rounded-xl border border-[#e8d0d0] text-[#5a3a3a] font-bold text-sm cursor-pointer">
+                Cancel
+              </button>
+              <button
+                onClick={submitItemRequest}
+                disabled={requestSubmitting}
+                className="flex-1 py-2.5 rounded-xl bg-[#800020] text-white font-bold text-sm cursor-pointer disabled:opacity-50">
+                {requestSubmitting ? 'Sending...' : 'Send Request'}
               </button>
             </div>
           </div>
