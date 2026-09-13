@@ -28,22 +28,44 @@ const requestRoutes = require('./routes/requestroutes');
 const app = express();
 const server = http.createServer(app);
 
-const allowedOrigins = (process.env.CLIENT_URL
+// Local development ke sare URLs
+const defaultOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5175',
+  'http://127.0.0.1:3000'
+];
+
+const envOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(',').map(o => o.trim())
-  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:3000']
-);
+  : [];
+
+const allowedOrigins = [...defaultOrigins, ...envOrigins];
 
 const corsOptions = {
   origin: (origin, callback) => {
+    // Postman, mobile apps ya local browser preflight requests allow karne ke liye
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(null, true); // Local development mein kisi bhi origin ko block hone se bachane ke liye
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE']
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
+// Express App par CORS apply karen
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Socket.io Config
 const io = new Server(server, {
   cors: corsOptions
 });
@@ -144,10 +166,6 @@ io.on('connection', async (socket) => {
 
 app.set('socketio', io);
 app.set('onlineUsers', onlineUsers);
-
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 connectDB();
 
