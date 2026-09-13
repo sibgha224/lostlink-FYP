@@ -79,9 +79,13 @@ export default function AdminDashboard() {
   const [pendingRequests, setPendingRequests] = useState(0);
   const [openSupportChats, setOpenSupportChats] = useState(0);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [loading, setLoading] = useState(true);
+  
+  // Custom Delete Modal State
+  const [itemToDelete, setItemToDelete] = useState(null);
+
+  const [loading, setLoading]     = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [busyId, setBusyId] = useState(null);
+  const [busyId, setBusyId]       = useState(null);
   const [notifications, setNotifications] = useState([]);
   const unreadCount = notifications.filter(n => n.unread).length;
 
@@ -138,7 +142,7 @@ export default function AdminDashboard() {
   };
 
   const navLinks = [
-    { id:"dashboard", label:"Dashboard",     icon: IcoDash,  badge:null },
+    { id:"dashboard", label:"Dashboard",    icon: IcoDash,  badge:null },
     { id:"items",     label:"Lost Items",    icon: IcoBox,   badge: itemStats.totalLost || null },
     { id:"found",     label:"Found Items",   icon: IcoItems, badge: itemStats.totalFound || null },
     { id:"claims",    label:"Claims",        icon: IcoClaim, badge: itemStats.pendingClaims || null },
@@ -150,14 +154,21 @@ export default function AdminDashboard() {
     { id:"settings",  label:"Settings",      icon: IcoSet,   badge:null },
   ];
 
-  const handleDelete = async (item) => {
-    if (!window.confirm(`Remove "${item.itemName}"? This cannot be undone.`)) return;
+  // Updated handleDelete to open Custom Modal instead of window.confirm
+  const handleDeleteClick = (item) => {
+    setItemToDelete(item);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    const item = itemToDelete;
     setBusyId(item._id);
     try {
       const path = item.kind === 'Lost' ? `/lost-items/${item._id}` : `/found-items/${item._id}`;
       await adminFetch(path, { method: 'DELETE' });
       setItemsList(prev => prev.filter(i => i._id !== item._id));
       setSelectedItem(null);
+      setItemToDelete(null);
     } catch (err) {
       alert(err.message);
     } finally {
@@ -417,7 +428,7 @@ export default function AdminDashboard() {
                         <div style={{ display:"flex", gap:6 }}>
                           <button onClick={() => setSelectedItem(item)} style={{ background:"rgba(128,0,32,0.07)", border:"1px solid rgba(128,0,32,0.15)", borderRadius:8, padding:"5px 12px", color:"#800020", fontSize:11, fontWeight:600, cursor:"pointer" }}>View</button>
                           <button disabled={busyId === item._id} onClick={() => handleApprove(item)} style={{ background:"#dcfce7", border:"1px solid #86efac", borderRadius:8, padding:"5px 12px", color:"#15803d", fontSize:11, fontWeight:700, cursor:"pointer" }}>✓ Approve</button>
-                          <button disabled={busyId === item._id} onClick={() => handleDelete({ ...item, kind: 'Found' })} style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"5px 12px", color:"#dc2626", fontSize:11, fontWeight:600, cursor:"pointer" }}>✕ Reject</button>
+                          <button disabled={busyId === item._id} onClick={() => handleDeleteClick({ ...item, kind: 'Found' })} style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"5px 12px", color:"#dc2626", fontSize:11, fontWeight:600, cursor:"pointer" }}>✕ Reject</button>
                         </div>
                       </div>
                     ))}
@@ -465,7 +476,7 @@ export default function AdminDashboard() {
                           <td style={{ padding:"13px 16px" }}>
                             <div style={{ display:"flex", gap:6 }}>
                               <button onClick={() => setSelectedItem(item)} style={{ background:"rgba(128,0,32,0.07)", border:"1px solid rgba(128,0,32,0.15)", borderRadius:8, padding:"5px 12px", color:"#800020", fontSize:11, fontWeight:600, cursor:"pointer" }}>View</button>
-                              <button disabled={busyId === item._id} onClick={() => handleDelete(item)} style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"5px 12px", color:"#dc2626", fontSize:11, fontWeight:600, cursor:"pointer" }}>Remove</button>
+                              <button disabled={busyId === item._id} onClick={() => handleDeleteClick(item)} style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"5px 12px", color:"#dc2626", fontSize:11, fontWeight:600, cursor:"pointer" }}>Remove</button>
                             </div>
                           </td>
                         </tr>
@@ -582,7 +593,37 @@ export default function AdminDashboard() {
             </div>
             <div style={{ padding:"16px 24px", background:"#fdf6f7", borderTop:"1px solid #f0e0e0", display:"flex", justifyContent:"flex-end", gap:10 }}>
               <button onClick={() => setSelectedItem(null)} style={{ padding:"8px 16px", borderRadius:10, border:"1px solid #e8d0d0", background:"#fff", color:"#6b4848", fontSize:12, fontWeight:600, cursor:"pointer" }}>Close</button>
-              <button disabled={busyId === selectedItem._id} onClick={() => handleDelete(selectedItem)} style={{ padding:"8px 16px", borderRadius:10, border:"none", background:"#dc2626", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer" }}>Delete Item</button>
+              <button disabled={busyId === selectedItem._id} onClick={() => { setSelectedItem(null); handleDeleteClick(selectedItem); }} style={{ padding:"8px 16px", borderRadius:10, border:"none", background:"#dc2626", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer" }}>Delete Item</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Modal */}
+      {itemToDelete && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(46,26,26,0.5)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:400, padding:20 }}>
+          <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, width:"100%", maxWidth:400, overflow:"hidden", boxShadow:"0 20px 50px rgba(74,0,16,0.25)" }}>
+            <div style={{ padding:"20px 24px 10px", textAlign:"center" }}>
+              <div style={{ width:48, height:48, borderRadius:14, background:"#fef2f2", color:"#dc2626", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px", fontSize:22, fontWeight:800, border:"1px solid #fecaca" }}>
+                !
+              </div>
+              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:18, fontWeight:800, color:"#2e1a1a", margin:0 }}>Remove Item?</h3>
+              <p style={{ fontSize:13, color:"#c07080", marginTop:8, lineHeight:1.4 }}>
+                Are you sure you want to remove <strong style={{ color:"#2e1a1a" }}>"{itemToDelete.itemName}"</strong>? This action cannot be undone.
+              </p>
+            </div>
+            <div style={{ padding:"16px 24px", background:"#fdf6f7", borderTop:"1px solid #f0e0e0", display:"flex", gap:10, marginTop:10 }}>
+              <button 
+                onClick={() => setItemToDelete(null)} 
+                style={{ flex:1, padding:"10px", borderRadius:10, border:"1px solid #e8d0d0", background:"#fff", color:"#6b4848", fontSize:13, fontWeight:600, cursor:"pointer" }}>
+                Cancel
+              </button>
+              <button 
+                disabled={busyId === itemToDelete._id} 
+                onClick={confirmDelete} 
+                style={{ flex:1, padding:"10px", borderRadius:10, border:"none", background:"#dc2626", color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", boxShadow:"0 3px 10px rgba(220,38,38,0.3)" }}>
+                {busyId === itemToDelete._id ? 'Removing...' : 'Yes, Remove'}
+              </button>
             </div>
           </div>
         </div>
