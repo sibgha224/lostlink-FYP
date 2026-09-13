@@ -47,6 +47,15 @@ const toggleBlockUser = async (req, res) => {
     user.isBlocked = !user.isBlocked;
     await user.save();
 
+    if (user.isBlocked) {
+      const io = req.app.get('socketio');
+      const onlineUsers = req.app.get('onlineUsers');
+      const targetSockets = onlineUsers ? onlineUsers.get(user._id.toString()) : null;
+      if (io && targetSockets && targetSockets.size > 0) {
+        targetSockets.forEach(socketId => io.to(socketId).emit('account_blocked'));
+      }
+    }
+
     res.status(200).json({
       message: user.isBlocked ? 'User blocked successfully!' : 'User unblocked successfully!',
       isBlocked: user.isBlocked
@@ -90,7 +99,6 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
-// Item-level stats for the admin dashboard (Total Lost / Total Found / Pending Claims / Total Resolved)
 const getItemStats = async (req, res) => {
   try {
     const Claim = require('../models/claim');

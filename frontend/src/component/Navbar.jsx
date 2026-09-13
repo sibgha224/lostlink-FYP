@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 
 const API_BASE = 'http://localhost:5000/api';
@@ -18,8 +18,20 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
   const notifRef = useRef(null);
   const dropdownRef = useRef(null);
 
+  const [prevTab, setPrevTab] = useState(activeTab);
+
+  if (prevTab !== activeTab) {
+    setPrevTab(activeTab);
+    setShowNotifs(false);
+    setShowDropdown(false);
+  }
+
   const user = (() => {
-    try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; }
+    try { 
+      return JSON.parse(localStorage.getItem('user') || 'null'); 
+    } catch { 
+      return null; 
+    }
   })();
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -34,18 +46,26 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
         const res = await fetch(`${API_BASE}/notifications`, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
         if (res.ok) setNotifications(Array.isArray(data) ? data : []);
-      } catch { }
+      } catch {
+        // Silently handle error
+      }
     };
     fetchNotifications();
 
     const socket = io(SOCKET_URL, { auth: { token } });
     socketRef.current = socket;
+    
     socket.on('new_notification', (notif) => {
       setNotifications(prev => [notif, ...prev]);
     });
+    
+    socket.on('account_blocked', () => {
+      alert('Your account has been blocked by the admin. You are being logged out.');
+      if (onLogout) onLogout();
+    });
 
     return () => socket.disconnect();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, onLogout]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -60,11 +80,6 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    setShowNotifs(false);
-    setShowDropdown(false);
-  }, [activeTab]);
-
   const toggleNotifs = async () => {
     const opening = !showNotifs;
     setShowNotifs(opening);
@@ -74,7 +89,9 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
       try {
         await fetch(`${API_BASE}/notifications/read-all`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } });
         setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-      } catch { }
+      } catch {
+        // Silently handle error
+      }
     }
   };
 
@@ -98,10 +115,10 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
   };
 
   return (
-    <nav className="flex justify-between items-center px-[5%] h-[68px] sticky top-0 z-[1000] bg-white/95 backdrop-blur border-b border-[#e8d0d0]" style={{ boxShadow: '0 2px 20px rgba(128, 0, 32, 0.04)' }}>
+    <nav className="flex justify-between items-center px-[5%] h-17 sticky top-0 z-1000 bg-white/95 backdrop-blur border-b border-[#e8d0d0]" style={{ boxShadow: '0 2px 20px rgba(128, 0, 32, 0.04)' }}>
 
       <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => onNavigate('home')}>
-        <div className="w-[38px] h-[38px] rounded-xl flex items-center justify-center bg-[#800020] text-white shadow-md">
+        <div className="w-9.5 h-9.5 rounded-xl flex items-center justify-center bg-[#800020] text-white shadow-md">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
         <span className="text-[1.35rem] font-bold text-[#2e1a1a]" style={{ fontFamily: "'Fraunces', serif" }}>LostLink</span>
@@ -181,7 +198,7 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
             </button>
             <button
               onClick={onGoToSignup}
-              className="px-5 py-2 rounded-xl text-white font-bold text-sm bg-gradient-to-r from-[#800020] to-[#4a0010] shadow hover:opacity-90 cursor-pointer transition-all">
+              className="px-5 py-2 rounded-xl text-white font-bold text-sm bg-linear-to-r from-[#800020] to-[#4a0010] shadow hover:opacity-90 cursor-pointer transition-all">
               Register
             </button>
           </div>
