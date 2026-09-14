@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const settingsSchema = new mongoose.Schema({
   collegeName: {
     type: String,
-    default: 'Govt. Graduate College Mandi Bahauddin'
+    default: 'Govt. Postgraduate College Mandi Bahauddin'
   },
   address: {
     type: String,

@@ -2,14 +2,15 @@ import { useState, useEffect } from "react";
 import { adminFetch } from "../adminApi";
 
 const initialItemsForExport = [
-  { id:"LL-001", title:"Black Wallet",  cat:"Accessories", date:"12 May 2026", status:"Lost",  reporter:"Ali Hassan" },
-  { id:"LL-002", title:"iPhone 14 Pro", cat:"Electronics", date:"11 May 2026", status:"Found", reporter:"Sara Malik" },
+  { id:"LL-001", title:"Black Wallet",   cat:"Accessories", date:"12 May 2026", status:"Lost",    reporter:"Ali Hassan" },
+  { id:"LL-002", title:"iPhone 14 Pro", cat:"Electronics", date:"11 May 2026", status:"Found",   reporter:"Sara Malik" },
   { id:"LL-003", title:"Student ID Card", cat:"Documents", date:"10 May 2026", status:"Claimed", reporter:"Umar Sheikh" },
 ];
 
-export default function SettingsPage() {
+export default function SettingsPage({ onInstituteSaved }) {
   const [saved, setSaved] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
+  const [savingInstitute, setSavingInstitute] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -31,7 +32,7 @@ export default function SettingsPage() {
     supportEmail: "support@lostlink.com",
     contactNumber: "0546-123456",
   });
-  const [savingInstitute, setSavingInstitute] = useState(false);
+
   const handleSystemChange = (e) =>
     setSystemInfo({ ...systemInfo, [e.target.name]: e.target.value });
 
@@ -85,6 +86,7 @@ export default function SettingsPage() {
         body: JSON.stringify(systemInfo),
       });
       showSaved("Institute information saved");
+      if (onInstituteSaved) onInstituteSaved();
     } catch (err) {
       showError(err.message);
     } finally {

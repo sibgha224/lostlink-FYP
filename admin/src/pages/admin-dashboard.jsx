@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ClaimsPage from "./claims-page";
 import RequestsPage from "./requests-page";
@@ -32,6 +32,7 @@ const IcoMail    = () => <Ico d={["M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1
 const IcoReqst   = () => <Ico d={["M9 12h6","M9 16h6","M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z","M13 2v6h6"]} />;
 const IcoSupport = () => <Ico d={["M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"]} />;
 const IcoStar    = () => <Ico d="M12 2l2.9 6.3 6.9.7-5.2 4.7 1.5 6.8L12 17l-6.1 3.5 1.5-6.8L2.2 9l6.9-.7z" />;
+const IcoCamera  = () => <Ico d={["M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z", "M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"]} />;
 
 const statusCfg = {
   Lost:     { bg:"#fef2f2", color:"#dc2626" },
@@ -41,12 +42,6 @@ const statusCfg = {
   Pending:  { bg:"#fffbeb", color:"#b45309" },
 };
 
-const itemStatusCfg = {
-  active:          { bg:"#f0fdf4", color:"#16a34a", label:"Active" },
-  claimed:         { bg:"#fff7ed", color:"#c2410c", label:"Claimed" },
-  returned:        { bg:"#fdf4ff", color:"#7c3aed", label:"Returned" },
-  handed_to_admin: { bg:"#eff6ff", color:"#2563eb", label:"Handed to Admin" },
-};
 const shortId = (mongoId) => `#${(mongoId || '').slice(-6).toUpperCase()}`;
 const NOTIF_TITLES = {
   claim_submitted: 'New Claim Submitted',
@@ -89,21 +84,40 @@ export default function AdminDashboard() {
   const [openSupportChats, setOpenSupportChats] = useState(0);
   const [pendingReviews, setPendingReviews] = useState(0);
   const [selectedItem, setSelectedItem] = useState(null);
-  
-  // Custom Delete Modal State
-  const [itemToDelete, setItemToDelete] = useState(null);
-
-  const [loading, setLoading]     = useState(true);
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [busyId, setBusyId]       = useState(null);
+  const [busyId, setBusyId] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [instituteName, setInstituteName] = useState("Govt. Graduate College Mandi Bahauddin");
+
+  // Admin avatar image state
+  const [profileImage, setProfileImage] = useState(() => localStorage.getItem("adminProfileImage") || null);
+  const fileInputRef = useRef(null);
+
+  const notifRef = useRef(null);
   const unreadCount = notifications.filter(n => n.unread).length;
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setNotifOpen(false);
+      }
+    };
+
+    if (notifOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [notifOpen]);
 
   const loadDashboard = async () => {
     setLoading(true);
     setLoadError("");
     try {
-      const [stats, lost, found, pending, notifs, requests, reviews] = await Promise.all([
+      const [stats, lost, found, pending, notifs, requests, reviews, settings] = await Promise.all([
         adminFetch('/admin/item-stats'),
         adminFetch('/lost-items/all'),
         adminFetch('/found-items/all'),
@@ -111,8 +125,12 @@ export default function AdminDashboard() {
         adminFetch('/notifications').catch(() => []),
         adminFetch('/requests/all').catch(() => []),
         adminFetch('/testimonials/admin').catch(() => []),
+        adminFetch('/settings').catch(() => null),
       ]);
-      setItemStats(stats);
+      if (settings) {
+        setInstituteName(settings.collegeName || "Govt. Graduate College Mandi Bahauddin");
+      }
+      setItemStats(stats || { totalLost: 0, totalFound: 0, pendingClaims: 0, totalResolved: 0 });
       const requestsList = Array.isArray(requests) ? requests : [];
       setPendingRequests(requestsList.filter(r => r.status === 'pending' && r.type !== 'general_issue').length);
       setOpenSupportChats(requestsList.filter(r => r.type === 'general_issue' && r.status !== 'closed').length);
@@ -125,7 +143,7 @@ export default function AdminDashboard() {
       setPendingApprovals(Array.isArray(pending) ? pending : []);
       setNotifications((Array.isArray(notifs) ? notifs : []).map(n => ({ id: n._id, msg: n.message, title: NOTIF_TITLES[n.type] || 'Notification', type: n.type, time: new Date(n.createdAt).toLocaleString(), dot: '#800020', unread: !n.isRead })));
     } catch (err) {
-      setLoadError(err.message);
+      setLoadError(err.message || "Failed to fetch dashboard data.");
     } finally {
       setLoading(false);
     }
@@ -140,8 +158,21 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Image = reader.result;
+        setProfileImage(base64Image);
+        localStorage.setItem("adminProfileImage", base64Image);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const markAllRead = async () => {
-    setNotifications(notifications.map(n => ({ ...n, unread: false })));
+    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
     try {
       await adminFetch('/notifications/read-all', { method: 'PUT' });
     } catch (err) {
@@ -150,38 +181,31 @@ export default function AdminDashboard() {
   };
 
   const markSingleRead = (id) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, unread: false } : n));
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
   };
 
   const navLinks = [
-    { id:"dashboard", label:"Dashboard",    icon: IcoDash,  badge:null },
-    { id:"items",     label:"Lost Items",    icon: IcoBox,   badge: itemStats.totalLost || null },
-    { id:"found",     label:"Found Items",   icon: IcoItems, badge: itemStats.totalFound || null },
-    { id:"claims",    label:"Claims",        icon: IcoClaim, badge: itemStats.pendingClaims || null },
-    { id:"requests",  label:"Requests",      icon: IcoReqst, badge: pendingRequests || null },
+    { id:"dashboard", label:"Dashboard",     icon: IcoDash,    badge:null },
+    { id:"items",     label:"Lost Items",    icon: IcoBox,     badge: itemStats.totalLost || null },
+    { id:"found",     label:"Found Items",   icon: IcoItems,   badge: itemStats.totalFound || null },
+    { id:"claims",    label:"Claims",        icon: IcoClaim,   badge: itemStats.pendingClaims || null },
+    { id:"requests",  label:"Requests",      icon: IcoReqst,   badge: pendingRequests || null },
     { id:"support",   label:"Support",       icon: IcoSupport, badge: openSupportChats || null },
-    { id:"users",     label:"Users",         icon: IcoUsers, badge:null },
-    { id:"messages",  label:"Messages",      icon: IcoMsg,   badge:null },
-    { id:"notif",     label:"Notifications", icon: IcoNotif, badge: unreadCount > 0 ? `${unreadCount}` : null },
-    { id:"reviews",   label:"Reviews",       icon: IcoStar,  badge: pendingReviews || null },
-    { id:"settings",  label:"Settings",      icon: IcoSet,   badge:null },
+    { id:"users",     label:"Users",         icon: IcoUsers,   badge:null },
+    { id:"messages",  label:"Messages",      icon: IcoMsg,     badge:null },
+    { id:"notif",     label:"Notifications", icon: IcoNotif,   badge: unreadCount > 0 ? `${unreadCount}` : null },
+    { id:"reviews",   label:"Reviews",       icon: IcoStar,    badge: pendingReviews || null },
+    { id:"settings",  label:"Settings",      icon: IcoSet,     badge:null },
   ];
 
-  // Updated handleDelete to open Custom Modal instead of window.confirm
-  const handleDeleteClick = (item) => {
-    setItemToDelete(item);
-  };
-
-  const confirmDelete = async () => {
-    if (!itemToDelete) return;
-    const item = itemToDelete;
+  const handleDelete = async (item) => {
+    if (!window.confirm(`Remove "${item.itemName}"? This action cannot be undone.`)) return;
     setBusyId(item._id);
     try {
       const path = item.kind === 'Lost' ? `/lost-items/${item._id}` : `/found-items/${item._id}`;
       await adminFetch(path, { method: 'DELETE' });
       setItemsList(prev => prev.filter(i => i._id !== item._id));
       setSelectedItem(null);
-      setItemToDelete(null);
     } catch (err) {
       alert(err.message);
     } finally {
@@ -202,26 +226,24 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleMarkReturned = async (item) => {
-    if (!window.confirm(`Mark "${item.itemName}" as returned? This will hide it from claims/public listing as available.`)) return;
-    setBusyId(item._id);
-    try {
-      const path = item.kind === 'Lost' ? `/lost-items/${item._id}` : `/found-items/${item._id}`;
-      await adminFetch(path, { method: 'PUT', body: JSON.stringify({ status: 'returned' }) });
-      setItemsList(prev => prev.map(i => i._id === item._id ? { ...i, status: 'returned' } : i));
-      setSelectedItem(prev => (prev && prev._id === item._id) ? { ...prev, status: 'returned' } : prev);
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setBusyId(null);
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearch(val);
+    if (val.trim() !== "" && !["dashboard", "items", "found"].includes(active)) {
+      setActive("dashboard");
     }
   };
 
   const barData = buildMonthlyChart(itemsList);
   const maxBar = Math.max(1, ...barData.flatMap(b => [b.lost, b.found]));
+
   const filtered = itemsList.filter(i => {
-    const matchesSearch = i.itemName.toLowerCase().includes(search.toLowerCase()) ||
-                          shortId(i._id).toLowerCase().includes(search.toLowerCase());
+    const query = search.toLowerCase().trim();
+    const itemNameMatches = (i.itemName || '').toLowerCase().includes(query);
+    const idMatches = shortId(i._id).toLowerCase().includes(query);
+    const categoryMatches = (i.category || '').toLowerCase().includes(query);
+    const reporterMatches = (i.userId?.name || i.contactName || '').toLowerCase().includes(query);
+    const matchesSearch = itemNameMatches || idMatches || categoryMatches || reporterMatches;
     if (active === "items") return matchesSearch && i.kind === "Lost";
     if (active === "found") return matchesSearch && i.kind === "Found";
     return matchesSearch;
@@ -248,6 +270,8 @@ export default function AdminDashboard() {
         .add-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(128,0,32,0.4);}
         .profile-trigger{cursor:pointer;transition:all .2s;border-radius:14px;padding:12px;background:linear-gradient(135deg,rgba(128,0,32,0.06),rgba(74,0,16,0.04));border:1px solid #e8d0d0;}
         .profile-trigger:hover{background:rgba(128,0,32,0.12);border-color:#800020;}
+        .avatar-hover-overlay{position:absolute;inset:0;background:rgba(46,26,26,0.5);border-radius:24px;display:flex;align-items:center;justify-content:center;color:#fff;opacity:0;transition:opacity 0.2s;}
+        .avatar-container:hover .avatar-hover-overlay{opacity:1;}
         @media(max-width:900px){
           .sidebar-desk{display:none!important} .main-wrap{margin-left:0!important}
           .search-area{display:none!important}
@@ -282,12 +306,14 @@ export default function AdminDashboard() {
             );
           })}
         </nav>
-
-        {/* User Card Trigger */}
         <div className="profile-trigger" style={{ marginTop:16 }} onClick={() => setProfileModalOpen(true)}>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0 }}>
-              {(admin?.name || 'A').slice(0,1).toUpperCase()}
+            <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0, overflow:"hidden" }}>
+              {profileImage ? (
+                <img src={profileImage} alt="Profile" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+              ) : (
+                (admin?.name || 'A').slice(0,1).toUpperCase()
+              )}
             </div>
             <div style={{ flex:1, overflow:"hidden" }}>
               <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a", margin:0, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
@@ -298,7 +324,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </aside>
-
       {sideOpen && (
         <div className="mob-overlay" style={{ position:"fixed", inset:0, zIndex:200 }}>
           <div onClick={() => setSideOpen(false)} style={{ position:"absolute", inset:0, background:"rgba(46,26,26,0.45)", backdropFilter:"blur(3px)" }} />
@@ -319,8 +344,12 @@ export default function AdminDashboard() {
             
             <div className="profile-trigger" style={{ marginTop:"auto" }} onClick={() => { setProfileModalOpen(true); setSideOpen(false); }}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0 }}>
-                  {(admin?.name || 'A').slice(0,1).toUpperCase()}
+                <div style={{ width:36, height:36, borderRadius:10, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:15, flexShrink:0, overflow:"hidden" }}>
+                  {profileImage ? (
+                    <img src={profileImage} alt="Profile" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                  ) : (
+                    (admin?.name || 'A').slice(0,1).toUpperCase()
+                  )}
                 </div>
                 <div style={{ flex:1, overflow:"hidden" }}>
                   <p style={{ fontSize:13, fontWeight:700, color:"#2e1a1a", margin:0, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
@@ -332,7 +361,6 @@ export default function AdminDashboard() {
           </aside>
         </div>
       )}
-
       <div className="main-wrap" style={{ marginLeft:236, flex:1, display:"flex", flexDirection:"column", minHeight:"100vh" }}>
         <header style={{ height:66, background:"rgba(255,255,255,0.95)", backdropFilter:"blur(10px)", borderBottom:"1px solid #e8d0d0", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 28px", position:"sticky", top:0, zIndex:40, boxShadow:"0 2px 10px rgba(74,0,16,0.05)" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
@@ -345,10 +373,10 @@ export default function AdminDashboard() {
           </div>
           <div className="search-area" style={{ position:"relative" }}>
             <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:"#c5a3a3", pointerEvents:"none", display:"flex" }}><IcoSearch /></span>
-            <input className="al-search" placeholder="Quick search..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="al-search" placeholder="Quick search..." value={search} onChange={handleSearchChange} />
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ position:"relative" }}>
+            <div ref={notifRef} style={{ position:"relative" }}>
               <button className="icon-btn" onClick={() => setNotifOpen(!notifOpen)}>
                 <IcoBell />
                 {unreadCount > 0 && (
@@ -400,7 +428,7 @@ export default function AdminDashboard() {
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24 }}>
                 <div>
                   <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:26, fontWeight:800, color:"#2e1a1a", margin:0 }}>Dashboard</h1>
-                  <p style={{ color:"#c07080", fontSize:13, marginTop:4 }}>Govt. Graduate College Mandi Bahauddin</p>
+                  <p style={{ color:"#c07080", fontSize:13, marginTop:4 }}>{instituteName}</p>
                 </div>
               </div>
               {loadError && (
@@ -456,7 +484,7 @@ export default function AdminDashboard() {
                         <div style={{ display:"flex", gap:6 }}>
                           <button onClick={() => setSelectedItem(item)} style={{ background:"rgba(128,0,32,0.07)", border:"1px solid rgba(128,0,32,0.15)", borderRadius:8, padding:"5px 12px", color:"#800020", fontSize:11, fontWeight:600, cursor:"pointer" }}>View</button>
                           <button disabled={busyId === item._id} onClick={() => handleApprove(item)} style={{ background:"#dcfce7", border:"1px solid #86efac", borderRadius:8, padding:"5px 12px", color:"#15803d", fontSize:11, fontWeight:700, cursor:"pointer" }}>✓ Approve</button>
-                          <button disabled={busyId === item._id} onClick={() => handleDeleteClick({ ...item, kind: 'Found' })} style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"5px 12px", color:"#dc2626", fontSize:11, fontWeight:600, cursor:"pointer" }}>✕ Reject</button>
+                          <button disabled={busyId === item._id} onClick={() => handleDelete({ ...item, kind: 'Found' })} style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"5px 12px", color:"#dc2626", fontSize:11, fontWeight:600, cursor:"pointer" }}>✕ Reject</button>
                         </div>
                       </div>
                     ))}
@@ -479,57 +507,53 @@ export default function AdminDashboard() {
                 <table style={{ width:"100%", borderCollapse:"collapse" }}>
                   <thead>
                     <tr style={{ background:"#fdf6f7", borderBottom:"1px solid #f0e0e0" }}>
-                      {["ID","Item","Category","Date","Type","Item Status","Reporter","Action"].map(h => (
+                      {["ID","Item","Category","Date","Status","Reporter","Action"].map(h => (
                         <th key={h} style={{ padding:"10px 16px", textAlign:"left", fontSize:10, fontWeight:700, color:"#c07080", letterSpacing:"1px", textTransform:"uppercase", whiteSpace:"nowrap" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((item) => {
-                      const s = statusCfg[item.kind === 'Lost' ? 'Lost' : 'Found'];
-                      const st = itemStatusCfg[item.status] || { bg:"#f5f0f0", color:"#6b4848", label: item.status || '—' };
-                      return (
-                        <tr key={item._id} className="trow" style={{ borderBottom:"1px solid #fdf0f0" }}>
-                          <td style={{ padding:"13px 16px", fontSize:12, color:"#800020", fontWeight:700 }}>{shortId(item._id)}</td>
-                          <td style={{ padding:"13px 16px" }}>
-                            <span style={{ fontSize:13, color:"#2e1a1a", fontWeight:500 }}>{item.itemName}</span>
-                          </td>
-                          <td style={{ padding:"13px 16px", fontSize:12, color:"#6b4848" }}>{item.category}</td>
-                          <td style={{ padding:"13px 16px", fontSize:12, color:"#c07080" }}>{new Date(item.createdAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}</td>
-                          <td style={{ padding:"13px 16px" }}>
-                            <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"3px 10px", borderRadius:100, fontSize:11, fontWeight:600, background:s.bg, color:s.color }}>
-                              {item.kind}
-                            </span>
-                          </td>
-                          <td style={{ padding:"13px 16px" }}>
-                            <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"3px 10px", borderRadius:100, fontSize:11, fontWeight:600, background:st.bg, color:st.color }}>
-                              {st.label}
-                            </span>
-                          </td>
-                          <td style={{ padding:"13px 16px", fontSize:12, color:"#6b4848" }}>{item.userId?.name || item.contactName || '—'}</td>
-                          <td style={{ padding:"13px 16px" }}>
-                            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                              <button onClick={() => setSelectedItem(item)} style={{ background:"rgba(128,0,32,0.07)", border:"1px solid rgba(128,0,32,0.15)", borderRadius:8, padding:"5px 12px", color:"#800020", fontSize:11, fontWeight:600, cursor:"pointer" }}>View</button>
-                              {item.status !== 'returned' && (
-                                <button disabled={busyId === item._id} onClick={() => handleMarkReturned(item)} style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"5px 12px", color:"#16a34a", fontSize:11, fontWeight:600, cursor:"pointer" }}>✓ Mark Returned</button>
-                              )}
-                              <button disabled={busyId === item._id} onClick={() => handleDeleteClick(item)} style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"5px 12px", color:"#dc2626", fontSize:11, fontWeight:600, cursor:"pointer" }}>Remove</button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {filtered.length > 0 ? (
+                      filtered.map((item) => {
+                        const s = statusCfg[item.kind === 'Lost' ? 'Lost' : 'Found'];
+                        return (
+                          <tr key={item._id} className="trow" style={{ borderBottom:"1px solid #fdf0f0" }}>
+                            <td style={{ padding:"13px 16px", fontSize:12, color:"#800020", fontWeight:700 }}>{shortId(item._id)}</td>
+                            <td style={{ padding:"13px 16px" }}>
+                              <span style={{ fontSize:13, color:"#2e1a1a", fontWeight:500 }}>{item.itemName}</span>
+                            </td>
+                            <td style={{ padding:"13px 16px", fontSize:12, color:"#6b4848" }}>{item.category}</td>
+                            <td style={{ padding:"13px 16px", fontSize:12, color:"#c07080" }}>{new Date(item.createdAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}</td>
+                            <td style={{ padding:"13px 16px" }}>
+                              <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"3px 10px", borderRadius:100, fontSize:11, fontWeight:600, background:s.bg, color:s.color }}>
+                                {item.kind}
+                              </span>
+                            </td>
+                            <td style={{ padding:"13px 16px", fontSize:12, color:"#6b4848" }}>{item.userId?.name || item.contactName || '—'}</td>
+                            <td style={{ padding:"13px 16px" }}>
+                              <div style={{ display:"flex", gap:6 }}>
+                                <button onClick={() => setSelectedItem(item)} style={{ background:"rgba(128,0,32,0.07)", border:"1px solid rgba(128,0,32,0.15)", borderRadius:8, padding:"5px 12px", color:"#800020", fontSize:11, fontWeight:600, cursor:"pointer" }}>View</button>
+                                <button disabled={busyId === item._id} onClick={() => handleDelete(item)} style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"5px 12px", color:"#dc2626", fontSize:11, fontWeight:600, cursor:"pointer" }}>Remove</button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="7" style={{ padding: "24px", textAlign: "center", color: "#c07080", fontSize: "13px" }}>
+                          No records match your selection or search query.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
           {active === "claims" && <ClaimsPage />}
-
           {active === "requests" && <RequestsPage />}
-
           {active === "support" && <SupportPage />}
-
           {active === "users" && <UsersPage />}
           {active === "messages" && <MessagesPage />}
           {active === "notif" && (
@@ -547,7 +571,15 @@ export default function AdminDashboard() {
         </main>
       </div>
 
-      {/* Admin Profile Modal */}
+      {/* Hidden File Input for Image Selection */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        accept="image/*" 
+        style={{ display: "none" }} 
+        onChange={handleImageUpload} 
+      />
+
       {profileModalOpen && (
         <div style={{ position:"fixed", inset:0, background:"rgba(46,26,26,0.5)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:350, padding:20 }}>
           <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:24, width:"100%", maxWidth:400, overflow:"hidden", boxShadow:"0 20px 60px rgba(74,0,16,0.2)" }}>
@@ -555,18 +587,44 @@ export default function AdminDashboard() {
               <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:18, fontWeight:800, color:"#2e1a1a", margin:0 }}>Admin Profile</h3>
               <button onClick={() => setProfileModalOpen(false)} style={{ background:"none", border:"none", fontSize:18, color:"#c07080", cursor:"pointer", padding:4 }}>✕</button>
             </div>
-
             <div style={{ padding:"24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 }}>
-              <div style={{ width:72, height:72, borderRadius:20, background:"linear-gradient(135deg,#800020,#4a0010)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fde8ec", fontWeight:800, fontSize:30, boxShadow:"0 6px 16px rgba(128,0,32,0.35)" }}>
-                {(admin?.name || 'A').slice(0,1).toUpperCase()}
+              {/* Clickable Profile Image Container */}
+              <div 
+                className="avatar-container"
+                onClick={() => fileInputRef.current?.click()}
+                style={{ 
+                  width:84, 
+                  height:84, 
+                  borderRadius:24, 
+                  background:"linear-gradient(135deg,#800020,#4a0010)", 
+                  display:"flex", 
+                  alignItems:"center", 
+                  justifyContent:"center", 
+                  color:"#fde8ec", 
+                  fontWeight:800, 
+                  fontSize:32, 
+                  boxShadow:"0 6px 16px rgba(128,0,32,0.35)",
+                  position:"relative",
+                  cursor:"pointer",
+                  overflow:"hidden"
+                }}
+              >
+                {profileImage ? (
+                  <img src={profileImage} alt="Admin Avatar" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                ) : (
+                  (admin?.name || 'A').slice(0,1).toUpperCase()
+                )}
+                <div className="avatar-hover-overlay">
+                  <IcoCamera />
+                </div>
               </div>
+              <p style={{ fontSize:11, color:"#c07080", margin:0, marginTop:-8, fontWeight:500 }}>Click image to change photo</p>
               <div style={{ textAlign:"center" }}>
                 <h4 style={{ fontFamily:"'Fraunces',serif", fontSize:20, fontWeight:700, color:"#2e1a1a", margin:0 }}>{admin?.name || 'Admin'}</h4>
                 <span style={{ display:"inline-block", margin:"6px 0", padding:"3px 10px", borderRadius:100, fontSize:11, fontWeight:700, background:"#fde8ec", color:"#800020" }}>
                   System Administrator
                 </span>
               </div>
-
               <div style={{ width:"100%", background:"#f9f4f4", borderRadius:14, padding:"14px", display:"flex", flexDirection:"column", gap:10, border:"1px solid #f0e0e0" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                   <div style={{ color:"#800020", display:"flex" }}><IcoMail /></div>
@@ -577,7 +635,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
-
             <div style={{ padding:"16px 24px", background:"#fdf6f7", borderTop:"1px solid #f0e0e0", display:"flex", gap:10 }}>
               <button onClick={() => setProfileModalOpen(false)} style={{ flex:1, padding:"10px", borderRadius:10, border:"1px solid #e8d0d0", background:"#fff", color:"#6b4848", fontSize:13, fontWeight:600, cursor:"pointer" }}>Close</button>
               <button onClick={adminLogout} style={{ flex:1, padding:"10px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#dc2626,#991b1b)", color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6, boxShadow:"0 3px 10px rgba(220,38,38,0.25)" }}>
@@ -587,7 +644,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
       {selectedItem && (
         <div style={{ position:"fixed", inset:0, background:"rgba(46,26,26,0.5)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:300, padding:20 }}>
           <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:24, width:"100%", maxWidth:480, overflow:"hidden", boxShadow:"0 20px 60px rgba(74,0,16,0.2)" }}>
@@ -621,10 +677,6 @@ export default function AdminDashboard() {
                   <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Location</p>
                   <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a", margin:"2px 0 0" }}>{selectedItem.location?.buildingName || selectedItem.location || '—'}</p>
                 </div>
-                <div>
-                  <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Item Status</p>
-                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a", margin:"2px 0 0", textTransform:"capitalize" }}>{(itemStatusCfg[selectedItem.status] || {}).label || selectedItem.status || 'Active'}</p>
-                </div>
               </div>
               <div>
                 <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Description</p>
@@ -633,42 +685,9 @@ export default function AdminDashboard() {
                 </p>
               </div>
             </div>
-            <div style={{ padding:"16px 24px", background:"#fdf6f7", borderTop:"1px solid #f0e0e0", display:"flex", justifyContent:"flex-end", gap:10, flexWrap:"wrap" }}>
+            <div style={{ padding:"16px 24px", background:"#fdf6f7", borderTop:"1px solid #f0e0e0", display:"flex", justifyContent:"flex-end", gap:10 }}>
               <button onClick={() => setSelectedItem(null)} style={{ padding:"8px 16px", borderRadius:10, border:"1px solid #e8d0d0", background:"#fff", color:"#6b4848", fontSize:12, fontWeight:600, cursor:"pointer" }}>Close</button>
-              {selectedItem.status !== 'returned' && (
-                <button disabled={busyId === selectedItem._id} onClick={() => handleMarkReturned(selectedItem)} style={{ padding:"8px 16px", borderRadius:10, border:"1px solid #bbf7d0", background:"#f0fdf4", color:"#16a34a", fontSize:12, fontWeight:600, cursor:"pointer" }}>✓ Mark as Returned</button>
-              )}
-              <button disabled={busyId === selectedItem._id} onClick={() => { setSelectedItem(null); handleDeleteClick(selectedItem); }} style={{ padding:"8px 16px", borderRadius:10, border:"none", background:"#dc2626", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer" }}>Delete Item</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Custom Delete Confirmation Modal */}
-      {itemToDelete && (
-        <div style={{ position:"fixed", inset:0, background:"rgba(46,26,26,0.5)", backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:400, padding:20 }}>
-          <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, width:"100%", maxWidth:400, overflow:"hidden", boxShadow:"0 20px 50px rgba(74,0,16,0.25)" }}>
-            <div style={{ padding:"20px 24px 10px", textAlign:"center" }}>
-              <div style={{ width:48, height:48, borderRadius:14, background:"#fef2f2", color:"#dc2626", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px", fontSize:22, fontWeight:800, border:"1px solid #fecaca" }}>
-                !
-              </div>
-              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:18, fontWeight:800, color:"#2e1a1a", margin:0 }}>Remove Item?</h3>
-              <p style={{ fontSize:13, color:"#c07080", marginTop:8, lineHeight:1.4 }}>
-                Are you sure you want to remove <strong style={{ color:"#2e1a1a" }}>"{itemToDelete.itemName}"</strong>? This action cannot be undone.
-              </p>
-            </div>
-            <div style={{ padding:"16px 24px", background:"#fdf6f7", borderTop:"1px solid #f0e0e0", display:"flex", gap:10, marginTop:10 }}>
-              <button 
-                onClick={() => setItemToDelete(null)} 
-                style={{ flex:1, padding:"10px", borderRadius:10, border:"1px solid #e8d0d0", background:"#fff", color:"#6b4848", fontSize:13, fontWeight:600, cursor:"pointer" }}>
-                Cancel
-              </button>
-              <button 
-                disabled={busyId === itemToDelete._id} 
-                onClick={confirmDelete} 
-                style={{ flex:1, padding:"10px", borderRadius:10, border:"none", background:"#dc2626", color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", boxShadow:"0 3px 10px rgba(220,38,38,0.3)" }}>
-                {busyId === itemToDelete._id ? 'Removing...' : 'Yes, Remove'}
-              </button>
+              <button disabled={busyId === selectedItem._id} onClick={() => handleDelete(selectedItem)} style={{ padding:"8px 16px", borderRadius:10, border:"none", background:"#dc2626", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer" }}>Delete Item</button>
             </div>
           </div>
         </div>
