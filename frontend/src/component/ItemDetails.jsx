@@ -28,6 +28,7 @@ const ItemDetails = ({ item, onBack, onClaimSuccess }) => {
   }
 
   const isLost = item.__type === 'LOST';
+  const isUnavailable = item.status === 'claimed' || item.status === 'returned' || item.status === 'resolved';
 
   const openClaimModal = () => {
     setClaimError('');
@@ -94,14 +95,21 @@ const ItemDetails = ({ item, onBack, onClaimSuccess }) => {
           </div>
 
           <div className="bg-white rounded-2xl border p-8" style={{ borderColor: '#e8d0d0' }}>
-            <span className="inline-block text-[0.72rem] font-bold uppercase tracking-wide rounded-md px-2.5 py-1 mb-3"
-              style={{
-                color: isLost ? '#a0002a' : '#16a34a',
-                background: isLost ? '#fff8f8' : '#f0fdf4',
-                border: `1px solid ${isLost ? '#e8d0d0' : '#bbf7d0'}`
-              }}>
-              {item.__type}
-            </span>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="inline-block text-[0.72rem] font-bold uppercase tracking-wide rounded-md px-2.5 py-1"
+                style={{
+                  color: isLost ? '#a0002a' : '#16a34a',
+                  background: isLost ? '#fff8f8' : '#f0fdf4',
+                  border: `1px solid ${isLost ? '#e8d0d0' : '#bbf7d0'}`
+                }}>
+                {item.__type}
+              </span>
+              {isUnavailable && (
+                <span className="inline-block text-[0.72rem] font-bold uppercase tracking-wide rounded-md px-2.5 py-1 text-gray-700 bg-gray-100 border border-gray-300">
+                  {item.status || 'Unavailable'}
+                </span>
+              )}
+            </div>
 
             <h1 className="font-headings text-2xl md:text-3xl text-[#2e1a1a] mb-6 font-bold">{item.itemName}</h1>
 
@@ -146,8 +154,14 @@ const ItemDetails = ({ item, onBack, onClaimSuccess }) => {
 
             {!isLost && (
               <div className="pt-5" style={{ borderTop: '1px solid #e8d0d0' }}>
-                {claimSubmitted ? (
-                  <span className="inline-block text-sm font-bold text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5">✓ Claim Submitted</span>
+                {isUnavailable ? (
+                  <span className="inline-block text-sm font-bold text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5">
+                    Not available for claims
+                  </span>
+                ) : claimSubmitted ? (
+                  <span className="inline-block text-sm font-bold text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5">
+                    ✓ Claim Submitted
+                  </span>
                 ) : (
                   <button
                     onClick={openClaimModal}

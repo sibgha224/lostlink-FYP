@@ -11,6 +11,8 @@ const connectDB = require('./config/db');
 
 const Claim = require('./models/claim');
 const FoundItem = require('./models/founditem');
+const LostItem = require('./models/lostitem');
+const Settings = require('./models/settings');
 const { getClaimParticipants } = require('./controllers/chatcontroller');
 
 const authRoutes = require('./routes/authroutes');
@@ -24,6 +26,7 @@ const adminChatRoutes = require('./routes/adminchatroutes');
 const matchingRoutes = require('./routes/matchingroutes');
 const reviewRoutes = require('./routes/reviewroutes');
 const requestRoutes = require('./routes/requestroutes');
+const settingsRoutes = require('./routes/settingsroutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -48,11 +51,10 @@ const allowedOrigins = [...defaultOrigins, ...envOrigins];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Postman, mobile apps ya local browser preflight requests allow karne ke liye
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(null, true); // Local development mein kisi bhi origin ko block hone se bachane ke liye
+      callback(null, true);
     }
   },
   credentials: true,
@@ -167,26 +169,81 @@ io.on('connection', async (socket) => {
 app.set('socketio', io);
 app.set('onlineUsers', onlineUsers);
 
-connectDB();
-
+// Routes Setup (Frontend paths ke sath match karne ke liye direct aur /api dono supports hain)
 app.use('/api/auth', authRoutes);
+app.use('/admin', adminRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/lost-items', lostItemRoutes);
 app.use('/api/lost-items', lostItemRoutes);
+app.use('/found-items', foundItemRoutes);
 app.use('/api/found-items', foundItemRoutes);
+app.use('/claims', claimRoutes);
 app.use('/api/claims', claimRoutes);
+app.use('/notifications', notificationRoutes);
 app.use('/api/notifications', notificationRoutes); 
+app.use('/chat', chatRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/admin/chat', adminChatRoutes);
 app.use('/api/admin/chat', adminChatRoutes);
+app.use('/matching', matchingRoutes);
 app.use('/api/matching', matchingRoutes);
+app.use('/reviews', reviewRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/requests', requestRoutes);
 app.use('/api/requests', requestRoutes);
+app.use('/settings', settingsRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'LostLink API is Running!' });
 });
 
+const runAutomationRules = async () => {
+  try {
+    const settings = await Settings.getSingleton();
+    if (!settings) return;
+    
+    const now = Date.now();
+
+    if (settings.autoResolveEnabled) {
+      const cutoff = new Date(now - settings.autoResolveDays * 24 * 60 * 60 * 1000);
+      await FoundItem.updateMany(
+        { status: 'active', createdAt: { $lte: cutoff } },
+        { status: 'returned' }
+      );
+      await LostItem.updateMany(
+        { status: 'active', createdAt: { $lte: cutoff } },
+        { status: 'returned' }
+      );
+    }
+
+    if (settings.autoDeleteEnabled) {
+      const deleteCutoff = new Date(now - settings.autoDeleteMonths * 30 * 24 * 60 * 60 * 1000);
+      await FoundItem.deleteMany({ status: 'returned', updatedAt: { $lte: deleteCutoff } });
+      await LostItem.deleteMany({ status: 'returned', updatedAt: { $lte: deleteCutoff } });
+    }
+  } catch (error) {
+    console.log('Automation rules error:', error.message);
+  }
+};
+
+// Database Connect hone ke baad automation aur server initialize karein
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+    
+    // Automation rules DB connect hone ke baad chalain
+    runAutomationRules();
+    setInterval(runAutomationRules, 60 * 60 * 1000);
+
+    server.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error.message);
+  }
+};
+
+startServer();

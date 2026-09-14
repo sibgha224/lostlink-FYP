@@ -14,6 +14,15 @@ const timeAgo = (dateStr) => {
   return `Reported ${days}d ago`;
 };
 
+const statusBadge = (status) => {
+  const map = {
+    claimed: { label: 'Claimed', color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
+    returned: { label: 'Returned', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
+    handed_to_admin: { label: 'Handed to Admin', color: '#7c3aed', bg: '#faf5ff', border: '#e9d5ff' }
+  };
+  return map[status] || null;
+};
+
 const Home = (props) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [reportedItems, setReportedItems] = useState([]);
@@ -31,10 +40,10 @@ const Home = (props) => {
         const foundData = await foundRes.json();
         const combined = [
           ...(Array.isArray(lostData) ? lostData : []).map(i => ({
-            id: i._id, type: 'LOST', name: i.itemName, location: i.location?.buildingName || 'Unknown', status: timeAgo(i.createdAt), image: i.imageURL, createdAt: i.createdAt
+            id: i._id, type: 'LOST', name: i.itemName, location: i.location?.buildingName || 'Unknown', reportedAgo: timeAgo(i.createdAt), rawStatus: i.status, image: i.imageURL, createdAt: i.createdAt
           })),
           ...(Array.isArray(foundData) ? foundData : []).map(i => ({
-            id: i._id, type: 'FOUND', name: i.itemName, location: i.location?.buildingName || 'Unknown', status: timeAgo(i.createdAt), image: i.imageURL, createdAt: i.createdAt
+            id: i._id, type: 'FOUND', name: i.itemName, location: i.location?.buildingName || 'Unknown', reportedAgo: timeAgo(i.createdAt), rawStatus: i.status, image: i.imageURL, createdAt: i.createdAt
           })),
         ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 8);
         setReportedItems(combined);
@@ -230,8 +239,10 @@ const Home = (props) => {
           </div>
         ) : (
           <div className="grid gap-[22px]" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-            {reportedItems.map((item, i) => (
-              <div key={item.id || i} className="card-hover bg-white rounded-[18px] p-[22px] flex flex-col"
+            {reportedItems.map((item, i) => {
+              const badge = statusBadge(item.rawStatus);
+              return (
+              <div key={item.id || i} className={`card-hover bg-white rounded-[18px] p-[22px] flex flex-col ${badge ? 'opacity-75' : ''}`}
                 style={{ background: '#ffffff' }}>
                 <div className="w-full h-[130px] rounded-xl mb-4 overflow-hidden flex items-center justify-center relative"
                   style={{ background: item.type === 'LOST' ? '#fff8f8' : '#f0fdf4' }}>
@@ -242,18 +253,26 @@ const Home = (props) => {
                     <span style={{ fontSize: '3.5rem' }}>📦</span>
                   )}
                 </div>
-                <span className="inline-block text-[0.72rem] font-bold uppercase tracking-wide rounded-md px-2 py-0.5 mb-2.5 self-start"
-                  style={{ color: item.type === 'LOST' ? '#a0002a' : '#16a34a', background: item.type === 'LOST' ? '#fff8f8' : '#f0fdf4', border: `1px solid ${item.type === 'LOST' ? '#e8d0d0' : '#bbf7d0'}` }}>
-                  {item.type}
-                </span>
+                {badge ? (
+                  <span className="inline-block text-[0.72rem] font-bold uppercase tracking-wide rounded-md px-2 py-0.5 mb-2.5 self-start"
+                    style={{ color: badge.color, background: badge.bg, border: `1px solid ${badge.border}` }}>
+                    {badge.label}
+                  </span>
+                ) : (
+                  <span className="inline-block text-[0.72rem] font-bold uppercase tracking-wide rounded-md px-2 py-0.5 mb-2.5 self-start"
+                    style={{ color: item.type === 'LOST' ? '#a0002a' : '#16a34a', background: item.type === 'LOST' ? '#fff8f8' : '#f0fdf4', border: `1px solid ${item.type === 'LOST' ? '#e8d0d0' : '#bbf7d0'}` }}>
+                    {item.type}
+                  </span>
+                )}
                 <h4 className="m-0 mb-1.5 text-[1.05rem] font-bold text-[#2e1a1a]">{item.name}</h4>
                 <p className="text-[0.85rem] text-[#c07080] m-0 mb-3.5 flex-1 leading-[1.5] font-medium">📍 {item.location}</p>
                 <div className="flex justify-between items-center text-[0.78rem] text-[#c07080] pt-3" style={{ borderTop: '1px solid #fff8f8' }}>
-                  <span>{item.status}</span>
+                  <span>{item.reportedAgo}</span>
                   <button onClick={() => props.onGoToAllItems && props.onGoToAllItems()} className="bg-transparent text-[#800020] border-none font-bold cursor-pointer text-[0.83rem]">Details</button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
