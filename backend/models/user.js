@@ -19,30 +19,31 @@ const userSchema = new mongoose.Schema({
   },
   rollNo: {
     type: String,
-    required: [true, "Roll number is required"],
     unique: true,
-    trim: true
+    sparse: true,
+    trim: true,
+    required: [function () { return this.role === 'student'; }, "Roll number is required"]
   },
   academicLevel: {
     type: String,
-    required: [true, "Academic level is required"],
-    enum: ['BS', 'Inter']
+    enum: ['BS', 'Inter', ''],
+    default: '',
+    required: [function () { return this.role === 'student'; }, "Academic level is required"]
   },
   department: {
     type: String,
-    required: [true, "Department is required"],
-    trim: true
+    trim: true,
+    required: [function () { return this.role === 'student'; }, "Department is required"]
   },
   shift: {
     type: String,
-    // Only BS programs run Morning/Evening shifts — Intermediate doesn't have this
     required: [function () { return this.academicLevel === 'BS'; }, "Shift is required"],
     enum: ['Morning', 'Evening', '']
   },
   session: {
     type: String,
-    required: [true, "Session/Batch is required"],
-    trim: true
+    trim: true,
+    required: [function () { return this.role === 'student'; }, "Session/Batch is required"]
   },
   phone: {
     type: String,
@@ -51,14 +52,14 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['student', 'admin'], 
-    default: 'student'         
+    enum: ['student', 'admin', 'co-admin'],
+    default: 'student'
   },
   isVerified: {
     type: Boolean,
     default: false
   },
-  isBlocked: {                 
+  isBlocked: {
     type: Boolean,
     default: false
   },
