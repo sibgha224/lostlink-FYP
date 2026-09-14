@@ -38,6 +38,13 @@ const statusCfg = {
   Resolved: { bg:"#fdf4ff", color:"#7c3aed" },
   Pending:  { bg:"#fffbeb", color:"#b45309" },
 };
+
+const itemStatusCfg = {
+  active:          { bg:"#f0fdf4", color:"#16a34a", label:"Active" },
+  claimed:         { bg:"#fff7ed", color:"#c2410c", label:"Claimed" },
+  returned:        { bg:"#fdf4ff", color:"#7c3aed", label:"Returned" },
+  handed_to_admin: { bg:"#eff6ff", color:"#2563eb", label:"Handed to Admin" },
+};
 const shortId = (mongoId) => `#${(mongoId || '').slice(-6).toUpperCase()}`;
 const NOTIF_TITLES = {
   claim_submitted: 'New Claim Submitted',
@@ -182,6 +189,21 @@ export default function AdminDashboard() {
       await adminFetch(`/found-items/${item._id}/approve`, { method: 'PUT' });
       setPendingApprovals(prev => prev.filter(i => i._id !== item._id));
       setItemsList(prev => prev.map(i => i._id === item._id ? { ...i, isApproved: true } : i));
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleMarkReturned = async (item) => {
+    if (!window.confirm(`Mark "${item.itemName}" as returned? This will hide it from claims/public listing as available.`)) return;
+    setBusyId(item._id);
+    try {
+      const path = item.kind === 'Lost' ? `/lost-items/${item._id}` : `/found-items/${item._id}`;
+      await adminFetch(path, { method: 'PUT', body: JSON.stringify({ status: 'returned' }) });
+      setItemsList(prev => prev.map(i => i._id === item._id ? { ...i, status: 'returned' } : i));
+      setSelectedItem(prev => (prev && prev._id === item._id) ? { ...prev, status: 'returned' } : prev);
     } catch (err) {
       alert(err.message);
     } finally {
@@ -451,7 +473,7 @@ export default function AdminDashboard() {
                 <table style={{ width:"100%", borderCollapse:"collapse" }}>
                   <thead>
                     <tr style={{ background:"#fdf6f7", borderBottom:"1px solid #f0e0e0" }}>
-                      {["ID","Item","Category","Date","Status","Reporter","Action"].map(h => (
+                      {["ID","Item","Category","Date","Type","Item Status","Reporter","Action"].map(h => (
                         <th key={h} style={{ padding:"10px 16px", textAlign:"left", fontSize:10, fontWeight:700, color:"#c07080", letterSpacing:"1px", textTransform:"uppercase", whiteSpace:"nowrap" }}>{h}</th>
                       ))}
                     </tr>
@@ -459,6 +481,7 @@ export default function AdminDashboard() {
                   <tbody>
                     {filtered.map((item) => {
                       const s = statusCfg[item.kind === 'Lost' ? 'Lost' : 'Found'];
+                      const st = itemStatusCfg[item.status] || { bg:"#f5f0f0", color:"#6b4848", label: item.status || '—' };
                       return (
                         <tr key={item._id} className="trow" style={{ borderBottom:"1px solid #fdf0f0" }}>
                           <td style={{ padding:"13px 16px", fontSize:12, color:"#800020", fontWeight:700 }}>{shortId(item._id)}</td>
@@ -472,10 +495,18 @@ export default function AdminDashboard() {
                               {item.kind}
                             </span>
                           </td>
+                          <td style={{ padding:"13px 16px" }}>
+                            <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"3px 10px", borderRadius:100, fontSize:11, fontWeight:600, background:st.bg, color:st.color }}>
+                              {st.label}
+                            </span>
+                          </td>
                           <td style={{ padding:"13px 16px", fontSize:12, color:"#6b4848" }}>{item.userId?.name || item.contactName || '—'}</td>
                           <td style={{ padding:"13px 16px" }}>
-                            <div style={{ display:"flex", gap:6 }}>
+                            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
                               <button onClick={() => setSelectedItem(item)} style={{ background:"rgba(128,0,32,0.07)", border:"1px solid rgba(128,0,32,0.15)", borderRadius:8, padding:"5px 12px", color:"#800020", fontSize:11, fontWeight:600, cursor:"pointer" }}>View</button>
+                              {item.status !== 'returned' && (
+                                <button disabled={busyId === item._id} onClick={() => handleMarkReturned(item)} style={{ background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"5px 12px", color:"#16a34a", fontSize:11, fontWeight:600, cursor:"pointer" }}>✓ Mark Returned</button>
+                              )}
                               <button disabled={busyId === item._id} onClick={() => handleDeleteClick(item)} style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"5px 12px", color:"#dc2626", fontSize:11, fontWeight:600, cursor:"pointer" }}>Remove</button>
                             </div>
                           </td>
@@ -583,6 +614,10 @@ export default function AdminDashboard() {
                   <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Location</p>
                   <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a", margin:"2px 0 0" }}>{selectedItem.location?.buildingName || selectedItem.location || '—'}</p>
                 </div>
+                <div>
+                  <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Item Status</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a", margin:"2px 0 0", textTransform:"capitalize" }}>{(itemStatusCfg[selectedItem.status] || {}).label || selectedItem.status || 'Active'}</p>
+                </div>
               </div>
               <div>
                 <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Description</p>
@@ -591,8 +626,11 @@ export default function AdminDashboard() {
                 </p>
               </div>
             </div>
-            <div style={{ padding:"16px 24px", background:"#fdf6f7", borderTop:"1px solid #f0e0e0", display:"flex", justifyContent:"flex-end", gap:10 }}>
+            <div style={{ padding:"16px 24px", background:"#fdf6f7", borderTop:"1px solid #f0e0e0", display:"flex", justifyContent:"flex-end", gap:10, flexWrap:"wrap" }}>
               <button onClick={() => setSelectedItem(null)} style={{ padding:"8px 16px", borderRadius:10, border:"1px solid #e8d0d0", background:"#fff", color:"#6b4848", fontSize:12, fontWeight:600, cursor:"pointer" }}>Close</button>
+              {selectedItem.status !== 'returned' && (
+                <button disabled={busyId === selectedItem._id} onClick={() => handleMarkReturned(selectedItem)} style={{ padding:"8px 16px", borderRadius:10, border:"1px solid #bbf7d0", background:"#f0fdf4", color:"#16a34a", fontSize:12, fontWeight:600, cursor:"pointer" }}>✓ Mark as Returned</button>
+              )}
               <button disabled={busyId === selectedItem._id} onClick={() => { setSelectedItem(null); handleDeleteClick(selectedItem); }} style={{ padding:"8px 16px", borderRadius:10, border:"none", background:"#dc2626", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer" }}>Delete Item</button>
             </div>
           </div>

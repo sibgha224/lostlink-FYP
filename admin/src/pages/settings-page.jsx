@@ -1,12 +1,5 @@
-import { useState } from "react";
-
-const initialCategories = [
-  { id: 1, name: "Electronics" },
-  { id: 2, name: "Accessories" },
-  { id: 3, name: "Documents" },
-  { id: 4, name: "Bags" },
-  { id: 5, name: "Keys" },
-];
+import { useState, useEffect } from "react";
+import { adminFetch } from "../adminApi";
 
 const initialItemsForExport = [
   { id:"LL-001", title:"Black Wallet",  cat:"Accessories", date:"12 May 2026", status:"Lost",  reporter:"Ali Hassan" },
@@ -17,6 +10,8 @@ const initialItemsForExport = [
 export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const showSaved = (msg) => {
     setSavedMsg(msg);
@@ -24,7 +19,10 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2200);
   };
 
-  /* ---------------- Password ---------------- */
+  const showError = (msg) => {
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(""), 3500);
+  };
 
   /* ---------------- Institute Info ---------------- */
   const [systemInfo, setSystemInfo] = useState({
@@ -33,22 +31,14 @@ export default function SettingsPage() {
     supportEmail: "support@lostlink.com",
     contactNumber: "0546-123456",
   });
+  const [savingInstitute, setSavingInstitute] = useState(false);
   const handleSystemChange = (e) =>
     setSystemInfo({ ...systemInfo, [e.target.name]: e.target.value });
 
   /* ---------------- Category Management ---------------- */
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState("");
-
-  const addCategory = () => {
-    if (!newCategory.trim()) return;
-    setCategories([...categories, { id: Date.now(), name: newCategory.trim() }]);
-    setNewCategory("");
-  };
-
-  const removeCategory = (id) => {
-    setCategories(categories.filter((c) => c.id !== id));
-  };
+  const [addingCategory, setAddingCategory] = useState(false);
 
   /* ---------------- Auto-Resolve Rule ---------------- */
   const [autoResolve, setAutoResolve] = useState({
@@ -57,6 +47,99 @@ export default function SettingsPage() {
     autoDeleteEnabled: false,
     deleteMonths: 6,
   });
+  const [savingRules, setSavingRules] = useState(false);
+
+  /* ---------------- Load current settings ---------------- */
+  useEffect(() => {
+    const loadSettings = async () => {
+      setLoading(true);
+      try {
+        const data = await adminFetch('/settings');
+        setSystemInfo({
+          collegeName: data.collegeName || '',
+          address: data.address || '',
+          supportEmail: data.supportEmail || '',
+          contactNumber: data.contactNumber || '',
+        });
+        setCategories(Array.isArray(data.categories) ? data.categories : []);
+        setAutoResolve({
+          enabled: !!data.autoResolveEnabled,
+          days: data.autoResolveDays || 30,
+          autoDeleteEnabled: !!data.autoDeleteEnabled,
+          deleteMonths: data.autoDeleteMonths || 6,
+        });
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  const saveInstituteInfo = async () => {
+    setSavingInstitute(true);
+    try {
+      await adminFetch('/settings/institute', {
+        method: 'PUT',
+        body: JSON.stringify(systemInfo),
+      });
+      showSaved("Institute information saved");
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setSavingInstitute(false);
+    }
+  };
+
+  const addCategory = async () => {
+    if (!newCategory.trim()) return;
+    setAddingCategory(true);
+    try {
+      const data = await adminFetch('/settings/categories', {
+        method: 'POST',
+        body: JSON.stringify({ name: newCategory.trim() }),
+      });
+      setCategories(data.settings.categories);
+      setNewCategory("");
+      showSaved("Category added");
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setAddingCategory(false);
+    }
+  };
+
+  const removeCategory = async (name) => {
+    try {
+      const data = await adminFetch(`/settings/categories/${encodeURIComponent(name)}`, {
+        method: 'DELETE',
+      });
+      setCategories(data.settings.categories);
+    } catch (err) {
+      showError(err.message);
+    }
+  };
+
+  const saveAutomationRules = async () => {
+    setSavingRules(true);
+    try {
+      await adminFetch('/settings/automation', {
+        method: 'PUT',
+        body: JSON.stringify({
+          autoResolveEnabled: autoResolve.enabled,
+          autoResolveDays: Number(autoResolve.days) || 1,
+          autoDeleteEnabled: autoResolve.autoDeleteEnabled,
+          autoDeleteMonths: Number(autoResolve.deleteMonths) || 1,
+        }),
+      });
+      showSaved("Automation rules saved");
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setSavingRules(false);
+    }
+  };
 
   /* ---------------- Export Data ---------------- */
   const exportCSV = () => {
@@ -152,6 +235,15 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {errorMsg && (
+        <div style={{ background: "#fee2e2", border: "1px solid #fecaca", color: "#b91c1c", padding: "10px 16px", borderRadius: 12, fontSize: 13, fontWeight: 600, marginBottom: 18 }}>
+          {errorMsg}
+        </div>
+      )}
+
+      {loading ? (
+        <p style={{ color: "#c07080", textAlign: "center", padding: 24 }}>Loading settings...</p>
+      ) : (
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
 
         {/* ============ CATEGORY MANAGEMENT ============ */}
@@ -161,9 +253,9 @@ export default function SettingsPage() {
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
             {categories.map((cat) => (
-              <div key={cat.id} className="cat-chip">
-                {cat.name}
-                <button onClick={() => removeCategory(cat.id)} title="Remove category">✕</button>
+              <div key={cat} className="cat-chip">
+                {cat}
+                <button onClick={() => removeCategory(cat)} title="Remove category">✕</button>
               </div>
             ))}
             {categories.length === 0 && (
@@ -181,7 +273,9 @@ export default function SettingsPage() {
               onChange={(e) => setNewCategory(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addCategory()}
             />
-            <button style={saveBtn} onClick={addCategory}>+ Add Category</button>
+            <button style={{ ...saveBtn, opacity: addingCategory ? 0.7 : 1 }} disabled={addingCategory} onClick={addCategory}>
+              {addingCategory ? 'Adding...' : '+ Add Category'}
+            </button>
           </div>
         </div>
 
@@ -251,7 +345,9 @@ export default function SettingsPage() {
           </div>
 
           <div style={{ marginTop: 18, textAlign: "right" }}>
-            <button style={saveBtn} onClick={() => showSaved("Automation rules saved")}>Save Rules</button>
+            <button style={{ ...saveBtn, opacity: savingRules ? 0.7 : 1 }} disabled={savingRules} onClick={saveAutomationRules}>
+              {savingRules ? 'Saving...' : 'Save Rules'}
+            </button>
           </div>
         </div>
 
@@ -280,7 +376,9 @@ export default function SettingsPage() {
           </div>
 
           <div style={{ marginTop: 18, textAlign: "right" }}>
-            <button style={saveBtn} onClick={() => showSaved("Institute information saved")}>Save Settings</button>
+            <button style={{ ...saveBtn, opacity: savingInstitute ? 0.7 : 1 }} disabled={savingInstitute} onClick={saveInstituteInfo}>
+              {savingInstitute ? 'Saving...' : 'Save Settings'}
+            </button>
           </div>
         </div>
 
@@ -298,6 +396,7 @@ export default function SettingsPage() {
         </div>
 
       </div>
+      )}
     </div>
   );
 }

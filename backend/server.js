@@ -11,6 +11,8 @@ const connectDB = require('./config/db');
 
 const Claim = require('./models/claim');
 const FoundItem = require('./models/founditem');
+const LostItem = require('./models/lostitem');
+const Settings = require('./models/settings');
 const { getClaimParticipants } = require('./controllers/chatcontroller');
 
 const authRoutes = require('./routes/authroutes');
@@ -24,6 +26,7 @@ const adminChatRoutes = require('./routes/adminchatroutes');
 const matchingRoutes = require('./routes/matchingroutes');
 const reviewRoutes = require('./routes/reviewroutes');
 const requestRoutes = require('./routes/requestroutes');
+const settingsRoutes = require('./routes/settingsroutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -162,10 +165,41 @@ app.use('/api/admin/chat', adminChatRoutes);
 app.use('/api/matching', matchingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/requests', requestRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'LostLink API is Running!' });
 });
+
+const runAutomationRules = async () => {
+  try {
+    const settings = await Settings.getSingleton();
+    const now = Date.now();
+
+    if (settings.autoResolveEnabled) {
+      const cutoff = new Date(now - settings.autoResolveDays * 24 * 60 * 60 * 1000);
+      await FoundItem.updateMany(
+        { status: 'active', createdAt: { $lte: cutoff } },
+        { status: 'returned' }
+      );
+      await LostItem.updateMany(
+        { status: 'active', createdAt: { $lte: cutoff } },
+        { status: 'returned' }
+      );
+    }
+
+    if (settings.autoDeleteEnabled) {
+      const deleteCutoff = new Date(now - settings.autoDeleteMonths * 30 * 24 * 60 * 60 * 1000);
+      await FoundItem.deleteMany({ status: 'returned', updatedAt: { $lte: deleteCutoff } });
+      await LostItem.deleteMany({ status: 'returned', updatedAt: { $lte: deleteCutoff } });
+    }
+  } catch (error) {
+    console.log('Automation rules error:', error.message);
+  }
+};
+
+setInterval(runAutomationRules, 60 * 60 * 1000);
+runAutomationRules();
 
 const PORT = process.env.PORT || 5000;
 

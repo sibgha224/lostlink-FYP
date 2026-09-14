@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const API_BASE = 'http://localhost:5000/api';
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   'All', 'Electronics', 'Books & Notes', 'Clothing', 'Keys',
   'Wallet / Purse', 'ID Card', 'Jewelry', 'Bag / Backpack', 'Other'
 ];
@@ -19,16 +19,44 @@ const timeAgo = (dateStr) => {
   return `Reported ${days}d ago`;
 };
 
+const statusBadge = (status) => {
+  const map = {
+    claimed: { label: 'Claimed', color: '#c2410c', bg: '#fff7ed', border: '#fed7aa' },
+    returned: { label: 'Returned', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
+    handed_to_admin: { label: 'Handed to Admin', color: '#7c3aed', bg: '#faf5ff', border: '#e9d5ff' }
+  };
+  return map[status] || null;
+};
+
 const AllItems = ({ initialSearchQuery, onViewDetails, onGoToHome, ...props }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
 
   useEffect(() => {
     if (initialSearchQuery) setSearchQuery(initialSearchQuery);
   }, [initialSearchQuery]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE}/settings`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await response.json();
+        if (response.ok && Array.isArray(data.categories) && data.categories.length > 0) {
+          setCategories(['All', ...data.categories]);
+        }
+      } catch (err) {
+        console.log('Failed to load categories:', err.message);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -90,7 +118,7 @@ const AllItems = ({ initialSearchQuery, onViewDetails, onGoToHome, ...props }) =
           <aside className="bg-white rounded-2xl p-5 border border-[#e8d0d0] h-fit shadow-sm">
             <h3 className="font-headings text-lg text-[#2e1a1a] mb-4 pb-2 border-b border-[#e8d0d0]">Categories</h3>
             <ul className="flex flex-col gap-1.5">
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <li key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-3 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors ${
@@ -130,8 +158,9 @@ const AllItems = ({ initialSearchQuery, onViewDetails, onGoToHome, ...props }) =
                 {filteredItems.length > 0 ? (
                   filteredItems.map((item) => {
                     const isLost = item.__type === 'LOST';
+                    const badge = statusBadge(item.status);
                     return (
-                      <div key={item._id} className="card-hover bg-white rounded-[18px] p-[22px] flex flex-col shadow-sm">
+                      <div key={item._id} className={`card-hover bg-white rounded-[18px] p-[22px] flex flex-col shadow-sm ${badge ? 'opacity-75' : ''}`}>
                         <div className="w-full h-[140px] rounded-xl mb-4 overflow-hidden flex items-center justify-center relative"
                           style={{ background: isLost ? '#fff8f8' : '#f0fdf4' }}>
                           {item.imageURL ? (
@@ -141,14 +170,21 @@ const AllItems = ({ initialSearchQuery, onViewDetails, onGoToHome, ...props }) =
                             <span style={{ fontSize: '3.5rem' }}>📦</span>
                           )}
                         </div>
-                        <span className="inline-block text-[0.72rem] font-bold uppercase tracking-wide rounded-md px-2 py-0.5 mb-2.5 self-start"
-                          style={{
-                            color: isLost ? '#a0002a' : '#16a34a',
-                            background: isLost ? '#fff8f8' : '#f0fdf4',
-                            border: `1px solid ${isLost ? '#e8d0d0' : '#bbf7d0'}`
-                          }}>
-                          {item.__type}
-                        </span>
+                        {badge ? (
+                          <span className="inline-block text-[0.72rem] font-bold uppercase tracking-wide rounded-md px-2 py-0.5 mb-2.5 self-start"
+                            style={{ color: badge.color, background: badge.bg, border: `1px solid ${badge.border}` }}>
+                            {badge.label}
+                          </span>
+                        ) : (
+                          <span className="inline-block text-[0.72rem] font-bold uppercase tracking-wide rounded-md px-2 py-0.5 mb-2.5 self-start"
+                            style={{
+                              color: isLost ? '#a0002a' : '#16a34a',
+                              background: isLost ? '#fff8f8' : '#f0fdf4',
+                              border: `1px solid ${isLost ? '#e8d0d0' : '#bbf7d0'}`
+                            }}>
+                            {item.__type}
+                          </span>
+                        )}
                         <h4 className="m-0 mb-1.5 text-[1.05rem] font-bold text-[#2e1a1a]">{item.itemName}</h4>
                         <p className="text-[0.85rem] text-[#c07080] m-0 mb-4 flex-1 font-medium">📍 {item.location?.buildingName || 'Unknown location'}</p>
                         <div className="flex justify-between items-center text-[0.78rem] text-[#c07080] pt-3 border-t border-[#fff8f8]">

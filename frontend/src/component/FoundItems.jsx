@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const API_BASE = 'http://localhost:5000/api';
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   'All', 'Electronics', 'Books & Notes', 'Clothing', 'Keys',
   'Wallet / Purse', 'ID Card', 'Jewelry', 'Bag / Backpack', 'Other'
 ];
@@ -11,7 +11,8 @@ const statusBadge = (status) => {
   const map = {
     claimed: { label: 'Claimed', cls: 'text-blue-700 bg-blue-50 border-blue-200' },
     returned: { label: 'Returned', cls: 'text-green-700 bg-green-50 border-green-200' },
-    resolved: { label: 'Resolved', cls: 'text-purple-700 bg-purple-50 border-purple-200' }
+    resolved: { label: 'Resolved', cls: 'text-purple-700 bg-purple-50 border-purple-200' },
+    handed_to_admin: { label: 'Handed to Admin', cls: 'text-purple-700 bg-purple-50 border-purple-200' }
   };
   return map[status] || null;
 };
@@ -40,6 +41,25 @@ const FoundItems = (props) => {
   const [claimSubmitting, setClaimSubmitting] = useState(false);
   const [claimError, setClaimError] = useState('');
   const [claimedIds, setClaimedIds] = useState([]);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE}/settings`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await response.json();
+        if (response.ok && Array.isArray(data.categories) && data.categories.length > 0) {
+          setCategories(['All', ...data.categories]);
+        }
+      } catch (err) {
+        console.log('Failed to load categories:', err.message);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const openClaimModal = (item) => {
     setClaimError('');
@@ -134,7 +154,7 @@ const FoundItems = (props) => {
           <aside className="bg-white rounded-2xl p-5 border border-[#e8d0d0] h-fit shadow-sm">
             <h3 className="font-headings text-lg text-[#2e1a1a] mb-4 pb-2 border-b border-[#e8d0d0]">Categories</h3>
             <ul className="flex flex-col gap-1.5">
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <li key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-3 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors ${

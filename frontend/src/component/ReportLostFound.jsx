@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const API_BASE = 'http://localhost:5000/api';
 
@@ -29,10 +29,28 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
     itemImage: null,
   });
 
-  const categories = [
+  const [categories, setCategories] = useState([
     'Electronics', 'Books & Notes', 'Clothing', 'Keys',
     'Wallet / Purse', 'ID Card', 'Jewelry', 'Bag / Backpack', 'Other'
-  ];
+  ]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE}/settings`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await response.json();
+        if (response.ok && Array.isArray(data.categories) && data.categories.length > 0) {
+          setCategories(data.categories);
+        }
+      } catch (err) {
+        console.log('Failed to load categories:', err.message);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const buildings = [
     'Science Block','Library',
