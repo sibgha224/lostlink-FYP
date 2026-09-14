@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const API_BASE = 'http://localhost:5000/api';
+
+const COLLEGE_LAT = 32.5859;
+const COLLEGE_LNG = 73.4903;
 
 const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToFoundItems, onGoToMyReports, onGoToReportItem }) => {
   const [step, setStep] = useState(1);
@@ -27,7 +30,68 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
     brand: '',
     timeLost: '',
     itemImage: null,
+    latitude: null,
+    longitude: null,
   });
+
+  const mapInstanceRef = useRef(null);
+  const markerInstanceRef = useRef(null);
+
+  const setMapPosition = (lat, lng) => {
+    setFormData((prev) => ({ ...prev, latitude: lat, longitude: lng }));
+  };
+
+  const initMap = (node) => {
+    if (!node || mapInstanceRef.current || !window.L) return;
+    const L = window.L;
+    const startLat = formData.latitude || COLLEGE_LAT;
+    const startLng = formData.longitude || COLLEGE_LNG;
+
+    const map = L.map(node, { zoomControl: true }).setView([startLat, startLng], 17);
+
+    const satellite = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { attribution: 'Tiles &copy; Esri', maxZoom: 19 }
+    ).addTo(map);
+
+    const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19
+    });
+
+    L.control.layers({ 'Satellite': satellite, 'Street Map': streets }).addTo(map);
+
+    const marker = L.marker([startLat, startLng], { draggable: true }).addTo(map);
+
+    marker.on('dragend', () => {
+      const pos = marker.getLatLng();
+      setMapPosition(pos.lat, pos.lng);
+    });
+
+    map.on('click', (e) => {
+      marker.setLatLng(e.latlng);
+      setMapPosition(e.latlng.lat, e.latlng.lng);
+    });
+
+    mapInstanceRef.current = map;
+    markerInstanceRef.current = marker;
+
+    setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    }, 200);
+  };
+
+  const mapRefCallback = (node) => {
+    if (node) {
+      initMap(node);
+    } else if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+      markerInstanceRef.current = null;
+    }
+  };
 
   const [categories, setCategories] = useState([
     'Electronics', 'Books & Notes', 'Clothing', 'Keys',
@@ -70,10 +134,16 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
       if (!formData.itemName || !formData.category || !formData.dateLost || !formData.description) {
         return 'Please fill in Item Name, Category, Date and Description before continuing.';
       }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.dateLost)) {
+        return 'Please enter a valid date.';
+      }
       const now = new Date();
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const selectedDate = new Date(formData.dateLost);
+      if (isNaN(selectedDate.getTime())) {
+        return 'Please enter a valid date.';
+      }
       if (selectedDate > today) {
         return 'Date cannot be in the future.';
       }
@@ -179,6 +249,8 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
     payload.append('floor', formData.floor);
     payload.append('specificLocation', formData.specificLocation);
     payload.append('additionalDetails', formData.additionalDetails);
+    if (formData.latitude) payload.append('latitude', formData.latitude);
+    if (formData.longitude) payload.append('longitude', formData.longitude);
     if (isFound) {
       payload.append('dateFound', formData.dateLost);
       payload.append('timeFound', formData.timeLost);
@@ -359,7 +431,7 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
               <div>
                 <label className={labelClass}>Date {reportType === 'found' ? 'Found' : 'Lost'} <span className="text-red-500">*</span></label>
-                <input type="date" name="dateLost" value={formData.dateLost} onChange={handleChange} className={inputClass} />
+                <input type="date" name="dateLost" value={formData.dateLost} onChange={handleChange} max={new Date().toISOString().split('T')[0]} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Time (Approx)</label>
@@ -498,17 +570,9 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
               </div>
               <div className="hidden lg:block">
                 <div className="bg-white rounded-xl border p-4 sticky top-[100px]" style={{ borderColor: '#e8d0d0' }}>
-                  <h3 className="text-sm font-bold mb-3" style={{ color: '#2e1a1a' }}>Last Seen Location</h3>
-                  <div className="rounded-lg overflow-hidden border h-64 flex items-center justify-center" style={{ borderColor: '#e8d0d0', background: '#f5f0f0' }}>
-                    <div className="text-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#c07080' }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                      </svg>
-                      <p className="text-sm font-medium" style={{ color: '#800020' }}>{formData.building || 'Select a location'}</p>
-                      {formData.specificLocation && <p className="text-xs mt-1" style={{ color: '#c07080' }}>{formData.specificLocation}</p>}
-                    </div>
-                  </div>
+                  <h3 className="text-sm font-bold mb-1" style={{ color: '#2e1a1a' }}>Mark on Map (Optional)</h3>
+                  <p className="text-xs mb-3" style={{ color: '#c07080' }}>Click or drag the pin to mark the exact spot on campus.</p>
+                  <div ref={mapRefCallback} className="rounded-lg overflow-hidden border h-64" style={{ borderColor: '#e8d0d0' }} />
                   {formData.building && <p className="text-sm mt-3" style={{ color: '#2e1a1a' }}>{formData.specificLocation || formData.building}</p>}
                 </div>
               </div>

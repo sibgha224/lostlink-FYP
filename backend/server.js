@@ -27,6 +27,7 @@ const matchingRoutes = require('./routes/matchingroutes');
 const reviewRoutes = require('./routes/reviewroutes');
 const requestRoutes = require('./routes/requestroutes');
 const settingsRoutes = require('./routes/settingsroutes');
+const testimonialRoutes = require('./routes/testimonialroutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -152,8 +153,6 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-connectDB();
-
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/lost-items', lostItemRoutes);
@@ -166,6 +165,7 @@ app.use('/api/matching', matchingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/testimonials', testimonialRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'LostLink API is Running!' });
@@ -198,11 +198,13 @@ const runAutomationRules = async () => {
   }
 };
 
-setInterval(runAutomationRules, 60 * 60 * 1000);
-runAutomationRules();
-
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+connectDB().then(() => {
+  setInterval(runAutomationRules, 60 * 60 * 1000);
+  runAutomationRules();
+
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 });

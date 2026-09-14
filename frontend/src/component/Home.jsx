@@ -23,9 +23,21 @@ const statusBadge = (status) => {
   return map[status] || null;
 };
 
+const initials = (name) => (name || '')
+  .split(' ')
+  .filter(Boolean)
+  .slice(0, 2)
+  .map(w => w[0].toUpperCase())
+  .join('') || '?';
+
 const Home = (props) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [reportedItems, setReportedItems] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, message: '' });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewFeedback, setReviewFeedback] = useState('');
 
   useEffect(() => {
     const fetchRecent = async () => {
@@ -53,6 +65,22 @@ const Home = (props) => {
     };
     fetchRecent();
   }, []);
+
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/testimonials/published`);
+        const data = await response.json();
+        if (response.ok && Array.isArray(data)) {
+          setTestimonials(data);
+        }
+      } catch (err) {
+        console.log('Failed to load testimonials:', err.message);
+      }
+    };
+    fetchTestimonials();
+  }, []);
+
   const matchedSuggestions = searchQuery.trim() === '' ? [] : reportedItems.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.location.toLowerCase().includes(searchQuery.toLowerCase())
@@ -71,11 +99,43 @@ const Home = (props) => {
     }
   };
 
-  const testimonials = [
-    { name: 'Ali Raza', dept: 'Information Technology', text: 'Found my keys within an hour! I was so stressed about getting back into my dorm, but someone had already posted them here.', avatar: 'AR' },
-    { name: 'Huma Arshad', dept: 'English', text: 'I left my AirPods at the library and thought they were gone forever. This portal is a lifesaver for forgetful students like me!', avatar: 'HA' },
-    { name: 'Zunira kanwal', dept: 'Mathematics', text: 'Reported a calculator I found in the lab, and the owner reached out five minutes later. The verification process was super smooth.', avatar: 'ZK' },
-  ];
+  const openReviewModal = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login first to share a review.');
+      if (props.onGoToLogin) props.onGoToLogin();
+      return;
+    }
+    setReviewFeedback('');
+    setReviewForm({ rating: 5, message: '' });
+    setReviewModalOpen(true);
+  };
+
+  const submitReview = async (e) => {
+    e.preventDefault();
+    if (!reviewForm.message.trim()) return;
+    setReviewSubmitting(true);
+    setReviewFeedback('');
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/testimonials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ rating: reviewForm.rating, message: reviewForm.message.trim() })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setReviewFeedback(data.message || 'Something went wrong. Please try again.');
+        return;
+      }
+      setReviewFeedback('Thanks! Your review has been submitted and will appear here once approved by admin.');
+      setReviewForm({ rating: 5, message: '' });
+    } catch (err) {
+      setReviewFeedback('Could not submit your review. Please check your connection and try again.');
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen m-0 p-0" style={{ fontFamily: "'DM Sans', sans-serif", backgroundColor: '#F5F0F0' }}>
@@ -302,25 +362,84 @@ const Home = (props) => {
       <section className="px-[5%] py-[70px]">
         <div className="text-center mb-12">
           <h2 className="font-headings text-[#2e1a1a] m-0 mb-2.5" style={{ fontSize: 'clamp(1.6rem, 3vw, 2.3rem)' }}>Student Success Stories</h2>
-          <p className="text-[#c07080] text-[1rem]">See how we are helping students reconnect with their lost belongings every single day.</p>
+          <p className="text-[#c07080] text-[1rem] mb-5">See how we are helping students reconnect with their lost belongings every single day.</p>
+          <button onClick={openReviewModal}
+            className="px-6 py-2.5 rounded-xl border-none font-bold cursor-pointer text-[0.88rem] transition-all"
+            style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', color: '#fde8ec' }}>
+            Share Your Experience
+          </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((t) => (
-            <div key={t.name} className="card-hover bg-white p-7 rounded-[20px]">
-              <div className="mb-3.5 text-[1.1rem] tracking-widest" style={{ color: '#c07080' }}>★★★★★</div>
-              <p className="italic text-[#2e1a1a] leading-[1.7] mb-5 text-[0.95rem]">"{t.text}"</p>
-              <div className="flex items-center gap-3">
-                <div className="w-[42px] h-[42px] rounded-full flex items-center justify-center text-[#fde8ec] font-bold text-[0.85rem] shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #800020, #4a0010)' }}>{t.avatar}</div>
-                <div>
-                  <p className="font-bold m-0 text-[#2e1a1a] text-[0.95rem]">{t.name}</p>
-                  <p className="text-[0.85rem] text-[#c07080] mt-0.5 m-0 font-medium">{t.dept}</p>
+        {testimonials.length === 0 ? (
+          <p className="text-center text-[#c07080] text-[0.95rem]">No reviews published yet — be the first to share your experience!</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((t) => (
+              <div key={t.id} className="card-hover bg-white p-7 rounded-[20px]">
+                <div className="mb-3.5 text-[1.1rem] tracking-widest" style={{ color: '#c07080' }}>{'★'.repeat(t.rating)}{'☆'.repeat(5 - t.rating)}</div>
+                <p className="italic text-[#2e1a1a] leading-[1.7] mb-5 text-[0.95rem]">"{t.text}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-[42px] h-[42px] rounded-full flex items-center justify-center text-[#fde8ec] font-bold text-[0.85rem] shrink-0"
+                    style={{ background: 'linear-gradient(135deg, #800020, #4a0010)' }}>{initials(t.name)}</div>
+                  <div>
+                    <p className="font-bold m-0 text-[#2e1a1a] text-[0.95rem]">{t.name}</p>
+                    <p className="text-[0.85rem] text-[#c07080] mt-0.5 m-0 font-medium">{t.dept}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
+
+      {reviewModalOpen && (
+        <div onClick={() => setReviewModalOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(46,26,26,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: 20, padding: 28, maxWidth: 440, width: '100%', boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
+            <h3 className="font-headings text-[#2e1a1a] m-0 mb-1" style={{ fontSize: '1.3rem' }}>Share Your Experience</h3>
+            <p className="text-[#c07080] text-[0.9rem] mb-5">Your review will be shown on the site after admin approves it.</p>
+
+            {reviewFeedback ? (
+              <div style={{ background: reviewFeedback.startsWith('Thanks') ? '#f0fdf4' : '#fef2f2', color: reviewFeedback.startsWith('Thanks') ? '#16a34a' : '#dc2626', border: `1px solid ${reviewFeedback.startsWith('Thanks') ? '#bbf7d0' : '#fecaca'}`, borderRadius: 12, padding: '12px 16px', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>
+                {reviewFeedback}
+              </div>
+            ) : null}
+
+            <form onSubmit={submitReview}>
+              <label className="text-[#6b4848] text-[0.8rem] font-bold uppercase tracking-wide block mb-2">Your Rating</label>
+              <div className="flex gap-1.5 mb-4" style={{ fontSize: '1.6rem', color: '#c07080' }}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <span key={n} onClick={() => setReviewForm(prev => ({ ...prev, rating: n }))} style={{ cursor: 'pointer' }}>
+                    {n <= reviewForm.rating ? '★' : '☆'}
+                  </span>
+                ))}
+              </div>
+              <label className="text-[#6b4848] text-[0.8rem] font-bold uppercase tracking-wide block mb-2">Your Review</label>
+              <textarea
+                value={reviewForm.message}
+                onChange={(e) => setReviewForm(prev => ({ ...prev, message: e.target.value }))}
+                placeholder="Tell other students about your experience with LostLink..."
+                rows={4}
+                required
+                className="w-full mb-5"
+                style={{ padding: '10px 14px', border: '1.5px solid #e8d0d0', borderRadius: 12, outline: 'none', fontSize: 13, fontFamily: "'DM Sans', sans-serif", resize: 'vertical', boxSizing: 'border-box' }}
+              />
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={() => setReviewModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl font-bold cursor-pointer text-[0.85rem]"
+                  style={{ background: '#f5f0f0', border: '1px solid #e8d0d0', color: '#6b4848' }}>
+                  Close
+                </button>
+                <button type="submit" disabled={reviewSubmitting}
+                  className="px-5 py-2.5 rounded-xl border-none font-bold cursor-pointer text-[0.85rem]"
+                  style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', color: '#fde8ec', opacity: reviewSubmitting ? 0.7 : 1 }}>
+                  {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       <section className="mx-[5%] mb-[60px] rounded-3xl px-[5%] py-[60px] text-center"
         style={{ background: 'linear-gradient(135deg, #4a0010, #800020, #a0002a)', boxShadow: '0 20px 50px rgba(128,0,32,0.25)' }}>
         <h2 className="font-headings text-[#fde8ec] m-0 mb-3" style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)' }}>Lost something? Don't stress!</h2>

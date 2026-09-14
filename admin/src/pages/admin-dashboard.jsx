@@ -7,6 +7,7 @@ import UsersPage from "./user-page";
 import MessagesPage from "./messages-page";
 import NotificationsPage from "./Notification-page";
 import SettingsPage from "./settings-page";
+import ReviewsPage from "./reviews-page";
 import { adminFetch, getAdminUser, adminLogout } from "../adminApi";
 
 const Ico = ({ d, size = 18, sw = 1.8 }) => (
@@ -30,6 +31,7 @@ const IcoNotif   = () => <Ico d={["M22 17H2a3 3 0 000-6h.09A6.01 6.01 0 0112 3a6
 const IcoMail    = () => <Ico d={["M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z", "M22 6l-10 7L2 6"]} />;
 const IcoReqst   = () => <Ico d={["M9 12h6","M9 16h6","M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z","M13 2v6h6"]} />;
 const IcoSupport = () => <Ico d={["M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"]} />;
+const IcoStar    = () => <Ico d="M12 2l2.9 6.3 6.9.7-5.2 4.7 1.5 6.8L12 17l-6.1 3.5 1.5-6.8L2.2 9l6.9-.7z" />;
 
 const statusCfg = {
   Lost:     { bg:"#fef2f2", color:"#dc2626" },
@@ -85,6 +87,7 @@ export default function AdminDashboard() {
   const [itemStats, setItemStats] = useState({ totalLost: 0, totalFound: 0, pendingClaims: 0, totalResolved: 0 });
   const [pendingRequests, setPendingRequests] = useState(0);
   const [openSupportChats, setOpenSupportChats] = useState(0);
+  const [pendingReviews, setPendingReviews] = useState(0);
   const [selectedItem, setSelectedItem] = useState(null);
   
   // Custom Delete Modal State
@@ -100,18 +103,20 @@ export default function AdminDashboard() {
     setLoading(true);
     setLoadError("");
     try {
-      const [stats, lost, found, pending, notifs, requests] = await Promise.all([
+      const [stats, lost, found, pending, notifs, requests, reviews] = await Promise.all([
         adminFetch('/admin/item-stats'),
         adminFetch('/lost-items/all'),
         adminFetch('/found-items/all'),
         adminFetch('/found-items/pending'),
         adminFetch('/notifications').catch(() => []),
         adminFetch('/requests/all').catch(() => []),
+        adminFetch('/testimonials/admin').catch(() => []),
       ]);
       setItemStats(stats);
       const requestsList = Array.isArray(requests) ? requests : [];
       setPendingRequests(requestsList.filter(r => r.status === 'pending' && r.type !== 'general_issue').length);
       setOpenSupportChats(requestsList.filter(r => r.type === 'general_issue' && r.status !== 'closed').length);
+      setPendingReviews((Array.isArray(reviews) ? reviews : []).filter(r => r.status === 'pending').length);
       const combined = [
         ...(Array.isArray(lost) ? lost : []).map(i => ({ ...i, kind: 'Lost' })),
         ...(Array.isArray(found) ? found : []).map(i => ({ ...i, kind: 'Found' })),
@@ -158,6 +163,7 @@ export default function AdminDashboard() {
     { id:"users",     label:"Users",         icon: IcoUsers, badge:null },
     { id:"messages",  label:"Messages",      icon: IcoMsg,   badge:null },
     { id:"notif",     label:"Notifications", icon: IcoNotif, badge: unreadCount > 0 ? `${unreadCount}` : null },
+    { id:"reviews",   label:"Reviews",       icon: IcoStar,  badge: pendingReviews || null },
     { id:"settings",  label:"Settings",      icon: IcoSet,   badge:null },
   ];
 
@@ -529,9 +535,10 @@ export default function AdminDashboard() {
           {active === "notif" && (
             <NotificationsPage notifications={notifications} setNotifications={setNotifications} />
           )}
+          {active === "reviews" && <ReviewsPage />}
           {active === "settings" && <SettingsPage />}
 
-          {!["dashboard", "items", "found", "claims", "requests", "support", "users", "messages", "notif", "settings"].includes(active) && (
+          {!["dashboard", "items", "found", "claims", "requests", "support", "users", "messages", "notif", "reviews", "settings"].includes(active) && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, padding:40, textAlign:"center" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", color:"#800020", textTransform:"capitalize" }}>{active} Page</h2>
               <p style={{ color:"#c07080", marginTop:8 }}>This section is active now.</p>

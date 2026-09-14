@@ -8,6 +8,7 @@ import UsersPage from "./pages/user-page";
 import MessagesPage from "./pages/messages-page";
 import NotificationsPage from "./pages/Notification-page";
 import SettingsPage from "./pages/settings-page";
+import ReviewsPage from "./pages/reviews-page";
 import { getAdminUser } from "./adminApi";
 
 const RequireAdmin = ({ children }) => {
@@ -31,6 +32,7 @@ function App() {
         <Route path="/admin/users" element={<RequireAdmin><UsersPage /></RequireAdmin>} />
         <Route path="/admin/messages" element={<RequireAdmin><MessagesPage /></RequireAdmin>} />
         <Route path="/admin/notifications" element={<RequireAdmin><NotificationsPage /></RequireAdmin>} />
+        <Route path="/admin/reviews" element={<RequireAdmin><ReviewsPage /></RequireAdmin>} />
         <Route path="/admin/settings" element={<RequireAdmin><SettingsPage /></RequireAdmin>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
