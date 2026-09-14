@@ -4,12 +4,6 @@ import { io } from 'socket.io-client';
 const API_BASE = 'http://localhost:5000/api';
 const SOCKET_URL = 'http://localhost:5000';
 
-const getInitials = (name) => {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase();
-};
-
 const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, onLogout, onGoToProfile, onGoToMyReports, onGoToSupport, onOpenMatchedItem, onOpenLostItem }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
@@ -117,29 +111,92 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
   return (
     <nav className="flex justify-between items-center px-[5%] h-17 sticky top-0 z-1000 bg-white/95 backdrop-blur border-b border-[#e8d0d0]" style={{ boxShadow: '0 2px 20px rgba(128, 0, 32, 0.04)' }}>
 
-      <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => onNavigate('home')}>
+      {/* 1. Brand Logo */}
+      <div className="flex items-center gap-2.5 cursor-pointer select-none" onClick={() => onNavigate('home')}>
         <div className="w-9.5 h-9.5 rounded-xl flex items-center justify-center bg-[#800020] text-white shadow-md">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
         <span className="text-[1.35rem] font-bold text-[#2e1a1a]" style={{ fontFamily: "'Fraunces', serif" }}>LostLink</span>
       </div>
 
-      <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-[#4b5563]">
-        <span onClick={() => onNavigate('home')} className="cursor-pointer hover:text-[#800020] transition-colors">Home</span>
-        <span onClick={() => onNavigate('found-items')} className="cursor-pointer hover:text-[#800020] transition-colors">Found Items</span>
-        <span onClick={() => onNavigate('lost-items')} className="cursor-pointer hover:text-[#800020] transition-colors">Lost Items</span>
-        <span onClick={() => onNavigate('report-lost-found')} className="cursor-pointer hover:text-[#800020] transition-colors">Report Lost & Found Items</span>
+      {/* 2. Navigation Links with Pill/Button Shapes & No Text Selection */}
+      <div className="hidden md:flex items-center gap-1 text-sm font-semibold text-[#4b5563]">
+        <span 
+          onClick={() => onNavigate('home')} 
+          className={`cursor-pointer select-none px-4 py-2 rounded-full transition-all duration-200 ${
+            activeTab === 'home' 
+              ? 'bg-[#800020] text-white shadow-sm font-bold' 
+              : 'hover:bg-[#fff8f8] hover:text-[#800020]'
+          }`}
+        >
+          Home
+        </span>
+
+        <span 
+          onClick={() => onNavigate('found-items')} 
+          className={`cursor-pointer select-none px-4 py-2 rounded-full transition-all duration-200 ${
+            activeTab === 'found-items' 
+              ? 'bg-[#800020] text-white shadow-sm font-bold' 
+              : 'hover:bg-[#fff8f8] hover:text-[#800020]'
+          }`}
+        >
+          Found Items
+        </span>
+
+        <span 
+          onClick={() => onNavigate('lost-items')} 
+          className={`cursor-pointer select-none px-4 py-2 rounded-full transition-all duration-200 ${
+            activeTab === 'lost-items' 
+              ? 'bg-[#800020] text-white shadow-sm font-bold' 
+              : 'hover:bg-[#fff8f8] hover:text-[#800020]'
+          }`}
+        >
+          Lost Items
+        </span>
+
+        <span 
+          onClick={() => onNavigate('report-lost-found')} 
+          className={`cursor-pointer select-none px-4 py-2 rounded-full transition-all duration-200 ${
+            activeTab === 'report-lost-found' 
+              ? 'bg-[#800020] text-white shadow-sm font-bold' 
+              : 'hover:bg-[#fff8f8] hover:text-[#800020]'
+          }`}
+        >
+          Report Lost &amp; Found Items
+        </span>
+
         {isLoggedIn && (
-          <span onClick={() => onNavigate('my-reports')} className="cursor-pointer hover:text-[#800020] transition-colors">My Reports</span>
+          <span 
+            onClick={() => onNavigate('my-reports')} 
+            className={`cursor-pointer select-none px-4 py-2 rounded-full transition-all duration-200 ${
+              activeTab === 'my-reports' 
+                ? 'bg-[#800020] text-white shadow-sm font-bold' 
+                : 'hover:bg-[#fff8f8] hover:text-[#800020]'
+            }`}
+          >
+            My Reports
+          </span>
         )}
+
         {isLoggedIn && (
-          <span onClick={() => onGoToSupport && onGoToSupport()} className="cursor-pointer hover:text-[#800020] transition-colors">Help &amp; Support</span>
+          <span 
+            onClick={() => onGoToSupport && onGoToSupport()} 
+            className={`cursor-pointer select-none px-4 py-2 rounded-full transition-all duration-200 ${
+              activeTab === 'support' 
+                ? 'bg-[#800020] text-white shadow-sm font-bold' 
+                : 'hover:bg-[#fff8f8] hover:text-[#800020]'
+            }`}
+          >
+            Help &amp; Support
+          </span>
         )}
       </div>
 
+      {/* 3. Right Side Notification & User Profile Button */}
       <div className="flex items-center gap-3 relative">
         {isLoggedIn ? (
           <>
+            {/* Notification Bell */}
             <div className="relative" ref={notifRef}>
               <button onClick={toggleNotifs} className="relative w-10 h-10 rounded-full flex items-center justify-center text-[#800020] hover:bg-[#fff8f8] cursor-pointer">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -171,15 +228,24 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
               )}
             </div>
 
+            {/* Profile Avatar Icon */}
             <div className="relative" ref={dropdownRef}>
-              <div
+              <button
                 onClick={() => { setShowDropdown(!showDropdown); setShowNotifs(false); }}
-                className="w-10 h-10 rounded-full bg-[#800020] text-white flex items-center justify-center font-bold text-sm cursor-pointer shadow hover:opacity-90">
-                {getInitials(user?.name)}
-              </div>
+                className="w-10 h-10 rounded-full bg-white border-2 border-[#e8d0d0] text-[#800020] hover:border-[#800020] flex items-center justify-center cursor-pointer shadow-sm transition-all p-0 overflow-hidden"
+                title={user?.name || "User Profile"}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </button>
 
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-[#e8d0d0] rounded-2xl shadow-xl py-2 z-50">
+                  <div className="px-4 py-1.5 border-b border-[#f5f0f0] mb-1">
+                    <p className="text-xs text-[#999] font-medium">Logged in as</p>
+                    <p className="text-sm font-bold text-[#800020] truncate">{user?.name || 'User'}</p>
+                  </div>
                   <button onClick={() => { setShowDropdown(false); onGoToProfile(); }} className="w-full text-left px-4 py-2 text-sm text-[#2e1a1a] hover:bg-[#fff8f8] font-medium">Profile</button>
                   <button onClick={() => { setShowDropdown(false); onGoToMyReports(); }} className="w-full text-left px-4 py-2 text-sm text-[#2e1a1a] hover:bg-[#fff8f8] font-medium">My Reports</button>
                   <button onClick={() => { setShowDropdown(false); onGoToSupport && onGoToSupport(); }} className="w-full text-left px-4 py-2 text-sm text-[#2e1a1a] hover:bg-[#fff8f8] font-medium">Help &amp; Support</button>
