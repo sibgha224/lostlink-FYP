@@ -4,6 +4,41 @@ import { io } from 'socket.io-client';
 const API_BASE = 'http://localhost:5000/api';
 const SOCKET_URL = 'http://localhost:5000';
 
+const NOTIF_META = {
+  claim_submitted: { label: 'Claim Submitted',      bg: '#fff7ed', color: '#c2410c' },
+  claim_approved:  { label: 'Claim Approved',       bg: '#f0fdf4', color: '#16a34a' },
+  claim_rejected:  { label: 'Claim Rejected',       bg: '#fef2f2', color: '#dc2626' },
+  item_matched:    { label: 'Possible Match Found', bg: '#f5f3ff', color: '#7c3aed' },
+  new_lost_item:   { label: 'New Lost Item',        bg: '#fdf6f7', color: '#800020' },
+  new_found_item:  { label: 'New Found Item',       bg: '#eff6ff', color: '#2563eb' },
+  report_reply:    { label: 'Support Replied',      bg: '#fdf6f7', color: '#800020' },
+  message:         { label: 'New Message',          bg: '#fdf6f7', color: '#800020' },
+  default:         { label: 'Notification',         bg: '#fdf6f7', color: '#800020' },
+};
+
+const timeAgo = (dateStr) => {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return 'Just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+};
+
+const NotifIcon = ({ type }) => {
+  const common = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' };
+  if (type === 'claim_approved') return <svg {...common}><path d="M20 6L9 17l-5-5" /></svg>;
+  if (type === 'claim_rejected') return <svg {...common}><path d="M18 6L6 18" /><path d="M6 6l12 12" /></svg>;
+  if (type === 'claim_submitted') return <svg {...common}><path d="M9 12h6" /><path d="M9 16h6" /><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M13 2v6h6" /></svg>;
+  if (type === 'item_matched') return <svg {...common}><path d="M12 2l2.9 6.3 6.9.7-5.2 4.7 1.5 6.8L12 17l-6.1 3.5 1.5-6.8L2.2 9l6.9-.7z" /></svg>;
+  if (type === 'new_lost_item') return <svg {...common}><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>;
+  if (type === 'new_found_item') return <svg {...common}><path d="M20 12V8a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2h8" /><path d="M18 21v-6" /><path d="M15 18h6" /></svg>;
+  return <svg {...common}><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>;
+};
+
 const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, onLogout, onGoToProfile, onGoToMyReports, onGoToSupport, onOpenMatchedItem, onOpenLostItem }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
@@ -210,20 +245,60 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
                 )}
               </button>
               {showNotifs && (
-                <div className="absolute right-0 mt-2 w-72 max-h-96 overflow-y-auto bg-white border border-[#e8d0d0] rounded-2xl shadow-xl py-2 z-50">
-                  {notifications.length === 0 ? (
-                    <p className="px-4 py-6 text-center text-sm text-[#c07080]">No notifications yet.</p>
-                  ) : (
-                    notifications.map((n) => (
-                      <div
-                        key={n._id}
-                        onClick={() => handleNotifClick(n)}
-                        className={`px-4 py-2.5 text-sm border-b border-[#f5f0f0] last:border-0 cursor-pointer hover:bg-[#fff8f8] ${n.isRead ? 'text-[#5a3a3a]' : 'text-[#2e1a1a] font-semibold bg-[#fff8f8]'}`}>
-                        {n.message}
-                        <div className="text-[10px] text-[#c5a3a3] mt-0.5">{new Date(n.createdAt).toLocaleString()}</div>
+                <div className="absolute right-0 mt-2 w-80 max-h-[26rem] bg-white border border-[#e8d0d0] rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden">
+                  <div className="px-4 py-3 border-b border-[#f5f0f0] bg-[#fff8f8] flex items-center justify-between flex-shrink-0">
+                    <span className="text-sm font-bold text-[#2e1a1a]">Notifications</span>
+                    {notifications.length > 0 && (
+                      <span className="text-[11px] font-semibold text-[#c07080]">{notifications.length} total</span>
+                    )}
+                  </div>
+                  <div className="overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-10 px-6 text-center gap-2">
+                        <div className="w-12 h-12 rounded-full bg-[#fdf6f7] flex items-center justify-center text-[#e0a8b4]">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                            <path d="M13.73 21a2 2 0 01-3.46 0" />
+                          </svg>
+                        </div>
+                        <p className="text-sm text-[#c07080] font-semibold">No notifications yet</p>
+                        <p className="text-xs text-[#d9b3b3]">We'll let you know when something happens</p>
                       </div>
-                    ))
-                  )}
+                    ) : (
+                      notifications.map((n) => {
+                        const meta = NOTIF_META[n.type] || NOTIF_META.default;
+                        return (
+                          <div
+                            key={n._id}
+                            onClick={() => handleNotifClick(n)}
+                            className={`flex gap-3 px-4 py-3 border-b border-[#f5f0f0] last:border-0 cursor-pointer transition-colors hover:bg-[#fff8f8] ${!n.isRead ? 'bg-[#fffbfb]' : ''}`}
+                          >
+                            <div
+                              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                              style={{ background: meta.bg, color: meta.color }}
+                            >
+                              <NotifIcon type={n.type} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`text-[13px] ${!n.isRead ? 'font-bold text-[#2e1a1a]' : 'font-semibold text-[#5a3a3a]'}`}>
+                                  {meta.label}
+                                </span>
+                                {!n.isRead && <span className="w-1.5 h-1.5 rounded-full bg-[#800020] flex-shrink-0" />}
+                              </div>
+                              <p
+                                className="text-[12.5px] text-[#6b4848] leading-snug mt-0.5"
+                                style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                              >
+                                {n.message}
+                              </p>
+                              <span className="text-[10.5px] text-[#c5a3a3] mt-1 inline-block">{timeAgo(n.createdAt)}</span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
               )}
             </div>

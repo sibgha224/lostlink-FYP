@@ -27,8 +27,8 @@ const statusBadge = (status) => {
 
 const daysSince = (date) => Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
 
-const LOST_FOLLOWUP_DAYS = 30;
-const FOUND_HANDOVER_DAYS = 15;
+const LOST_FOLLOWUP_DAYS = 0;
+const FOUND_HANDOVER_DAYS = 0;
 
 const requestStatusBadge = (status) => ({
   pending: { label: 'Request Pending', cls: 'bg-yellow-50 text-yellow-700' },

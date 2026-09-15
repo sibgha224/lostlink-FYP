@@ -143,7 +143,7 @@ export default function AdminDashboard() {
       ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setItemsList(combined);
       setPendingApprovals(Array.isArray(pending) ? pending : []);
-      setNotifications((Array.isArray(notifs) ? notifs : []).map(n => ({ id: n._id, msg: n.message, title: NOTIF_TITLES[n.type] || 'Notification', type: n.type, time: new Date(n.createdAt).toLocaleString(), dot: '#800020', unread: !n.isRead })));
+      setNotifications((Array.isArray(notifs) ? notifs : []).map(n => ({ id: n._id, msg: n.message, title: NOTIF_TITLES[n.type] || 'Notification', type: n.type, relatedItem: n.relatedItem, time: new Date(n.createdAt).toLocaleString(), dot: '#800020', unread: !n.isRead })));
     } catch (err) {
       setLoadError(err.message || "Failed to fetch dashboard data.");
     } finally {
@@ -184,6 +184,44 @@ export default function AdminDashboard() {
 
   const markSingleRead = (id) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
+  };
+
+  const handleNotifClick = (n) => {
+    markSingleRead(n.id);
+    setNotifOpen(false);
+    const type = n.type;
+    const msg = (n.msg || '').toLowerCase();
+
+    if (type === 'new_found_item') {
+      setActive('found');
+      const found = itemsList.find(i => i._id === n.relatedItem);
+      if (found) setSelectedItem(found);
+      return;
+    }
+    if (type === 'new_lost_item') {
+      setActive('items');
+      const lost = itemsList.find(i => i._id === n.relatedItem);
+      if (lost) setSelectedItem(lost);
+      return;
+    }
+    if (type === 'claim_submitted' || type === 'claim_approved' || type === 'claim_rejected') {
+      setActive('claims');
+      return;
+    }
+    if (type === 'item_matched') {
+      setActive('found');
+      const matched = itemsList.find(i => i._id === n.relatedItem);
+      if (matched) setSelectedItem(matched);
+      return;
+    }
+    if (type === 'message') {
+      if (msg.includes('unblock')) { setActive('users'); return; }
+      if (msg.includes('issue') || msg.includes('support')) { setActive('support'); return; }
+      if (msg.includes('follow-up') || msg.includes('hand over') || msg.includes('hand-over')) { setActive('requests'); return; }
+      setActive('messages');
+      return;
+    }
+    setActive('notif');
   };
 
   const navLinks = [
@@ -397,7 +435,7 @@ export default function AdminDashboard() {
                       notifications.map((n) => (
                         <div
                           key={n.id}
-                          onClick={() => markSingleRead(n.id)}
+                          onClick={() => handleNotifClick(n)}
                           style={{
                             padding:"11px 16px",
                             borderBottom:"1px solid #fdf0f0",
@@ -560,7 +598,7 @@ export default function AdminDashboard() {
           {active === "users" && <UsersPage />}
           {active === "messages" && <MessagesPage />}
           {active === "notif" && (
-            <NotificationsPage notifications={notifications} setNotifications={setNotifications} />
+            <NotificationsPage notifications={notifications} setNotifications={setNotifications} onNotifClick={handleNotifClick} />
           )}
           {active === "reviews" && <ReviewsPage />}
           {active === "adminmanagement" && <AdminManagementPage />}

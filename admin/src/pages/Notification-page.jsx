@@ -8,7 +8,7 @@ const badgeColors = {
   message:         { bg: "#fdf6f7", color: "#800020", border: "#fce7f3" },
 };
 
-export default function NotificationsPage({ notifications, setNotifications }) {
+export default function NotificationsPage({ notifications, setNotifications, onNotifClick }) {
   const [filter, setFilter] = useState("all");
 
   const notifList = notifications || [];
@@ -85,6 +85,7 @@ export default function NotificationsPage({ notifications, setNotifications }) {
             return (
               <div
                 key={item.id}
+                onClick={() => onNotifClick && onNotifClick(item)}
                 style={{
                   display: "flex",
                   alignItems: "flex-start",
@@ -94,6 +95,7 @@ export default function NotificationsPage({ notifications, setNotifications }) {
                   background: item.unread ? "#fdf6f7" : "#fff",
                   border: item.unread ? "1px solid #f0d0d0" : "1px solid #f2e8e8",
                   transition: "all 0.2s",
+                  cursor: onNotifClick ? "pointer" : "default",
                 }}
               >
                 <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
@@ -120,7 +122,7 @@ export default function NotificationsPage({ notifications, setNotifications }) {
                 </div>
 
                 <button
-                  onClick={() => deleteNotif(item.id)}
+                  onClick={(e) => { e.stopPropagation(); deleteNotif(item.id); }}
                   style={{ background: "none", border: "none", color: "#c5a3a3", fontSize: 16, cursor: "pointer", padding: "0 4px" }}
                   title="Remove notification"
                 >
