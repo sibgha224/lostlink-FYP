@@ -10,6 +10,7 @@ export default function MessagesPage() {
   const [threadLoading, setThreadLoading] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [presence, setPresence] = useState({ claimantOnline: false, finderOnline: false });
 
   // Define selectClaim before useEffect or use regular function hoisting
   const selectClaim = async (claim) => {
@@ -55,6 +56,32 @@ export default function MessagesPage() {
     };
     load();
   }, []);
+
+  useEffect(() => {
+    if (!selectedClaim?._id) {
+      setPresence({ claimantOnline: false, finderOnline: false });
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchPresence = async () => {
+      try {
+        const data = await adminFetch(`/admin/chat/claims/${selectedClaim._id}/presence`);
+        if (!cancelled) setPresence(data);
+      } catch {
+        if (!cancelled) setPresence({ claimantOnline: false, finderOnline: false });
+      }
+    };
+
+    fetchPresence();
+    const interval = setInterval(fetchPresence, 5000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [selectedClaim?._id]);
 
   const markReturned = async () => {
     if (!selectedClaim) return;
@@ -264,6 +291,17 @@ export default function MessagesPage() {
                     </h3>
                     <div style={{ fontSize: 12, color: "#c07080", marginTop: 6, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
                       <span>
+                        <span
+                          title={presence.finderOnline ? "Online" : "Offline"}
+                          style={{
+                            display: "inline-block",
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            background: presence.finderOnline ? "#22c55e" : "#d1d5db",
+                            marginRight: 6,
+                          }}
+                        />
                         <strong>{finder?.name || "Finder"}</strong> (finder)
                         {finder?.isBlocked && (
                           <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: "#b91c1c" }}>BANNED</span>
@@ -271,6 +309,17 @@ export default function MessagesPage() {
                       </span>
                       <span>↔️</span>
                       <span>
+                        <span
+                          title={presence.claimantOnline ? "Online" : "Offline"}
+                          style={{
+                            display: "inline-block",
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            background: presence.claimantOnline ? "#22c55e" : "#d1d5db",
+                            marginRight: 6,
+                          }}
+                        />
                         <strong>{claimant?.name || "Claimant"}</strong> (claimant)
                         {claimant?.isBlocked && (
                           <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: "#b91c1c" }}>BANNED</span>

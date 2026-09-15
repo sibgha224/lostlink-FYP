@@ -69,4 +69,35 @@ const markItemReturned = async (req, res) => {
   }
 };
 
-module.exports = { markItemReturned };
+const getClaimPresence = async (req, res) => {
+  try {
+    const { claimId } = req.params;
+
+    const claim = await Claim.findById(claimId).populate('claimedBy', '_id');
+    if (!claim) {
+      return res.status(404).json({ message: 'Claim not found' });
+    }
+
+    const item = await FoundItem.findById(claim.foundItem).select('userId');
+    if (!item) {
+      return res.status(404).json({ message: 'Related item not found' });
+    }
+
+    const onlineUsers = req.app.get('onlineUsers');
+    const isOnline = (userId) => {
+      if (!userId || !onlineUsers) return false;
+      const sockets = onlineUsers.get(userId.toString());
+      return !!(sockets && sockets.size > 0);
+    };
+
+    res.status(200).json({
+      claimantOnline: isOnline(claim.claimedBy?._id),
+      finderOnline: isOnline(item.userId)
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = { markItemReturned, getClaimPresence };

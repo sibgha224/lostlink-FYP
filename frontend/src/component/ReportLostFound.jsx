@@ -93,6 +93,41 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
     }
   };
 
+  const reviewMapInstanceRef = useRef(null);
+
+  const initReviewMap = (node) => {
+    if (!node || reviewMapInstanceRef.current || !window.L) return;
+    const L = window.L;
+    const lat = formData.latitude;
+    const lng = formData.longitude;
+
+    const map = L.map(node, { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false }).setView([lat, lng], 17);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    L.marker([lat, lng]).addTo(map);
+
+    reviewMapInstanceRef.current = map;
+
+    setTimeout(() => {
+      if (reviewMapInstanceRef.current) {
+        reviewMapInstanceRef.current.invalidateSize();
+      }
+    }, 200);
+  };
+
+  const reviewMapRefCallback = (node) => {
+    if (node) {
+      initReviewMap(node);
+    } else if (reviewMapInstanceRef.current) {
+      reviewMapInstanceRef.current.remove();
+      reviewMapInstanceRef.current = null;
+    }
+  };
+
   const [categories, setCategories] = useState([
     'Electronics', 'Books & Notes', 'Clothing', 'Keys',
     'Wallet / Purse', 'ID Card', 'Jewelry', 'Bag / Backpack', 'Other'
@@ -573,6 +608,9 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
                   <h3 className="text-sm font-bold mb-1" style={{ color: '#2e1a1a' }}>Mark on Map (Optional)</h3>
                   <p className="text-xs mb-3" style={{ color: '#c07080' }}>Click or drag the pin to mark the exact spot on campus.</p>
                   <div ref={mapRefCallback} className="rounded-lg overflow-hidden border h-64" style={{ borderColor: '#e8d0d0' }} />
+                  {formData.latitude && formData.longitude && (
+                    <p className="text-xs mt-2" style={{ color: '#16a34a' }}>Location marked on map.</p>
+                  )}
                   {formData.building && <p className="text-sm mt-3" style={{ color: '#2e1a1a' }}>{formData.specificLocation || formData.building}</p>}
                 </div>
               </div>
@@ -693,16 +731,20 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
                 </div>
                 <div className="bg-white rounded-xl border p-4" style={{ borderColor: '#e8d0d0' }}>
                   <h3 className="text-sm font-bold mb-3" style={{ color: '#2e1a1a' }}>Last Seen Location</h3>
-                  <div className="rounded-lg overflow-hidden border h-36 flex items-center justify-center" style={{ borderColor: '#e8d0d0', background: '#fff8f8' }}>
-                    <div className="text-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#c07080' }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                      </svg>
-                      <p className="text-sm font-medium" style={{ color: '#800020' }}>{formData.building || 'Location not specified'}</p>
+                  {formData.latitude && formData.longitude ? (
+                    <div ref={reviewMapRefCallback} className="rounded-lg overflow-hidden border h-36" style={{ borderColor: '#e8d0d0' }} />
+                  ) : (
+                    <div className="rounded-lg overflow-hidden border h-36 flex items-center justify-center" style={{ borderColor: '#e8d0d0', background: '#fff8f8' }}>
+                      <div className="text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#c07080' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                        </svg>
+                        <p className="text-sm font-medium" style={{ color: '#800020' }}>{formData.building || 'Location not specified'}</p>
+                      </div>
                     </div>
-                  </div>
-                  {formData.specificLocation && <p className="text-sm mt-3" style={{ color: '#2e1a1a' }}>{formData.specificLocation}</p>}
+                  )}
+                  <p className="text-sm mt-3 font-medium" style={{ color: '#2e1a1a' }}>{formData.specificLocation || formData.building || ''}</p>
                 </div>
               </div>
             </div>

@@ -147,7 +147,7 @@ const submitGeneralIssue = async (req, res) => {
 
     await notifyAdmins(req, {
       type: 'message',
-      message: `${req.user.name} reported an issue: "${message.trim().slice(0, 80)}"`,
+      message: `${req.user.name} reported a new issue. Open Support to view the details.`,
       relatedItem: request._id
     });
 
