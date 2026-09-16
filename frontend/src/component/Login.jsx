@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { API_BASE as ROOT_API_BASE } from '../config';
 
-const API_BASE = 'http://localhost:5000/api/auth';
-const REQUEST_API_BASE = 'http://localhost:5000/api/requests';
+const API_BASE = `${ROOT_API_BASE}/auth`;
+const REQUEST_API_BASE = `${ROOT_API_BASE}/requests`;
 
 const Login = ({ onLoginSuccess, onGoToSignup, onGoToForget }) => {
   const [email, setEmail] = useState('');

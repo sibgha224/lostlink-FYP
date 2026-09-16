@@ -1,7 +1,9 @@
 // Shared fetch helper for the admin panel — every admin page talks to the
 // same backend the student app uses, authenticated as an admin-role user.
 
-export const API_BASE = 'http://localhost:5000/api';
+const RAW_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
+export const API_ROOT = RAW_BASE;
+export const API_BASE = `${RAW_BASE}/api`;
 
 export const getAdminToken = () => localStorage.getItem('adminToken');
 export const getAdminUser = () => {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE } from './config';
 
 import Navbar from "./component/Navbar.jsx";
 import Home from "./component/Home.jsx";
@@ -35,7 +36,7 @@ function App() {
   const openMatchedItem = async (foundItemId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/found-items/${foundItemId}`, {
+      const response = await fetch(`${API_BASE}/found-items/${foundItemId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
@@ -52,7 +53,7 @@ function App() {
   const openLostItemDetail = async (lostItemId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/lost-items/${lostItemId}`, {
+      const response = await fetch(`${API_BASE}/lost-items/${lostItemId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { API_BASE as ROOT_API_BASE } from '../config';
 
-const API_BASE = 'http://localhost:5000/api/auth';
+const API_BASE = `${ROOT_API_BASE}/auth`;
 
 const ForgotPassword = ({ onGoToLogin }) => {
   const [step, setStep] = useState('email'); // 'email' ya 'reset'

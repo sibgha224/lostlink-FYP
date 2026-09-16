@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
-
-const API_BASE = 'http://localhost:5000/api';
-const SOCKET_URL = 'http://localhost:5000';
+import { API_BASE, SOCKET_URL } from '../config';
 
 const NOTIF_META = {
   claim_submitted: { label: 'Claim Submitted',      bg: '#fff7ed', color: '#c2410c' },

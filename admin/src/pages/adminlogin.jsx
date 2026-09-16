@@ -1,8 +1,9 @@
 import bgImage from "../assets/clg.png"; // Rename ki hui image ka import
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_ROOT } from "../adminApi";
 
-const API_BASE = "http://localhost:5000/api/auth";
+const API_BASE = `${API_ROOT}/api/auth`;
 
 const AdminLogin = () => {
   const [screen, setScreen] = useState("login");
