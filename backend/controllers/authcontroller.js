@@ -98,17 +98,20 @@ const register = async (req, res) => {
     user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000;
     await user.save();
 
-
-    await sendEmail(
-      user.email,
-      'LostLink — Verify Your Email',
-      `<div style="font-family: Arial; padding: 20px;">
-        <h2>Welcome to LostLink!</h2>
-        <p>Hi <b>${user.name}</b>, your email verification OTP is:</p>
-        <h1 style="color: #4F46E5; letter-spacing: 8px;">${otp}</h1>
-        <p>This OTP will expire in <b>24 hours</b>.</p>
-      </div>`
-    );
+    try {
+      await sendEmail(
+        user.email,
+        'LostLink — Verify Your Email',
+        `<div style="font-family: Arial; padding: 20px;">
+          <h2>Welcome to LostLink!</h2>
+          <p>Hi <b>${user.name}</b>, your email verification OTP is:</p>
+          <h1 style="color: #4F46E5; letter-spacing: 8px;">${otp}</h1>
+          <p>This OTP will expire in <b>24 hours</b>.</p>
+        </div>`
+      );
+    } catch (emailError) {
+      console.log('Email send failed, OTP for', user.email, 'is:', otp);
+    }
 
     res.status(201).json({
       message: 'Registration successful! Please check your email for OTP.',
@@ -247,17 +250,21 @@ const forgotPassword = async (req, res) => {
     user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000;
     await user.save();
 
-    await sendEmail(
-      user.email,
-      'LostLink — Password Reset OTP',
-      `<div style="font-family: Arial; padding: 20px;">
-        <h2 style="color: #4F46E5;">Password Reset Request</h2>
-        <p>Hi <b>${user.name}</b>, your password reset OTP is:</p>
-        <h1 style="color: #4F46E5; letter-spacing: 8px;">${otp}</h1>
-        <p>This OTP will expire in <b>15 minutes</b>.</p>
-        <p style="color: gray;">If you did not request this, please ignore this email.</p>
-      </div>`
-    );
+    try {
+      await sendEmail(
+        user.email,
+        'LostLink — Password Reset OTP',
+        `<div style="font-family: Arial; padding: 20px;">
+          <h2 style="color: #4F46E5;">Password Reset Request</h2>
+          <p>Hi <b>${user.name}</b>, your password reset OTP is:</p>
+          <h1 style="color: #4F46E5; letter-spacing: 8px;">${otp}</h1>
+          <p>This OTP will expire in <b>15 minutes</b>.</p>
+          <p style="color: gray;">If you did not request this, please ignore this email.</p>
+        </div>`
+      );
+    } catch (emailError) {
+      console.log('Email send failed, reset OTP for', user.email, 'is:', otp);
+    }
 
     res.status(200).json({ message: 'OTP sent to your email' });
 
