@@ -19,4 +19,4 @@ router.get('/users/:id', protect, adminOnly, getUserById);
 router.put('/users/:id/block', protect, adminOnly, toggleBlockUser);
 router.delete('/users/:id', protect, adminOnly, deleteUser);
 
-module.exports = router;
+module.exports = router;

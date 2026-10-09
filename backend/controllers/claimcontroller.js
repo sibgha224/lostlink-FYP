@@ -20,7 +20,7 @@ const submitClaim = async (req, res) => {
       return res.status(400).json({ message: 'You cannot claim an item you posted yourself!' });
     }
 
-    if (item.status !== 'active') {
+    if (item.status !== 'active' || !item.isApproved) {
       return res.status(400).json({ message: 'This item is no longer available for claims' });
     }
 
@@ -227,11 +227,11 @@ const getMyClaims = async (req, res) => {
 const getAllClaimsAdmin = async (req, res) => {
   try {
     const claims = await Claim.find({})
-      .populate('claimedBy', 'name email rollNo')
+      .populate('claimedBy', 'name email rollNo isBlocked')
       .populate({
         path: 'foundItem',
         select: 'itemName status imageURL userId',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'name email isBlocked' }
       })
       .sort({ createdAt: -1 });
 
@@ -247,4 +247,4 @@ module.exports = {
   updateClaimStatus,
   getMyClaims,
   getAllClaimsAdmin
-};
+};

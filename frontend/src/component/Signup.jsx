@@ -4,7 +4,7 @@ import { API_BASE as ROOT_API_BASE } from '../config';
 const API_BASE = `${ROOT_API_BASE}/auth`;
 
 const Signup = ({ onSignupSuccess, onGoToLogin }) => {
-  const [step, setStep] = useState('details'); // 'details' ya 'otp'
+  const [step, setStep] = useState('details');
   const [level, setLevel] = useState('BS');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -181,21 +181,17 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,800&display=swap');
         .font-headings { font-family: 'Fraunces', serif; }
 
-        /* Edge/IE ka built-in password reveal & clear icon hide karne ke liye,
-           taake sirf custom EyeIcon hi dikhe (double-eye issue fix) */
         input[type="password"]::-ms-reveal,
         input[type="password"]::-ms-clear {
           display: none;
         }
 
-        /* Chrome/Safari autofill ka apna credentials icon bhi hide kar dein */
         input::-webkit-credentials-auto-fill-button {
           visibility: hidden;
           display: none !important;
         }
       `}</style>
 
-      {/* Top-Left Logo */}
       <div className="absolute top-4 left-4 flex items-center gap-2.5 z-10">
         <div className="w-[38px] h-[38px] rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #800020, #4a0010)' }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -205,10 +201,8 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
         </span>
       </div>
 
-      {/* Card */}
       <div className="w-full max-w-[390px] bg-white rounded-2xl shadow-2xl flex flex-col z-10 overflow-hidden my-auto mt-16 mb-6 border border-[#e8d0d0]">
 
-        {/* Card Header */}
         <div className="bg-gradient-to-r from-[#4a0010] to-[#800020] px-4 py-3 text-center shrink-0">
           <h2 className="m-0 text-[1.05rem] font-extrabold text-[#fde8ec]">
             {step === 'details' ? 'Create Account' : 'OTP Verification'}
@@ -218,7 +212,6 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
           </p>
         </div>
 
-        {/* Card Body */}
         <div className="px-4 py-2.5 max-h-[75vh] overflow-y-auto">
 
           {error && (
@@ -228,22 +221,18 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
           )}
 
           {step === 'details' ? (
-            /* --- STEP 1: REGISTRATION FORM --- */
             <form onSubmit={handleRegisterSubmit} className="grid grid-cols-2 gap-1.5">
 
-              {/* Full Name */}
               <div>
                 <label className={labelClass}>Full Name <span className="text-red-600">*</span></label>
                 <input type="text" name="name" value={formData.name} onChange={handleChange} required placeholder="Name" className={inputClass} />
               </div>
 
-              {/* Email */}
               <div>
                 <label className={labelClass}>Email <span className="text-red-600">*</span></label>
                 <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="email@com" className={inputClass} />
               </div>
 
-              {/* Academic Level */}
               <div className="col-span-2">
                 <label className={labelClass}>Academic Level <span className="text-red-600">*</span></label>
                 <select
@@ -252,7 +241,6 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
                   onChange={(e) => {
                     const newLevel = e.target.value;
                     setLevel(newLevel);
-                    // Intermediate has no Morning/Evening shift — clear it when switching
                     setFormData({ ...formData, department: '', shift: newLevel === 'BS' ? 'Morning' : '' });
                   }}
                 >
@@ -261,7 +249,6 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
                 </select>
               </div>
 
-              {/* Program → maps to backend `department` */}
               <div className="col-span-2">
                 <label className={labelClass}>Program <span className="text-red-600">*</span></label>
                 <select name="department" value={formData.department} onChange={handleChange} className={inputClass} required>
@@ -272,25 +259,21 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
                 </select>
               </div>
 
-              {/* Roll No */}
               <div>
                 <label className={labelClass}>Roll No <span className="text-red-600">*</span></label>
                 <input type="text" name="rollNo" value={formData.rollNo} onChange={handleChange} required placeholder={rollNoPlaceholder} className={inputClass} />
               </div>
 
-              {/* Session */}
               <div>
                 <label className={labelClass}>Session <span className="text-red-600">*</span></label>
                 <input type="text" name="session" value={formData.session} onChange={handleChange} required placeholder={sessionPlaceholder} className={inputClass} />
               </div>
 
-              {/* Phone (optional) */}
               <div className="col-span-2">
                 <label className={labelClass}>Phone Number <span className="text-[#c07080] font-normal">(optional)</span></label>
                 <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="03XXXXXXXXX" className={inputClass} />
               </div>
 
-              {/* Password */}
               <div>
                 <label className={labelClass}>Password <span className="text-red-600">*</span></label>
                 <div className="relative mt-0.5">
@@ -301,7 +284,6 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
                 </div>
               </div>
 
-              {/* Confirm Password */}
               <div>
                 <label className={labelClass}>Confirm Password <span className="text-red-600">*</span></label>
                 <div className="relative mt-0.5">
@@ -312,7 +294,6 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
                 </div>
               </div>
 
-              {/* Shift — BS programs only, Intermediate doesn't have shifts */}
               {level === 'BS' && (
                 <div className="col-span-2">
                   <label className={labelClass}>Shift <span className="text-red-600">*</span></label>
@@ -329,7 +310,6 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
                 </div>
               )}
 
-              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading}
@@ -341,7 +321,6 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
 
             </form>
           ) : (
-            /* --- STEP 2: OTP VERIFICATION FORM (6 digits, matches backend) --- */
             <form onSubmit={handleVerifyOtp} className="py-6 text-center">
               <div className="flex justify-center gap-2 mb-6">
                 {otp.map((data, index) => (
@@ -367,7 +346,6 @@ const Signup = ({ onSignupSuccess, onGoToLogin }) => {
             </form>
           )}
 
-          {/* Login Link */}
           <p className="text-center mt-3 text-[0.72rem] text-[#5a3a3a] font-medium">
             Already have an account?{' '}
             <span

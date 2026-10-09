@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE } from '../config';
+import BackButton from './BackButton';
 
 const authHeaders = () => {
   const token = localStorage.getItem('token');
@@ -75,7 +76,7 @@ const Messages = (props) => {
       `}</style>
 
       <div className="max-w-3xl mx-auto px-6 py-10">
-        <span onClick={props.onGoToHome} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: '#800020' }}>← Back to Home</span>
+        <BackButton onClick={props.onGoToHome} label="Home" />
 
         <h1 className="font-headings text-2xl md:text-3xl text-[#2e1a1a] mt-6 mb-2 font-bold">Messages</h1>
         <p className="text-sm text-[#c07080] mb-8">Chats open once a claim on your item is approved, or your own claim is approved by the finder.</p>

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']); 
 
@@ -10,6 +11,7 @@ require('dotenv').config();
 const connectDB = require('./config/db');
 
 const Claim = require('./models/claim');
+const Message = require('./models/message');
 const FoundItem = require('./models/founditem');
 const LostItem = require('./models/lostitem');
 const Settings = require('./models/settings');
@@ -28,7 +30,6 @@ const reviewRoutes = require('./routes/reviewroutes');
 const requestRoutes = require('./routes/requestroutes');
 const settingsRoutes = require('./routes/settingsroutes');
 const testimonialRoutes = require('./routes/testimonialroutes');
-const adminManagementRoutes = require('./routes/adminmanagementroutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -104,25 +105,24 @@ io.on('connection', async (socket) => {
     console.error('Online status broadcast failed:', error.message);
   }
 
-  socket.on('typing', async ({ claimId }) => {
-    const result = await getClaimParticipants(claimId, socket.userId);
-    if (result.error) return;
+  const relayTyping = (eventName) => async (payload) => {
+    try {
+      const claimId = payload && payload.claimId;
+      if (!claimId || !mongoose.Types.ObjectId.isValid(claimId)) return;
+      const result = await getClaimParticipants(claimId, socket.userId);
+      if (result.error) return;
 
-    const partnerSockets = onlineUsers.get(result.otherUserId);
-    if (partnerSockets) {
-      partnerSockets.forEach(sId => io.to(sId).emit('typing', { claimId, userId: socket.userId }));
+      const partnerSockets = onlineUsers.get(result.otherUserId);
+      if (partnerSockets) {
+        partnerSockets.forEach(sId => io.to(sId).emit(eventName, { claimId, userId: socket.userId }));
+      }
+    } catch (error) {
+      console.error(`${eventName} relay failed:`, error.message);
     }
-  });
+  };
 
-  socket.on('stop_typing', async ({ claimId }) => {
-    const result = await getClaimParticipants(claimId, socket.userId);
-    if (result.error) return;
-
-    const partnerSockets = onlineUsers.get(result.otherUserId);
-    if (partnerSockets) {
-      partnerSockets.forEach(sId => io.to(sId).emit('stop_typing', { claimId, userId: socket.userId }));
-    }
-  });
+  socket.on('typing', relayTyping('typing'));
+  socket.on('stop_typing', relayTyping('stop_typing'));
 
   socket.on('disconnect', async () => {
     const userSockets = onlineUsers.get(socket.userId);
@@ -167,7 +167,6 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/testimonials', testimonialRoutes);
-app.use('/api/admin/admins', adminManagementRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'LostLink API is Running!' });
@@ -180,8 +179,9 @@ const runAutomationRules = async () => {
 
     if (settings.autoResolveEnabled) {
       const cutoff = new Date(now - settings.autoResolveDays * 24 * 60 * 60 * 1000);
+      const itemsWithOpenClaims = await Claim.find({ status: { $in: ['pending', 'approved'] } }).distinct('foundItem');
       await FoundItem.updateMany(
-        { status: 'active', createdAt: { $lte: cutoff } },
+        { status: 'active', createdAt: { $lte: cutoff }, _id: { $nin: itemsWithOpenClaims } },
         { status: 'returned' }
       );
       await LostItem.updateMany(
@@ -192,7 +192,11 @@ const runAutomationRules = async () => {
 
     if (settings.autoDeleteEnabled) {
       const deleteCutoff = new Date(now - settings.autoDeleteMonths * 30 * 24 * 60 * 60 * 1000);
-      await FoundItem.deleteMany({ status: 'returned', updatedAt: { $lte: deleteCutoff } });
+      const oldFoundIds = await FoundItem.find({ status: 'returned', updatedAt: { $lte: deleteCutoff } }).distinct('_id');
+      const oldClaimIds = await Claim.find({ foundItem: { $in: oldFoundIds } }).distinct('_id');
+      await Message.deleteMany({ claim: { $in: oldClaimIds } });
+      await Claim.deleteMany({ _id: { $in: oldClaimIds } });
+      await FoundItem.deleteMany({ _id: { $in: oldFoundIds } });
       await LostItem.deleteMany({ status: 'returned', updatedAt: { $lte: deleteCutoff } });
     }
   } catch (error) {
@@ -209,4 +213,4 @@ connectDB().then(() => {
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
-});
+});

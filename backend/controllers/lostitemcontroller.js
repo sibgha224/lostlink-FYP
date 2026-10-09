@@ -3,6 +3,18 @@ const FoundItem = require('../models/founditem');
 const { calculateMatchScore, MATCH_THRESHOLD } = require('./matchingcontroller');
 const { createNotification, notifyAllUsersExcept, notifyAdmins } = require('./notificationcontroller');
 
+const EDITABLE_FIELDS = ['itemName', 'category', 'description', 'color', 'brand', 'contactName', 'contactEmail', 'contactPhone', 'preferredContact', 'location', 'dateLost', 'timeLost'];
+
+const pickEditableFields = (body) => {
+  const updates = {};
+  EDITABLE_FIELDS.forEach((key) => {
+    if (body[key] !== undefined) updates[key] = body[key];
+  });
+  return updates;
+};
+
+const escapeRegex = (text) => String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 
 const reportLostItem = async (req, res) => {
   try {
@@ -142,8 +154,8 @@ const updateLostItem = async (req, res) => {
 
     const updatedItem = await LostItem.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true }
+      pickEditableFields(req.body),
+      { new: true, runValidators: true }
     );
 
     res.status(200).json({
@@ -186,8 +198,8 @@ const searchLostItems = async (req, res) => {
 
     if (keyword) {
       query.$or = [
-        { itemName: { $regex: keyword, $options: 'i' } },
-        { description: { $regex: keyword, $options: 'i' } }
+        { itemName: { $regex: escapeRegex(keyword), $options: 'i' } },
+        { description: { $regex: escapeRegex(keyword), $options: 'i' } }
       ];
     }
 
@@ -206,7 +218,25 @@ const searchLostItems = async (req, res) => {
   }
 };
 
+const getPublicRecentItems = async (req, res) => {
+  try {
+    const fields = 'itemName location.buildingName status imageURL createdAt';
+    const [lost, found] = await Promise.all([
+      LostItem.find({}).select(fields).sort({ createdAt: -1 }).limit(8).lean(),
+      FoundItem.find({ isApproved: true }).select(fields).sort({ createdAt: -1 }).limit(8).lean(),
+    ]);
+    const items = [
+      ...lost.map(i => ({ ...i, type: 'LOST' })),
+      ...found.map(i => ({ ...i, type: 'FOUND' })),
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 8);
+    res.status(200).json(items);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
+  getPublicRecentItems,
   reportLostItem,
   getAllLostItems,
   getLostItemById,
@@ -214,4 +244,4 @@ module.exports = {
   updateLostItem,
   deleteLostItem,
   searchLostItems
-};
+};

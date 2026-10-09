@@ -1,5 +1,3 @@
-// Shared fetch helper for the admin panel — every admin page talks to the
-// same backend the student app uses, authenticated as an admin-role user.
 
 const RAW_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
 export const API_ROOT = RAW_BASE;
@@ -24,6 +22,10 @@ export const adminFetch = async (path, options = {}) => {
   }
   const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
   const data = await response.json().catch(() => ({}));
+  if (response.status === 401 && token) {
+    adminLogout();
+    throw new Error('Session expired. Please log in again.');
+  }
   if (!response.ok) {
     throw new Error(data.message || `Request failed (${response.status})`);
   }

@@ -191,7 +191,7 @@ const FoundItems = (props) => {
                 {filteredItems.length > 0 ? (
                   filteredItems.map((item) => {
                   const badge = statusBadge(item.status);
-                  const isUnavailable = item.status === 'claimed' || item.status === 'returned' || item.status === 'resolved';
+                  const isUnavailable = ['claimed', 'returned', 'handed_to_admin'].includes(item.status);
                   return (
                     <div key={item._id} className={`card-hover bg-white rounded-[18px] p-[22px] flex flex-col shadow-sm ${badge ? 'opacity-75' : ''}`}>
                       <div className="w-full h-[140px] rounded-xl mb-4 overflow-hidden flex items-center justify-center relative bg-[#f0fdf4]">
@@ -303,4 +303,4 @@ const FoundItems = (props) => {
   );
 };
 
-export default FoundItems;
+export default FoundItems;

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { adminFetch } from "../adminApi";
 
 const badgeColors = {
   claim_submitted: { bg: "#fff7ed", color: "#c2410c", border: "#ffedd5" },
@@ -14,12 +15,24 @@ export default function NotificationsPage({ notifications, setNotifications, onN
   const notifList = notifications || [];
   const updateNotifs = setNotifications || (() => {});
 
-  const markAllRead = () => {
+  const markAllRead = async () => {
     updateNotifs(notifList.map(n => ({ ...n, unread: false })));
+    try {
+      await adminFetch('/notifications/read-all', { method: 'PUT' });
+    } catch (err) {
+      console.error(err.message);
+    }
   };
 
-  const deleteNotif = (id) => {
+  const deleteNotif = async (id) => {
+    const previous = notifList;
     updateNotifs(notifList.filter(n => n.id !== id));
+    try {
+      await adminFetch(`/notifications/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      updateNotifs(previous);
+      alert(err.message);
+    }
   };
 
   const filtered = notifList.filter(n => {
@@ -29,7 +42,6 @@ export default function NotificationsPage({ notifications, setNotifications, onN
 
   return (
     <div style={{ background: "#fff", border: "1px solid #e8d0d0", borderRadius: 20, padding: 24, boxShadow: "0 2px 12px rgba(74,0,16,0.05)" }}>
-      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <div>
           <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700, color: "#2e1a1a", margin: 0 }}>
@@ -50,7 +62,6 @@ export default function NotificationsPage({ notifications, setNotifications, onN
         </div>
       </div>
 
-      {/* Filter Tabs */}
       <div style={{ display: "flex", gap: 8, borderBottom: "1px solid #f0e0e0", paddingBottom: 12, marginBottom: 16 }}>
         {["all", "unread"].map((tab) => (
           <button
@@ -73,7 +84,6 @@ export default function NotificationsPage({ notifications, setNotifications, onN
         ))}
       </div>
 
-      {/* Notifications List */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px 0", color: "#c07080", fontSize: 14 }}>

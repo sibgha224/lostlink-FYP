@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { API_BASE } from '../config';
+import BackButton from './BackButton';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -20,14 +21,14 @@ const ItemDetails = ({ item, onBack, onClaimSuccess }) => {
       <div className="min-h-screen bg-[#F5F0F0] flex items-center justify-center" style={{ fontFamily: "'DM Sans', sans-serif" }}>
         <div className="text-center">
           <p className="text-[#c07080] font-medium mb-4">No item selected.</p>
-          <span onClick={onBack} className="text-[#800020] font-bold cursor-pointer hover:underline">← Back to All Items</span>
+          <BackButton onClick={onBack} label="All Items" />
         </div>
       </div>
     );
   }
 
   const isLost = item.__type === 'LOST';
-  const isUnavailable = item.status === 'claimed' || item.status === 'returned' || item.status === 'resolved';
+  const isUnavailable = ['claimed', 'returned', 'handed_to_admin'].includes(item.status);
 
   const openClaimModal = () => {
     setClaimError('');
@@ -80,7 +81,7 @@ const ItemDetails = ({ item, onBack, onClaimSuccess }) => {
 
       <div className="max-w-4xl mx-auto px-6 py-10">
 
-        <span onClick={onBack} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: '#800020' }}>← Back to All Items</span>
+        <BackButton onClick={onBack} label="All Items" />
 
         <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-8 mt-6">
 
@@ -229,4 +230,4 @@ const ItemDetails = ({ item, onBack, onClaimSuccess }) => {
   );
 };
 
-export default ItemDetails;
+export default ItemDetails;

@@ -225,9 +225,10 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        alert('Please upload a valid image file (JPG, PNG, GIF, or WebP)');
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
+      const isHeicByName = /\.(heic|heif)$/i.test(file.name);
+      if (!allowedTypes.includes(file.type) && !isHeicByName) {
+        alert('Please upload a valid image file (JPG, PNG, GIF, WebP or HEIC)');
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
@@ -496,7 +497,7 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
                   </svg>
                   <p className="font-semibold text-[0.9rem]" style={{ color: '#2e1a1a' }}>Click to upload image</p>
                   <p className="text-[0.8rem] mt-1" style={{ color: '#c07080' }}>or drag and drop</p>
-                  <p className="text-[0.75rem] mt-2" style={{ color: '#c5a3a3' }}>JPG, PNG, GIF or WebP (Max 5MB)</p>
+                  <p className="text-[0.75rem] mt-2" style={{ color: '#c5a3a3' }}>JPG, PNG, GIF, WebP or HEIC (Max 5MB)</p>
                 </div>
               ) : (
                 <div className="relative rounded-xl overflow-hidden border bg-white flex items-center justify-center p-3 max-w-sm mx-auto shadow-sm" style={{ borderColor: '#e8d0d0' }}>
@@ -592,7 +593,7 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
                     style={{ color: '#2e1a1a', background: '#f5f0f0' }}
                     onMouseEnter={(e) => e.currentTarget.style.background = '#e8d0d0'}
                     onMouseLeave={(e) => e.currentTarget.style.background = '#f5f0f0'}>
-                    ← Back
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: '-2px', marginRight: 6 }}><path d="M15 18l-6-6 6-6" /></svg>Back
                   </button>
                   <button onClick={() => goToStep(3)} className="px-6 py-2.5 rounded-lg font-semibold text-sm text-white cursor-pointer transition-colors"
                     style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', boxShadow: '0 4px 12px rgba(128, 0, 32, 0.25)' }}
@@ -647,7 +648,7 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
                 style={{ color: '#2e1a1a', background: '#f5f0f0' }}
                 onMouseEnter={(e) => e.currentTarget.style.background = '#e8d0d0'}
                 onMouseLeave={(e) => e.currentTarget.style.background = '#f5f0f0'}>
-                ← Back
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: '-2px', marginRight: 6 }}><path d="M15 18l-6-6 6-6" /></svg>Back
               </button>
               <button onClick={() => goToStep(4)} className="px-6 py-2.5 rounded-lg font-semibold text-sm text-white cursor-pointer transition-colors"
                 style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', boxShadow: '0 4px 12px rgba(128, 0, 32, 0.25)' }}
@@ -757,7 +758,7 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
                 style={{ color: '#2e1a1a', background: '#f5f0f0' }}
                 onMouseEnter={(e) => e.currentTarget.style.background = '#e8d0d0'}
                 onMouseLeave={(e) => e.currentTarget.style.background = '#f5f0f0'}>
-                ← Back to Edit
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: '-2px', marginRight: 6 }}><path d="M15 18l-6-6 6-6" /></svg>Back to Edit
               </button>
               <button onClick={handleSubmit} disabled={submitting} className="px-6 py-2 text-sm font-medium text-white rounded-lg cursor-pointer transition-colors"
                 style={{ background: 'linear-gradient(135deg, #800020, #4a0010)', boxShadow: '0 4px 12px rgba(128, 0, 32, 0.25)', opacity: submitting ? 0.7 : 1 }}
@@ -774,4 +775,4 @@ const ReportLostFound = ({ onGoToHome, onGoToDashboard, onReportSuccess, onGoToF
   );
 };
 
-export default ReportLostFound;
+export default ReportLostFound;

@@ -1,4 +1,5 @@
 import React from 'react';
+import BackButton from './BackButton';
 
 const PrivacyPolicy = (props) => {
   return (
@@ -10,7 +11,7 @@ const PrivacyPolicy = (props) => {
 
       <div className="max-w-3xl mx-auto px-8 py-10 bg-white my-10 rounded-3xl border border-[#e8d0d0] shadow-sm">
 
-        <span onClick={props.onGoToHome} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: '#800020' }}>← Back to Home</span>
+        <BackButton onClick={props.onGoToHome} label="Home" />
 
         <h2 className="font-headings text-xl text-[#800020] mb-6 mt-4 font-bold border-b border-[#e8d0d0] pb-2">Privacy Policy</h2>
 
@@ -54,4 +55,4 @@ const PrivacyPolicy = (props) => {
   );
 };
 
-export default PrivacyPolicy;
+export default PrivacyPolicy;

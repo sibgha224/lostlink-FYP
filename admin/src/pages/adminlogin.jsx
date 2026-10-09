@@ -1,4 +1,4 @@
-import bgImage from "../assets/clg.png"; // Rename ki hui image ka import
+import bgImage from "../assets/clg.png";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_ROOT } from "../adminApi";
@@ -16,11 +16,10 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Forgot-password step state
   const [resetEmail, setResetEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [resetStep, setResetStep] = useState("email"); // 'email' | 'otp'
+  const [resetStep, setResetStep] = useState("email");
   const [resetMsg, setResetMsg] = useState("");
 
   const navigate = useNavigate();
@@ -28,7 +27,6 @@ const AdminLogin = () => {
   useEffect(() => { setTimeout(() => setMounted(true), 50); }, []);
 
   useEffect(() => {
-    // If already logged in as admin, skip straight to dashboard
     const token = localStorage.getItem("adminToken");
     const user = JSON.parse(localStorage.getItem("adminUser") || "null");
     if (token && user?.role === "admin") {
@@ -111,7 +109,7 @@ const AdminLogin = () => {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundImage: `url(${bgImage})`, // 1. Background Image yahan apply ho gayi
+      backgroundImage: `url(${bgImage})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
       display: "flex", alignItems: "center", justifyContent: "center",
@@ -119,7 +117,6 @@ const AdminLogin = () => {
       fontFamily: "'DM Sans', sans-serif",
     }}>
       
-      {/* 2. Dark Overlay - Taake text easily parha jaye */}
       <div style={{
         position: "absolute",
         inset: 0,
@@ -230,7 +227,6 @@ const AdminLogin = () => {
         }
       `}</style>
 
-      {/* ── CARD ── */}
       <div
         className={mounted ? "al-enter" : ""}
         style={{
@@ -240,7 +236,6 @@ const AdminLogin = () => {
         }}
       >
 
-        {/* ── HEADER ── */}
         <div style={{
           background: "linear-gradient(135deg, #4a0010 0%, #800020 100%)",
           borderRadius: "24px 24px 0 0",
@@ -272,7 +267,6 @@ const AdminLogin = () => {
           </p>
         </div>
 
-        {/* ── FORM BODY ── */}
         <div style={{
           background: "#ffffff",
           border: "1.5px solid #e8d0d0",
@@ -297,7 +291,6 @@ const AdminLogin = () => {
             </div>
           </div>
 
-          {/* ── LOGIN FORM ── */}
           {screen === "login" && (
             <form onSubmit={handleLoginSubmit} className="al-slide" style={{ display:"flex", flexDirection:"column", gap:18 }}>
 
@@ -312,7 +305,6 @@ const AdminLogin = () => {
                 </div>
               )}
 
-              {/* Email */}
               <div>
                 <label className="al-label">Email Address</label>
                 <div style={{ position:"relative" }}>
@@ -332,7 +324,6 @@ const AdminLogin = () => {
                 </div>
               </div>
 
-              {/* Password */}
               <div>
                 <label className="al-label">Password</label>
                 <div style={{ position:"relative" }}>
@@ -360,7 +351,6 @@ const AdminLogin = () => {
                 </div>
               </div>
 
-              {/* Forgot */}
               <div style={{ textAlign:"right", marginTop:-6 }}>
                 <button type="button" className="al-ghost" onClick={() => setScreen("forgot")}
                   style={{ color:"#800020", fontSize:12, fontWeight:500, textDecoration:"underline", textDecorationColor:"rgba(128,0,32,0.3)", textUnderlineOffset:3 }}>
@@ -380,7 +370,6 @@ const AdminLogin = () => {
             </form>
           )}
 
-          {/* ── FORGOT PASSWORD ── */}
           {screen === "forgot" && (
             <form onSubmit={handleForgotSubmit} className="al-slide" style={{ textAlign:"center", display:"flex", flexDirection:"column", gap:22, alignItems:"center" }}>
               <div>
@@ -455,14 +444,14 @@ const AdminLogin = () => {
 
               <button type="button" className="al-ghost" onClick={() => { setScreen("login"); setResetStep("email"); setErrorMsg(""); setResetMsg(""); }}
                 style={{ color:"#c5a3a3", fontSize:13, display:"flex", alignItems:"center", gap:4 }}>
-                ← Back to Login
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+                Back to Login
               </button>
             </form>
           )}
 
         </div>
 
-        {/* Footer */}
         <p style={{ textAlign:"center", marginTop:16, color:"#ffffff", fontSize:11, letterSpacing:"0.5px" }}>
           LostLink Portal © 2026
         </p>

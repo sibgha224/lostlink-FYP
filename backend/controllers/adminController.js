@@ -1,6 +1,13 @@
 const User = require('../models/user');
 const LostItem = require('../models/lostitem');
 const FoundItem = require('../models/founditem');
+const Claim = require('../models/claim');
+const Message = require('../models/message');
+const Notification = require('../models/notification');
+const Review = require('../models/review');
+const Testimonial = require('../models/testimonial');
+const Request = require('../models/request');
+const ReportMessage = require('../models/reportmessage');
 
 const getAllUsers = async (req, res) => {
   try {
@@ -75,8 +82,27 @@ const deleteUser = async (req, res) => {
       return res.status(400).json({ message: 'Cannot delete an admin!' });
     }
 
-    await User.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: 'User deleted successfully!' });
+    const userId = user._id;
+    const foundItemIds = await FoundItem.find({ userId }).distinct('_id');
+    const claimIds = await Claim.find({
+      $or: [{ claimedBy: userId }, { foundItem: { $in: foundItemIds } }]
+    }).distinct('_id');
+    const requestIds = await Request.find({ requester: userId }).distinct('_id');
+
+    await Promise.all([
+      Message.deleteMany({ claim: { $in: claimIds } }),
+      Claim.deleteMany({ _id: { $in: claimIds } }),
+      FoundItem.deleteMany({ _id: { $in: foundItemIds } }),
+      LostItem.deleteMany({ userId }),
+      Notification.deleteMany({ recipient: userId }),
+      Review.deleteMany({ $or: [{ reviewer: userId }, { reviewedUser: userId }] }),
+      Testimonial.deleteMany({ user: userId }),
+      ReportMessage.deleteMany({ request: { $in: requestIds } }),
+      Request.deleteMany({ _id: { $in: requestIds } })
+    ]);
+
+    await User.findByIdAndDelete(userId);
+    res.status(200).json({ message: 'User and all their data deleted successfully!' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -126,4 +152,4 @@ module.exports = {
   deleteUser,
   getDashboardStats,
   getItemStats
-};
+};

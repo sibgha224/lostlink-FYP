@@ -27,4 +27,4 @@ router.get('/:id/messages', protect, getReportMessages);
 router.post('/:id/messages', protect, sendReportMessage);
 router.put('/:id/close', protect, adminOnly, closeReport);
 
-module.exports = router;
+module.exports = router;

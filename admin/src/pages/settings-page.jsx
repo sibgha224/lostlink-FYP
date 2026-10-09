@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
 import { adminFetch } from "../adminApi";
 
-const initialItemsForExport = [
-  { id:"LL-001", title:"Black Wallet",   cat:"Accessories", date:"12 May 2026", status:"Lost",    reporter:"Ali Hassan" },
-  { id:"LL-002", title:"iPhone 14 Pro", cat:"Electronics", date:"11 May 2026", status:"Found",   reporter:"Sara Malik" },
-  { id:"LL-003", title:"Student ID Card", cat:"Documents", date:"10 May 2026", status:"Claimed", reporter:"Umar Sheikh" },
-];
-
 export default function SettingsPage({ onInstituteSaved }) {
   const [saved, setSaved] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
@@ -25,7 +19,6 @@ export default function SettingsPage({ onInstituteSaved }) {
     setTimeout(() => setErrorMsg(""), 3500);
   };
 
-  /* ---------------- Institute Info ---------------- */
   const [systemInfo, setSystemInfo] = useState({
     collegeName: "Govt. Graduate College Mandi Bahauddin",
     address: "Mandi Bahauddin, Punjab, Pakistan",
@@ -36,12 +29,10 @@ export default function SettingsPage({ onInstituteSaved }) {
   const handleSystemChange = (e) =>
     setSystemInfo({ ...systemInfo, [e.target.name]: e.target.value });
 
-  /* ---------------- Category Management ---------------- */
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
 
-  /* ---------------- Auto-Resolve Rule ---------------- */
   const [autoResolve, setAutoResolve] = useState({
     enabled: true,
     days: 30,
@@ -50,7 +41,6 @@ export default function SettingsPage({ onInstituteSaved }) {
   });
   const [savingRules, setSavingRules] = useState(false);
 
-  /* ---------------- Load current settings ---------------- */
   useEffect(() => {
     const loadSettings = async () => {
       setLoading(true);
@@ -143,24 +133,68 @@ export default function SettingsPage({ onInstituteSaved }) {
     }
   };
 
-  /* ---------------- Export Data ---------------- */
-  const exportCSV = () => {
-    const headers = ["ID", "Item", "Category", "Date", "Status", "Reporter"];
-    const rows = initialItemsForExport.map((i) => [i.id, i.title, i.cat, i.date, i.status, i.reporter]);
-    const csvContent =
-      [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const downloadCSV = (filename, headers, rows) => {
+    const escape = (cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`;
+    const csvContent = [headers, ...rows].map((row) => row.map(escape).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "lostlink_items_report.csv");
+    link.setAttribute("download", filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showSaved("Report exported successfully");
+    URL.revokeObjectURL(url);
   };
 
-  /* ---------------- Shared styles ---------------- */
+  const formatDate = (value) => (value ? new Date(value).toLocaleDateString() : "");
+
+  const exportItemsCSV = async () => {
+    try {
+      const [lost, found, pending] = await Promise.all([
+        adminFetch('/lost-items/all'),
+        adminFetch('/found-items/all'),
+        adminFetch('/found-items/pending').catch(() => []),
+      ]);
+      const rows = [
+        ...(Array.isArray(lost) ? lost : []).map((i) => ["Lost", i.itemName, i.category, i.location?.buildingName, formatDate(i.dateLost || i.createdAt), i.status, i.userId?.name, i.userId?.email]),
+        ...[...(Array.isArray(found) ? found : []), ...(Array.isArray(pending) ? pending : [])].map((i) => ["Found", i.itemName, i.category, i.location?.buildingName, formatDate(i.dateFound || i.createdAt), i.isApproved ? i.status : "pending approval", i.userId?.name, i.userId?.email]),
+      ];
+      if (rows.length === 0) {
+        showError("There are no items to export yet.");
+        return;
+      }
+      downloadCSV("lostlink_items_report.csv", ["Type", "Item", "Category", "Location", "Date", "Status", "Reported By", "Email"], rows);
+      showSaved(`Exported ${rows.length} items`);
+    } catch (err) {
+      showError(err.message);
+    }
+  };
+
+  const exportClaimsCSV = async () => {
+    try {
+      const claims = await adminFetch('/claims/all');
+      const rows = (Array.isArray(claims) ? claims : []).map((c) => [
+        String(c._id).slice(-6).toUpperCase(),
+        c.foundItem?.itemName,
+        c.claimedBy?.name,
+        c.claimedBy?.email,
+        c.foundItem?.userId?.name,
+        c.status,
+        c.foundItem?.status,
+        formatDate(c.createdAt),
+      ]);
+      if (rows.length === 0) {
+        showError("There are no claims to export yet.");
+        return;
+      }
+      downloadCSV("lostlink_claims_report.csv", ["Claim ID", "Item", "Claimant", "Claimant Email", "Finder", "Claim Status", "Item Status", "Date"], rows);
+      showSaved(`Exported ${rows.length} claims`);
+    } catch (err) {
+      showError(err.message);
+    }
+  };
+
   const cardStyle = {
     background: "#fff",
     border: "1px solid #e8d0d0",
@@ -248,7 +282,6 @@ export default function SettingsPage({ onInstituteSaved }) {
       ) : (
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
 
-        {/* ============ CATEGORY MANAGEMENT ============ */}
         <div style={cardStyle}>
           <h3 style={sectionTitle}>Category Management</h3>
           <p style={sectionSub}>Add or remove item categories used across Lost & Found listings</p>
@@ -281,13 +314,11 @@ export default function SettingsPage({ onInstituteSaved }) {
           </div>
         </div>
 
-        {/* ============ AUTO-RESOLVE RULE ============ */}
         <div style={cardStyle}>
           <h3 style={sectionTitle}>Automation Rules</h3>
           <p style={sectionSub}>Let the system manage stale listings automatically</p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-            {/* Auto resolve */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 220 }}>
                 <p style={{ fontSize: 13, fontWeight: 700, color: "#2e1a1a", margin: 0 }}>Auto-mark items as Resolved</p>
@@ -317,7 +348,6 @@ export default function SettingsPage({ onInstituteSaved }) {
 
             <div style={{ height: 1, background: "#f0e0e0" }} />
 
-            {/* Auto delete */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 220 }}>
                 <p style={{ fontSize: 13, fontWeight: 700, color: "#2e1a1a", margin: 0 }}>Auto-delete archived items</p>
@@ -353,7 +383,6 @@ export default function SettingsPage({ onInstituteSaved }) {
           </div>
         </div>
 
-        {/* ============ INSTITUTE INFO ============ */}
         <div style={cardStyle}>
           <h3 style={sectionTitle}>Institute Information</h3>
           <p style={sectionSub}>Shown across the portal, login page, and reports</p>
@@ -384,14 +413,13 @@ export default function SettingsPage({ onInstituteSaved }) {
           </div>
         </div>
 
-        {/* ============ EXPORT DATA ============ */}
         <div style={cardStyle}>
           <h3 style={sectionTitle}>Export Data</h3>
           <p style={sectionSub}>Download records for record-keeping or audit purposes</p>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-            <button style={saveBtn} onClick={exportCSV}>⬇ Export Items Report (CSV)</button>
-            <button style={{ ...saveBtn, background: "#fdf6f7", color: "#800020", border: "1px solid #e8d0d0" }} onClick={() => showSaved("Claims report exported")}>
+            <button style={saveBtn} onClick={exportItemsCSV}>⬇ Export Items Report (CSV)</button>
+            <button style={{ ...saveBtn, background: "#fdf6f7", color: "#800020", border: "1px solid #e8d0d0" }} onClick={exportClaimsCSV}>
               ⬇ Export Claims Report (CSV)
             </button>
           </div>
@@ -401,4 +429,4 @@ export default function SettingsPage({ onInstituteSaved }) {
       )}
     </div>
   );
-}
+}

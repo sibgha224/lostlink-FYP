@@ -8,7 +8,6 @@ const SecurityOffice = (props) => {
         .font-headings { font-family: 'Fraunces', serif; }
       `}</style>
 
-      {/* CONTENT */}
       <div className="max-w-4xl mx-auto px-[5%] py-12 bg-white my-10 rounded-3xl border border-[#e8d0d0] shadow-sm">
         <h1 className="font-headings text-3xl md:text-4xl text-[#2e1a1a] mb-6">College Security Office Guidelines</h1>
         <div className="space-y-4 text-[#5a3a3a] text-base leading-relaxed">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE } from '../config';
+import BackButton from './BackButton';
 
 const DEFAULT_CATEGORIES = [
   'All', 'Electronics', 'Books & Notes', 'Clothing', 'Keys',
@@ -106,7 +107,7 @@ const AllItems = ({ initialSearchQuery, onViewDetails, onGoToHome, ...props }) =
       `}</style>
       <div className="max-w-7xl mx-auto px-[4%] py-10">
 
-        <span onClick={onGoToHome} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: '#800020' }}>← Back to Home</span>
+        <BackButton onClick={onGoToHome} label="Home" />
 
         <div className="text-center mb-10 mt-6">
           <h1 className="font-headings text-3xl md:text-4xl text-[#2e1a1a] mb-2">All Reported Items</h1>
@@ -210,4 +211,4 @@ const AllItems = ({ initialSearchQuery, onViewDetails, onGoToHome, ...props }) =
   );
 };
 
-export default AllItems;
+export default AllItems;

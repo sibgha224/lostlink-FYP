@@ -3,6 +3,18 @@ const LostItem = require('../models/lostitem');
 const { calculateMatchScore, MATCH_THRESHOLD } = require('./matchingcontroller');
 const { createNotification, notifyAllUsersExcept, notifyAdmins } = require('./notificationcontroller');
 
+const EDITABLE_FIELDS = ['itemName', 'category', 'description', 'color', 'brand', 'contactName', 'contactEmail', 'contactPhone', 'preferredContact', 'location', 'dateFound', 'timeFound'];
+
+const pickEditableFields = (body) => {
+  const updates = {};
+  EDITABLE_FIELDS.forEach((key) => {
+    if (body[key] !== undefined) updates[key] = body[key];
+  });
+  return updates;
+};
+
+const escapeRegex = (text) => String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const reportFoundItem = async (req, res) => {
   try {
     const {
@@ -124,8 +136,8 @@ const updateFoundItem = async (req, res) => {
 
     const updatedItem = await FoundItem.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true }
+      pickEditableFields(req.body),
+      { new: true, runValidators: true }
     );
 
     res.status(200).json({
@@ -167,8 +179,8 @@ const searchFoundItems = async (req, res) => {
 
     if (keyword) {
       query.$or = [
-        { itemName: { $regex: keyword, $options: 'i' } },
-        { description: { $regex: keyword, $options: 'i' } }
+        { itemName: { $regex: escapeRegex(keyword), $options: 'i' } },
+        { description: { $regex: escapeRegex(keyword), $options: 'i' } }
       ];
     }
 
@@ -246,4 +258,4 @@ module.exports = {
   searchFoundItems,
   approveFoundItem,
   getPendingFoundItems
-};
+};

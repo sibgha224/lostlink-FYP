@@ -25,9 +25,11 @@ const storage = new CloudinaryStorage({
         unique_filename: true
       };
     }
+    const isHeic = /heic|heif/i.test(file.mimetype) || /\.(heic|heif)$/i.test(file.originalname || '');
     return {
       folder: 'lostlink-items',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'webp']
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'],
+      ...(isHeic ? { format: 'jpg' } : {})
     };
   }
 });

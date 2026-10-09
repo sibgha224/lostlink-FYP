@@ -13,7 +13,7 @@ const {
 const { protect } = require('../middleware/authmiddleware');
 const { adminOnly } = require('../middleware/adminMiddleware');
 
-router.get('/published', getPublishedTestimonials); // public — Home page reads this
+router.get('/published', getPublishedTestimonials);
 
 router.post('/', protect, submitTestimonial);
 router.get('/my', protect, getMyTestimonial);

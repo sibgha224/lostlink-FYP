@@ -70,12 +70,18 @@ const register = async (req, res) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'Email already registered' });
+      if (existingUser.isVerified) {
+        return res.status(400).json({ message: 'Email already registered' });
+      }
+      await User.deleteOne({ _id: existingUser._id });
     }
 
     const existingRollNo = await User.findOne({ rollNo });
     if (existingRollNo) {
-      return res.status(400).json({ message: 'This Roll Number is already registered by another student' });
+      if (existingRollNo.isVerified) {
+        return res.status(400).json({ message: 'This Roll Number is already registered by another student' });
+      }
+      await User.deleteOne({ _id: existingRollNo._id });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -137,7 +143,13 @@ const verifyEmail = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    if (!user.verifyOtp || (user.otpAttempts || 0) >= 5) {
+      return res.status(400).json({ message: 'Too many wrong attempts. Please sign up again to get a new OTP.' });
+    }
+
     if (user.verifyOtp !== otp) {
+      user.otpAttempts = (user.otpAttempts || 0) + 1;
+      await user.save();
       return res.status(400).json({ message: 'Invalid OTP' });
     }
 
@@ -146,6 +158,7 @@ const verifyEmail = async (req, res) => {
     }
 
     user.isVerified = true;
+    user.otpAttempts = 0;
     user.verifyOtp = undefined;
     user.verifyOtpExpireAt = 0;
     await user.save();
@@ -248,6 +261,7 @@ const forgotPassword = async (req, res) => {
     const otp = String(Math.floor(100000 + Math.random() * 900000));
     user.resetOtp = otp;
     user.resetOtpExpireAt = Date.now() + 15 * 60 * 1000;
+    user.otpAttempts = 0;
     await user.save();
 
     try {
@@ -293,7 +307,13 @@ const resetPassword = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    if (!user.resetOtp || (user.otpAttempts || 0) >= 5) {
+      return res.status(400).json({ message: 'Too many wrong attempts. Please request a new OTP.' });
+    }
+
     if (user.resetOtp !== otp) {
+      user.otpAttempts = (user.otpAttempts || 0) + 1;
+      await user.save();
       return res.status(400).json({ message: 'Invalid OTP' });
     }
 
@@ -305,6 +325,7 @@ const resetPassword = async (req, res) => {
     user.password = await bcrypt.hash(newPassword, salt);
     user.resetOtp = '';
     user.resetOtpExpireAt = 0;
+    user.otpAttempts = 0;
     await user.save();
 
     res.status(200).json({ message: 'Password reset successful! Please login.' });

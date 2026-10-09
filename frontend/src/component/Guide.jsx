@@ -8,7 +8,6 @@ const Guide = (props) => {
         .font-headings { font-family: 'Fraunces', serif; }
       `}</style>
 
-      {/* CONTENT CARD */}
       <div className="max-w-3xl mx-auto px-8 py-10 bg-white my-10 rounded-3xl border border-[#e8d0d0] shadow-sm">
         
         <h2 className="font-headings text-xl text-[#800020] mb-6 font-bold border-b border-[#e8d0d0] pb-2">Claiming Process</h2>

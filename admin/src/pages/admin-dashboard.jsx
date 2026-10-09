@@ -8,7 +8,6 @@ import MessagesPage from "./messages-page";
 import NotificationsPage from "./Notification-page";
 import SettingsPage from "./settings-page";
 import ReviewsPage from "./reviews-page";
-import AdminManagementPage from "./adminmanagement-page";
 import { adminFetch, getAdminUser, adminLogout } from "../adminApi";
 
 const Ico = ({ d, size = 18, sw = 1.8 }) => (
@@ -34,7 +33,6 @@ const IcoReqst   = () => <Ico d={["M9 12h6","M9 16h6","M13 2H6a2 2 0 00-2 2v16a2
 const IcoSupport = () => <Ico d={["M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"]} />;
 const IcoStar    = () => <Ico d="M12 2l2.9 6.3 6.9.7-5.2 4.7 1.5 6.8L12 17l-6.1 3.5 1.5-6.8L2.2 9l6.9-.7z" />;
 const IcoCamera  = () => <Ico d={["M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z", "M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"]} />;
-const IcoShield  = () => <Ico d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />;
 
 const statusCfg = {
   Lost:     { bg:"#fef2f2", color:"#dc2626" },
@@ -92,7 +90,6 @@ export default function AdminDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [instituteName, setInstituteName] = useState("Govt. Graduate College Mandi Bahauddin");
 
-  // Admin avatar image state
   const [profileImage, setProfileImage] = useState(() => localStorage.getItem("adminProfileImage") || null);
   const fileInputRef = useRef(null);
 
@@ -184,6 +181,7 @@ export default function AdminDashboard() {
 
   const markSingleRead = (id) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
+    adminFetch(`/notifications/${id}/read`, { method: 'PUT' }).catch(() => {});
   };
 
   const handleNotifClick = (n) => {
@@ -193,9 +191,13 @@ export default function AdminDashboard() {
     const msg = (n.msg || '').toLowerCase();
 
     if (type === 'new_found_item') {
-      setActive('found');
       const found = itemsList.find(i => i._id === n.relatedItem);
-      if (found) setSelectedItem(found);
+      if (found) {
+        setActive('found');
+        setSelectedItem(found);
+      } else {
+        setActive('dashboard');
+      }
       return;
     }
     if (type === 'new_lost_item') {
@@ -235,7 +237,6 @@ export default function AdminDashboard() {
     { id:"messages",  label:"Messages",      icon: IcoMsg,     badge:null },
     { id:"notif",     label:"Notifications", icon: IcoNotif,   badge: unreadCount > 0 ? `${unreadCount}` : null },
     { id:"reviews",   label:"Reviews",       icon: IcoStar,    badge: pendingReviews || null },
-    { id:"adminmanagement", label:"Admin Management", icon: IcoShield, badge:null },
     { id:"settings",  label:"Settings",      icon: IcoSet,     badge:null },
   ];
 
@@ -246,6 +247,7 @@ export default function AdminDashboard() {
       const path = item.kind === 'Lost' ? `/lost-items/${item._id}` : `/found-items/${item._id}`;
       await adminFetch(path, { method: 'DELETE' });
       setItemsList(prev => prev.filter(i => i._id !== item._id));
+      setPendingApprovals(prev => prev.filter(i => i._id !== item._id));
       setSelectedItem(null);
     } catch (err) {
       alert(err.message);
@@ -259,7 +261,9 @@ export default function AdminDashboard() {
     try {
       await adminFetch(`/found-items/${item._id}/approve`, { method: 'PUT' });
       setPendingApprovals(prev => prev.filter(i => i._id !== item._id));
-      setItemsList(prev => prev.map(i => i._id === item._id ? { ...i, isApproved: true } : i));
+      setItemsList(prev => prev.some(i => i._id === item._id)
+        ? prev.map(i => i._id === item._id ? { ...i, isApproved: true } : i)
+        : [{ ...item, isApproved: true, kind: 'Found' }, ...prev]);
     } catch (err) {
       alert(err.message);
     } finally {
@@ -406,10 +410,11 @@ export default function AdminDashboard() {
         <header style={{ height:66, background:"rgba(255,255,255,0.95)", backdropFilter:"blur(10px)", borderBottom:"1px solid #e8d0d0", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 28px", position:"sticky", top:0, zIndex:40, boxShadow:"0 2px 10px rgba(74,0,16,0.05)" }}>
           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
             <button className="hamburger icon-btn" onClick={() => setSideOpen(true)}><IcoMenu /></button>
-            <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-              <span style={{ fontSize:13, color:"#c07080" }}>Home</span>
-              <span style={{ color:"#e8d0d0" }}>→</span>
-              <span style={{ fontSize:13, color:"#800020", fontWeight:600, textTransform:"capitalize" }}>{active}</span>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ fontSize:14, color:"#2e1a1a", fontWeight:600 }}>Welcome, {admin?.name || "Admin"}</span>
+              <span style={{ fontSize:11, fontWeight:700, color:"#800020", background:"#fbeef0", border:"1px solid #f0d0d6", borderRadius:20, padding:"2px 10px" }}>
+                Admin
+              </span>
             </div>
           </div>
           <div className="search-area" style={{ position:"relative" }}>
@@ -601,10 +606,9 @@ export default function AdminDashboard() {
             <NotificationsPage notifications={notifications} setNotifications={setNotifications} onNotifClick={handleNotifClick} />
           )}
           {active === "reviews" && <ReviewsPage />}
-          {active === "adminmanagement" && <AdminManagementPage />}
           {active === "settings" && <SettingsPage />}
 
-          {!["dashboard", "items", "found", "claims", "requests", "support", "users", "messages", "notif", "reviews", "adminmanagement", "settings"].includes(active) && (
+          {!["dashboard", "items", "found", "claims", "requests", "support", "users", "messages", "notif", "reviews", "settings"].includes(active) && (
             <div style={{ background:"#fff", border:"1px solid #e8d0d0", borderRadius:20, padding:40, textAlign:"center" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", color:"#800020", textTransform:"capitalize" }}>{active} Page</h2>
               <p style={{ color:"#c07080", marginTop:8 }}>This section is active now.</p>
@@ -613,7 +617,6 @@ export default function AdminDashboard() {
         </main>
       </div>
 
-      {/* Hidden File Input for Image Selection */}
       <input 
         type="file" 
         ref={fileInputRef} 
@@ -630,7 +633,6 @@ export default function AdminDashboard() {
               <button onClick={() => setProfileModalOpen(false)} style={{ background:"none", border:"none", fontSize:18, color:"#c07080", cursor:"pointer", padding:4 }}>✕</button>
             </div>
             <div style={{ padding:"24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 }}>
-              {/* Clickable Profile Image Container */}
               <div 
                 className="avatar-container"
                 onClick={() => fileInputRef.current?.click()}
@@ -698,8 +700,8 @@ export default function AdminDashboard() {
             </div>
             
             <div style={{ padding:24, display:"flex", flexDirection:"column", gap:14, maxHeight:"70vh", overflowY:"auto" }}>
-              {selectedItem.image && (
-                <img src={selectedItem.image} alt={selectedItem.itemName} style={{ width:"100%", height:180, objectFit:"cover", borderRadius:14, border:"1px solid #e8d0d0" }} />
+              {(selectedItem.imageURL || selectedItem.image) && (
+                <img src={selectedItem.imageURL || selectedItem.image} alt={selectedItem.itemName} style={{ width:"100%", height:180, objectFit:"cover", borderRadius:14, border:"1px solid #e8d0d0" }} />
               )}
               
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
@@ -717,7 +719,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <p style={{ fontSize:11, color:"#c07080", margin:0 }}>Location</p>
-                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a", margin:"2px 0 0" }}>{selectedItem.location?.buildingName || selectedItem.location || '—'}</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:"#2e1a1a", margin:"2px 0 0" }}>{(typeof selectedItem.location === 'string' ? selectedItem.location : selectedItem.location?.buildingName) || '—'}</p>
                 </div>
               </div>
               <div>
@@ -736,4 +738,4 @@ export default function AdminDashboard() {
       )}
     </div>
   );
-}
+}

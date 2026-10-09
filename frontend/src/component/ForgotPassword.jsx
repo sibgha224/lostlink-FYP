@@ -4,7 +4,7 @@ import { API_BASE as ROOT_API_BASE } from '../config';
 const API_BASE = `${ROOT_API_BASE}/auth`;
 
 const ForgotPassword = ({ onGoToLogin }) => {
-  const [step, setStep] = useState('email'); // 'email' ya 'reset'
+  const [step, setStep] = useState('email');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
@@ -98,7 +98,6 @@ const ForgotPassword = ({ onGoToLogin }) => {
         fontFamily: "'DM Sans', sans-serif",
       }}
     >
-      {/* Top-Left Logo */}
       <div className="fixed top-4 left-4 flex items-center gap-2.5 z-20">
         <div
           className="w-[48px] h-[48px] rounded-xl flex items-center justify-center"
@@ -133,10 +132,8 @@ const ForgotPassword = ({ onGoToLogin }) => {
         </span>
       </div>
 
-      {/* Card */}
       <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-2xl overflow-hidden z-10 mx-4">
 
-        {/* Card Header */}
         <div
           className="px-6 py-5 text-center border-b-2"
           style={{
@@ -165,7 +162,6 @@ const ForgotPassword = ({ onGoToLogin }) => {
           </p>
         </div>
 
-        {/* Card Body */}
         <div className="p-7">
 
           {error && (
@@ -180,7 +176,6 @@ const ForgotPassword = ({ onGoToLogin }) => {
           )}
 
           {step === 'email' ? (
-            /* --- STEP 1: EMAIL INPUT FORM --- */
             <form onSubmit={handleGetCode}>
               <div className="mb-4">
                 <label
@@ -241,7 +236,6 @@ const ForgotPassword = ({ onGoToLogin }) => {
               </button>
             </form>
           ) : (
-            /* --- STEP 2: OTP + NEW PASSWORD FORM --- */
             <form onSubmit={handleResetPassword}>
               <div className="flex justify-center gap-2 mb-5">
                 {otp.map((data, index) => (
@@ -303,7 +297,6 @@ const ForgotPassword = ({ onGoToLogin }) => {
             </form>
           )}
 
-          {/* Back to Login */}
           <div className="text-center mt-5">
             <span
               onClick={onGoToLogin}
@@ -313,7 +306,7 @@ const ForgotPassword = ({ onGoToLogin }) => {
                 fontFamily: "'DM Sans', sans-serif",
               }}
             >
-              ← Back to Login
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: '-2px', marginRight: 6 }}><path d="M15 18l-6-6 6-6" /></svg>Back to Login
             </span>
           </div>
 

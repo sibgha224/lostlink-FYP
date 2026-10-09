@@ -31,7 +31,7 @@ const markItemReturned = async (req, res) => {
 
     try {
       const claimerLostItems = await LostItem.find({
-        userId: claim.claimedBy._id,
+        userId: claim.claimedBy?._id,
         status: { $in: ['active', 'claimed'] }
       });
       for (const lostItem of claimerLostItems) {
@@ -46,7 +46,7 @@ const markItemReturned = async (req, res) => {
 
     const io = req.app.get('socketio');
     const onlineUsers = req.app.get('onlineUsers');
-    const participantIds = [claim.claimedBy._id.toString(), item.userId?.toString()].filter(Boolean);
+    const participantIds = [claim.claimedBy?._id?.toString(), item.userId?.toString()].filter(Boolean);
 
     for (const userId of participantIds) {
       await createNotification(req, {
@@ -100,4 +100,4 @@ const getClaimPresence = async (req, res) => {
   }
 };
 
-module.exports = { markItemReturned, getClaimPresence };
+module.exports = { markItemReturned, getClaimPresence };

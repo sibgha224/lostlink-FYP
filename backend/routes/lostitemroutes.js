@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
+  getPublicRecentItems,
   reportLostItem,
   getAllLostItems,
   getLostItemById,
@@ -21,6 +22,7 @@ router.post('/report', protect, (req, res, next) => {
   });
 }, reportLostItem);
 
+router.get('/public/recent', getPublicRecentItems);
 router.get('/all', protect, getAllLostItems);
 router.get('/my-items', protect, getMyLostItems);
 router.get('/search', protect, searchLostItems);

@@ -41,22 +41,11 @@ const Home = (props) => {
   useEffect(() => {
     const fetchRecent = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        const [lostRes, foundRes] = await Promise.all([
-          fetch(`${API_BASE}/lost-items/all`, { headers }),
-          fetch(`${API_BASE}/found-items/all`, { headers }),
-        ]);
-        const lostData = await lostRes.json();
-        const foundData = await foundRes.json();
-        const combined = [
-          ...(Array.isArray(lostData) ? lostData : []).map(i => ({
-            id: i._id, type: 'LOST', name: i.itemName, location: i.location?.buildingName || 'Unknown', reportedAgo: timeAgo(i.createdAt), rawStatus: i.status, image: i.imageURL, createdAt: i.createdAt
-          })),
-          ...(Array.isArray(foundData) ? foundData : []).map(i => ({
-            id: i._id, type: 'FOUND', name: i.itemName, location: i.location?.buildingName || 'Unknown', reportedAgo: timeAgo(i.createdAt), rawStatus: i.status, image: i.imageURL, createdAt: i.createdAt
-          })),
-        ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 8);
+        const res = await fetch(`${API_BASE}/lost-items/public/recent`);
+        const data = await res.json();
+        const combined = (Array.isArray(data) ? data : []).map(i => ({
+          id: i._id, type: i.type, name: i.itemName, location: i.location?.buildingName || 'Unknown', reportedAgo: timeAgo(i.createdAt), rawStatus: i.status, image: i.imageURL, createdAt: i.createdAt
+        }));
         setReportedItems(combined);
       } catch {
         setReportedItems([]);
@@ -497,4 +486,4 @@ const Home = (props) => {
   );
 };
 
-export default Home;
+export default Home;

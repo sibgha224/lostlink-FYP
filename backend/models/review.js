@@ -29,7 +29,6 @@ const reviewSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// One review per reviewer per claim — can't rate the same exchange twice.
 reviewSchema.index({ claim: 1, reviewer: 1 }, { unique: true });
 
 module.exports = mongoose.model('Review', reviewSchema);

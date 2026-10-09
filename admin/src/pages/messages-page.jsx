@@ -12,7 +12,6 @@ export default function MessagesPage() {
   const [busy, setBusy] = useState(false);
   const [presence, setPresence] = useState({ claimantOnline: false, finderOnline: false });
 
-  // Define selectClaim before useEffect or use regular function hoisting
   const selectClaim = async (claim) => {
     setSelectedClaim(claim);
     setThreadLoading(true);

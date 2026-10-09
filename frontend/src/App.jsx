@@ -265,7 +265,7 @@ function App() {
         {isReportSuccessPage && (
           <SuccessScreen
             title="Item Posted Successfully!"
-            message="Your report is now live. We'll notify you if a match comes up, or you can browse all items yourself."
+            message="Your report has been submitted. Lost item reports appear right away; found item reports appear once the admin verifies them. We'll notify you if a match comes up."
             onGoToHome={() => setScreen('home')}
           />
         )}

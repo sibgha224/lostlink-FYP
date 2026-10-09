@@ -5,7 +5,7 @@ const testimonialSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    unique: true // one review per student — resubmitting updates it instead of stacking duplicates
+    unique: true
   },
   rating: {
     type: Number,

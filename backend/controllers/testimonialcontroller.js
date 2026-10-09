@@ -1,8 +1,5 @@
 const Testimonial = require('../models/testimonial');
 
-// POST /api/testimonials  { rating, message }
-// A student submits (or re-submits) their review of the website.
-// Re-submitting overwrites their previous review and sends it back to pending.
 const submitTestimonial = async (req, res) => {
   try {
     const { rating, message } = req.body;
@@ -30,7 +27,6 @@ const submitTestimonial = async (req, res) => {
   }
 };
 
-// GET /api/testimonials/my — the logged-in student's own review (or null)
 const getMyTestimonial = async (req, res) => {
   try {
     const testimonial = await Testimonial.findOne({ user: req.user._id });
@@ -40,7 +36,6 @@ const getMyTestimonial = async (req, res) => {
   }
 };
 
-// GET /api/testimonials/published — public, shown on the Home page
 const getPublishedTestimonials = async (req, res) => {
   try {
     const testimonials = await Testimonial.find({ status: 'published' })
@@ -49,7 +44,7 @@ const getPublishedTestimonials = async (req, res) => {
       .limit(9);
 
     const formatted = testimonials
-      .filter(t => t.user) // guard against a deleted user leaving an orphan review
+      .filter(t => t.user)
       .map(t => ({
         id: t._id,
         name: t.user.name,
@@ -64,7 +59,6 @@ const getPublishedTestimonials = async (req, res) => {
   }
 };
 
-// GET /api/testimonials/admin — admin: every review, newest first
 const getAllTestimonials = async (req, res) => {
   try {
     const testimonials = await Testimonial.find({})
@@ -77,7 +71,6 @@ const getAllTestimonials = async (req, res) => {
   }
 };
 
-// PUT /api/testimonials/:id/publish — admin: show this review publicly
 const publishTestimonial = async (req, res) => {
   try {
     const testimonial = await Testimonial.findByIdAndUpdate(
@@ -94,7 +87,6 @@ const publishTestimonial = async (req, res) => {
   }
 };
 
-// PUT /api/testimonials/:id/unpublish — admin: pull this review off the public site
 const unpublishTestimonial = async (req, res) => {
   try {
     const testimonial = await Testimonial.findByIdAndUpdate(
@@ -111,7 +103,6 @@ const unpublishTestimonial = async (req, res) => {
   }
 };
 
-// DELETE /api/testimonials/:id — admin: remove a review entirely
 const deleteTestimonial = async (req, res) => {
   try {
     const testimonial = await Testimonial.findByIdAndDelete(req.params.id);

@@ -79,10 +79,8 @@ const Login = ({ onLoginSuccess, onGoToSignup, onGoToForget }) => {
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-[420px] px-4 flex flex-col items-center">
 
-        {/* Card */}
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden w-full border border-[#e8d0d0]">
 
-          {/* Logo Header */}
           <div className="flex items-center justify-center gap-3 pt-7 pb-3 px-6">
             <div className="bg-[#800020] w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-[#800020]/30">
               <svg
@@ -105,7 +103,6 @@ const Login = ({ onLoginSuccess, onGoToSignup, onGoToForget }) => {
             </span>
           </div>
 
-          {/* Form */}
           <div className="px-9 pb-9 pt-4">
             {error && (
               <div className="mb-4 p-3 bg-red-100 text-red-700 text-xs rounded-xl font-medium">
@@ -168,7 +165,6 @@ const Login = ({ onLoginSuccess, onGoToSignup, onGoToForget }) => {
 
             <form onSubmit={handleLogin} className="flex flex-col gap-5">
 
-              {/* Email */}
               <div>
                 <label className="block text-sm font-semibold text-[#2e1a1a] mb-1 ml-1">
                   Email
@@ -200,7 +196,6 @@ const Login = ({ onLoginSuccess, onGoToSignup, onGoToForget }) => {
                 </div>
               </div>
 
-              {/* Password */}
               <div>
                 <label className="block text-sm font-semibold text-[#2e1a1a] mb-1 ml-1">
                   Password
@@ -239,7 +234,6 @@ const Login = ({ onLoginSuccess, onGoToSignup, onGoToForget }) => {
                 </p>
               </div>
 
-              {/* Login Button */}
               <button
                 type="submit"
                 disabled={loading}
@@ -266,7 +260,6 @@ const Login = ({ onLoginSuccess, onGoToSignup, onGoToForget }) => {
           </div>
         </div>
 
-        {/* Footer */}
         <p className="text-center mt-5 text-[0.95rem] text-white font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
           Don't have an account?{' '}
           <span

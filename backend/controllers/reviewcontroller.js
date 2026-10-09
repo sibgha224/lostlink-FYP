@@ -3,8 +3,6 @@ const Claim = require('../models/claim');
 const FoundItem = require('../models/founditem');
 const { createNotification } = require('./notificationcontroller');
 
-// Works out who the "other side" of a claim is for the person submitting
-// the review — the finder rates the claimant, the claimant rates the finder.
 const getOtherPartyId = async (claim, currentUserId) => {
   const item = await FoundItem.findById(claim.foundItem).select('userId');
   if (!item) return null;
@@ -17,7 +15,6 @@ const getOtherPartyId = async (claim, currentUserId) => {
   return null;
 };
 
-// POST /api/reviews  { claimId, rating, comment }
 const submitReview = async (req, res) => {
   try {
     const { claimId, rating, comment } = req.body;
@@ -73,7 +70,6 @@ const submitReview = async (req, res) => {
   }
 };
 
-// GET /api/reviews/user/:userId  — reviews someone has received, plus their average
 const getUserReviews = async (req, res) => {
   try {
     const reviews = await Review.find({ reviewedUser: req.params.userId })
@@ -90,7 +86,6 @@ const getUserReviews = async (req, res) => {
   }
 };
 
-// GET /api/reviews/my-reviews — claim ids the logged-in user has already reviewed
 const getMyGivenReviews = async (req, res) => {
   try {
     const reviews = await Review.find({ reviewer: req.user._id }).select('claim rating comment');

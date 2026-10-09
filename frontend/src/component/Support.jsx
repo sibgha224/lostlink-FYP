@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { API_BASE, SOCKET_URL } from '../config';
+import BackButton from './BackButton';
 
 const authHeaders = () => {
   const token = localStorage.getItem('token');
@@ -168,7 +169,7 @@ const Support = ({ onGoToHome }) => {
       `}</style>
 
       <div className="max-w-3xl mx-auto px-6 py-10">
-        <span onClick={onGoToHome} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: '#800020' }}>← Back to Home</span>
+        <BackButton onClick={onGoToHome} label="Home" />
 
         <div className="flex items-center justify-between mt-6 mb-2">
           <h1 className="font-headings text-2xl md:text-3xl text-[#2e1a1a] font-bold">Help &amp; Support</h1>
@@ -303,4 +304,4 @@ const Support = ({ onGoToHome }) => {
   );
 };
 
-export default Support;
+export default Support;

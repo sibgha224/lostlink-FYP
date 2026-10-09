@@ -40,6 +40,7 @@ const NotifIcon = ({ type }) => {
 const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, onLogout, onGoToProfile, onGoToMyReports, onGoToSupport, onOpenMatchedItem, onOpenLostItem }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const socketRef = useRef(null);
   const notifRef = useRef(null);
@@ -51,6 +52,7 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
     setPrevTab(activeTab);
     setShowNotifs(false);
     setShowDropdown(false);
+    setMobileOpen(false);
   }
 
   const user = (() => {
@@ -74,7 +76,6 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
         const data = await res.json();
         if (res.ok) setNotifications(Array.isArray(data) ? data : []);
       } catch {
-        // Silently handle error
       }
     };
     fetchNotifications();
@@ -111,13 +112,13 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
     const opening = !showNotifs;
     setShowNotifs(opening);
     setShowDropdown(false);
+    setMobileOpen(false);
     if (opening && unreadCount > 0) {
       const token = localStorage.getItem('token');
       try {
         await fetch(`${API_BASE}/notifications/read-all`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } });
         setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       } catch {
-        // Silently handle error
       }
     }
   };
@@ -142,18 +143,16 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
   };
 
   return (
-    <nav className="flex justify-between items-center px-[5%] h-17 sticky top-0 z-1000 bg-white/95 backdrop-blur border-b border-[#e8d0d0]" style={{ boxShadow: '0 2px 20px rgba(128, 0, 32, 0.04)' }}>
+    <nav className="flex justify-between items-center gap-3 px-4 sm:px-[5%] h-17 sticky top-0 z-1000 bg-white/95 backdrop-blur border-b border-[#e8d0d0]" style={{ boxShadow: '0 2px 20px rgba(128, 0, 32, 0.04)' }}>
 
-      {/* 1. Brand Logo */}
       <div className="flex items-center gap-2.5 cursor-pointer select-none" onClick={() => onNavigate('home')}>
         <div className="w-9.5 h-9.5 rounded-xl flex items-center justify-center bg-[#800020] text-white shadow-md">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fde8ec" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
-        <span className="text-[1.35rem] font-bold text-[#2e1a1a]" style={{ fontFamily: "'Fraunces', serif" }}>LostLink</span>
+        <span className="text-[1.2rem] sm:text-[1.35rem] font-bold text-[#2e1a1a]" style={{ fontFamily: "'Fraunces', serif" }}>LostLink</span>
       </div>
 
-      {/* 2. Navigation Links with Pill/Button Shapes & No Text Selection */}
-      <div className="hidden md:flex items-center gap-1 text-sm font-semibold text-[#4b5563]">
+      <div className="hidden lg:flex items-center gap-1 text-sm font-semibold text-[#4b5563]">
         <span 
           onClick={() => onNavigate('home')} 
           className={`cursor-pointer select-none px-4 py-2 rounded-full transition-all duration-200 ${
@@ -225,11 +224,9 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
         )}
       </div>
 
-      {/* 3. Right Side Notification & User Profile Button */}
-      <div className="flex items-center gap-3 relative">
+      <div className="flex items-center gap-2 sm:gap-3 relative">
         {isLoggedIn ? (
           <>
-            {/* Notification Bell */}
             <div className="relative" ref={notifRef}>
               <button onClick={toggleNotifs} className="relative w-10 h-10 rounded-full flex items-center justify-center text-[#800020] hover:bg-[#fff8f8] cursor-pointer">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -243,7 +240,7 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
                 )}
               </button>
               {showNotifs && (
-                <div className="absolute right-0 mt-2 w-80 max-h-[26rem] bg-white border border-[#e8d0d0] rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden">
+                <div className="fixed left-3 right-3 top-[4.5rem] sm:absolute sm:left-auto sm:top-auto sm:right-0 mt-0 sm:mt-2 sm:w-80 max-h-[70vh] sm:max-h-[26rem] bg-white border border-[#e8d0d0] rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden">
                   <div className="px-4 py-3 border-b border-[#f5f0f0] bg-[#fff8f8] flex items-center justify-between flex-shrink-0">
                     <span className="text-sm font-bold text-[#2e1a1a]">Notifications</span>
                     {notifications.length > 0 && (
@@ -301,10 +298,9 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
               )}
             </div>
 
-            {/* Profile Avatar Icon */}
             <div className="relative" ref={dropdownRef}>
               <button
-                onClick={() => { setShowDropdown(!showDropdown); setShowNotifs(false); }}
+                onClick={() => { setShowDropdown(!showDropdown); setShowNotifs(false); setMobileOpen(false); }}
                 className="w-10 h-10 rounded-full bg-white border-2 border-[#e8d0d0] text-[#800020] hover:border-[#800020] flex items-center justify-center cursor-pointer shadow-sm transition-all p-0 overflow-hidden"
                 title={user?.name || "User Profile"}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -329,7 +325,7 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
             </div>
           </>
         ) : (
-          <div className="flex gap-2">
+          <div className="hidden sm:flex gap-2">
             <button
               onClick={onGoToLogin}
               className="px-5 py-2 rounded-xl border border-[#e8d0d0] text-[#800020] font-bold text-sm bg-white hover:bg-[#fff8f8] cursor-pointer transition-all">
@@ -342,10 +338,55 @@ const Navbar = ({ isLoggedIn, activeTab, onNavigate, onGoToLogin, onGoToSignup, 
             </button>
           </div>
         )}
+        <button
+          type="button"
+          onClick={() => { setMobileOpen(!mobileOpen); setShowNotifs(false); setShowDropdown(false); }}
+          className="lg:hidden w-10 h-10 rounded-full flex items-center justify-center text-[#800020] border border-[#e8d0d0] bg-white hover:bg-[#fff8f8] cursor-pointer"
+          aria-label="Open menu">
+          {mobileOpen ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6L6 18" /><path d="M6 6l12 12" /></svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
+          )}
+        </button>
       </div>
+
+      {mobileOpen && (
+        <>
+          <div className="lg:hidden fixed inset-0 top-17 bg-black/20 z-40" onClick={() => setMobileOpen(false)} />
+          <div className="lg:hidden absolute left-0 right-0 top-full bg-white border-b border-[#e8d0d0] shadow-lg z-50 px-4 py-3">
+            {[
+              { id: 'home', label: 'Home', action: () => onNavigate('home') },
+              { id: 'found-items', label: 'Found Items', action: () => onNavigate('found-items') },
+              { id: 'lost-items', label: 'Lost Items', action: () => onNavigate('lost-items') },
+              { id: 'report-lost-found', label: 'Report Lost & Found Items', action: () => onNavigate('report-lost-found') },
+              ...(isLoggedIn ? [
+                { id: 'my-reports', label: 'My Reports', action: () => onNavigate('my-reports') },
+                { id: 'support', label: 'Help & Support', action: () => onGoToSupport && onGoToSupport() },
+              ] : []),
+            ].map((link) => (
+              <button
+                key={link.id}
+                type="button"
+                onClick={() => { setMobileOpen(false); link.action(); }}
+                className={`w-full text-left px-4 py-3 rounded-xl text-[15px] font-semibold transition-colors cursor-pointer ${
+                  activeTab === link.id ? 'bg-[#800020] text-white' : 'text-[#2e1a1a] hover:bg-[#fff8f8]'
+                }`}>
+                {link.label}
+              </button>
+            ))}
+            {!isLoggedIn && (
+              <div className="grid grid-cols-2 gap-2 pt-3 mt-2 border-t border-[#f0e0e0] sm:hidden">
+                <button onClick={() => { setMobileOpen(false); onGoToLogin(); }} className="py-2.5 rounded-xl border border-[#e8d0d0] text-[#800020] font-bold text-sm bg-white cursor-pointer">Login</button>
+                <button onClick={() => { setMobileOpen(false); onGoToSignup(); }} className="py-2.5 rounded-xl text-white font-bold text-sm bg-linear-to-r from-[#800020] to-[#4a0010] cursor-pointer">Register</button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
     </nav>
   );
 };
 
-export default Navbar;
+export default Navbar;
